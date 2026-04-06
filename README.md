@@ -13,7 +13,11 @@ npm start
 
 ## Colaboração em equipe (Git)
 
-Passo a passo para remoto, push inicial, convite e fluxo com branches: **[docs/COLLABORATION.md](docs/COLLABORATION.md)**.
+- **`main`**: código integrado.
+- **`murilo`**: sua branch de trabalho.
+- **`vinicius`**: branch do colega.
+
+Fluxo completo (criar branches, dia a dia, merge na `main`): **[docs/COLLABORATION.md](docs/COLLABORATION.md)**.
 
 ## Variáveis de ambiente
 
