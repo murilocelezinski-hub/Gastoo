@@ -12,19 +12,26 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { T } from '../theme';
 import { Header, PrimaryButton, CatIcon } from '../components/Shared';
-import { useFinance, activeAccounts } from '../context/FinanceContext';
+import { useFinance, activeAccounts, activeCreditCards } from '../context/FinanceContext';
 
 export default function EditTransactionScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
   const { tx } = route.params;
-  const { accounts, updateTransaction, showToast } = useFinance();
+  const { accounts, creditCards, updateTransaction, showToast } = useFinance();
   const act = useMemo(() => activeAccounts(accounts), [accounts]);
+  const cardsAct = useMemo(() => activeCreditCards(creditCards), [creditCards]);
   const accountPickerList = useMemo(() => {
     const cur = accounts.find((a) => a.id === tx.accountId);
     if (!cur) return act;
     if (act.some((a) => a.id === cur.id)) return act;
     return [...act, cur];
   }, [act, accounts, tx.accountId]);
+  const cardPickerList = useMemo(() => {
+    const cur = creditCards.find((c) => String(c.id) === String(tx.creditCardId));
+    if (!cur) return cardsAct;
+    if (cardsAct.some((c) => c.id === cur.id)) return cardsAct;
+    return [...cardsAct, cur];
+  }, [cardsAct, creditCards, tx.creditCardId]);
 
   const [tipo, setTipo] = useState(tx.tipo);
   const [valor, setValor] = useState(String(tx.valor));
@@ -33,6 +40,9 @@ export default function EditTransactionScreen({ navigation, route }) {
   const [obs, setObs] = useState(tx.obs || '');
   const [categoria, setCategoria] = useState(tx.categoria);
   const [accountId, setAccountId] = useState(tx.accountId || accounts[0]?.id);
+  const [creditCardId, setCreditCardId] = useState(tx.creditCardId || null);
+  const [gastoTipo, setGastoTipo] = useState(tx.gastoTipo || 'nenhum');
+  const [periodicidade, setPeriodicidade] = useState(tx.periodicidade || 'mensal');
 
   useEffect(() => {
     if (route.params?.selectedCategory) {
@@ -48,6 +58,17 @@ export default function EditTransactionScreen({ navigation, route }) {
 
   const displayValor = valor ? parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '';
 
+  const PERIODS = [
+    { key: 'diaria', label: 'Diária' },
+    { key: 'semanal', label: 'Semanal' },
+    { key: 'quinzenal', label: 'Quinzenal' },
+    { key: 'mensal', label: 'Mensal' },
+    { key: 'bimensal', label: 'Bimensal' },
+    { key: 'trimestral', label: 'Trimestral' },
+    { key: 'semestral', label: 'Semestral' },
+    { key: 'anual', label: 'Anual' },
+  ];
+
   const handleSave = () => {
     const updated = {
       ...tx,
@@ -58,6 +79,8 @@ export default function EditTransactionScreen({ navigation, route }) {
       obs,
       categoria,
       accountId,
+      creditCardId: creditCardId || null,
+      ...(gastoTipo === 'nenhum' ? { gastoTipo: 'nenhum', periodicidade: undefined } : { gastoTipo, periodicidade }),
     };
     updateTransaction(updated);
     showToast('Transação atualizada! ✓');
@@ -161,6 +184,72 @@ export default function EditTransactionScreen({ navigation, route }) {
               ))}
             </ScrollView>
           </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Cartão (opcional)</Text>
+            {cardPickerList.length ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountRow}>
+                <TouchableOpacity
+                  onPress={() => setCreditCardId(null)}
+                  style={[styles.accountPill, !creditCardId && styles.accountPillActive]}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.accountIcon}>—</Text>
+                  <Text style={[styles.accountText, !creditCardId && styles.accountTextActive]}>Nenhum</Text>
+                </TouchableOpacity>
+                {cardPickerList.map((c) => (
+                  <TouchableOpacity
+                    key={c.id}
+                    onPress={() => setCreditCardId(c.id)}
+                    style={[styles.accountPill, String(creditCardId) === String(c.id) && styles.accountPillActive]}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.accountIcon}>{c.icon}</Text>
+                    <Text style={[styles.accountText, String(creditCardId) === String(c.id) && styles.accountTextActive]}>{c.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : (
+              <Text style={styles.blockText}>Você ainda não cadastrou cartões.</Text>
+            )}
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Tipo de gasto</Text>
+            <View style={styles.toggle}>
+              {[
+                { key: 'nenhum', label: 'Normal' },
+                { key: 'fixo', label: 'Fixo' },
+                { key: 'parcelado', label: 'Parcelado' },
+              ].map((o) => (
+                <TouchableOpacity
+                  key={o.key}
+                  onPress={() => setGastoTipo(o.key)}
+                  style={[styles.toggleBtn, gastoTipo === o.key && styles.toggleBtnActive]}
+                >
+                  <Text style={[styles.toggleText, gastoTipo === o.key && styles.toggleTextActive]}>{o.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {gastoTipo !== 'nenhum' ? (
+            <View style={styles.field}>
+              <Text style={styles.label}>Periodicidade</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountRow}>
+                {PERIODS.map((p) => (
+                  <TouchableOpacity
+                    key={p.key}
+                    onPress={() => setPeriodicidade(p.key)}
+                    style={[styles.accountPill, periodicidade === p.key && styles.accountPillActive]}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.accountText, periodicidade === p.key && styles.accountTextActive]}>{p.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          ) : null}
 
           <View style={styles.field}>
             <Text style={styles.label}>Categoria</Text>

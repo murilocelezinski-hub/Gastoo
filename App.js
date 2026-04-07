@@ -23,6 +23,7 @@ import ProjectionScreen from './src/screens/ProjectionScreen';
 import EditTransactionScreen from './src/screens/EditTransactionScreen';
 import AccountsScreen from './src/screens/AccountsScreen';
 import CreditCardsScreen from './src/screens/CreditCardsScreen';
+import RecurringScreen from './src/screens/RecurringScreen';
 
 SplashScreenExpo.preventAutoHideAsync();
 
@@ -72,6 +73,7 @@ function AppNavigation() {
           <Stack.Screen name="EditTransaction" component={EditTransactionScreen} />
           <Stack.Screen name="Accounts" component={AccountsScreen} />
           <Stack.Screen name="CreditCards" component={CreditCardsScreen} />
+          <Stack.Screen name="Recurring" component={RecurringScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       <ToastHost />

@@ -23,6 +23,24 @@ export default function DetailScreen({ navigation, route }) {
     ['Tipo', tx.tipo === 'entrada' ? 'Entrada' : 'Saída'],
     ['Conta', contaLabel],
     ...(tx.creditCardId ? [['Cartão', creditCardName(creditCards, tx.creditCardId)]] : []),
+    ...(tx.gastoTipo && tx.gastoTipo !== 'nenhum' ? [['Gasto', tx.gastoTipo === 'fixo' ? 'Fixo' : 'Parcelado']] : []),
+    ...(tx.gastoTipo && tx.gastoTipo !== 'nenhum' && tx.periodicidade
+      ? [
+          [
+            'Periodicidade',
+            ({
+              diaria: 'Diária',
+              semanal: 'Semanal',
+              quinzenal: 'Quinzenal',
+              mensal: 'Mensal',
+              bimensal: 'Bimensal',
+              trimestral: 'Trimestral',
+              semestral: 'Semestral',
+              anual: 'Anual',
+            }[tx.periodicidade] || tx.periodicidade),
+          ],
+        ]
+      : []),
     ['Data', tx.data],
     ['Observações', tx.obs || '—'],
   ];
