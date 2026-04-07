@@ -1,0 +1,41 @@
+/** Paletas alinhadas às chaves usadas em `theme.js` (T.*) */
+
+export const lightPalette = {
+  orange: '#F05000',
+  amber: '#D98C00',
+  white: '#FFFFFF',
+  graphite: '#333333',
+  chocolate: '#2A1200',
+  brown: '#844213',
+  burnt: '#C96A1E',
+  amberDark: '#CB7D00',
+  gold: '#E09A00',
+  warmWhite: '#F5F0E8',
+  charcoal: '#3C3C34',
+  grayMed: '#797970',
+  grayNeutral: '#989890',
+  graySilver: '#BCBCB8',
+  grayLight: '#CBCBC7',
+  grayVLight: '#DEDEDC',
+  offWhite: '#F5F5F3',
+};
+
+export const darkPalette = {
+  orange: '#FF6B1A',
+  amber: '#E8A020',
+  white: '#1A1A1A',
+  graphite: '#E8E8E4',
+  chocolate: '#0D0603',
+  brown: '#A65C2E',
+  burnt: '#E8955A',
+  amberDark: '#D4A020',
+  gold: '#F0B040',
+  warmWhite: '#1E1C18',
+  charcoal: '#D4D4CE',
+  grayMed: '#9A9A92',
+  grayNeutral: '#B0B0A8',
+  graySilver: '#6A6A62',
+  grayLight: '#4A4A44',
+  grayVLight: '#3A3A36',
+  offWhite: '#121210',
+};

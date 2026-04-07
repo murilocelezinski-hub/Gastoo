@@ -18,7 +18,7 @@ export const T = {
   offWhite: '#F5F5F3',
 };
 
-export const CATEGORIES = [
+export const DEFAULT_CATEGORIES = [
   { name: 'Alimentação', color: '#F05000', icon: '🍽' },
   { name: 'Transporte', color: '#3C3C34', icon: '🚗' },
   { name: 'Moradia', color: '#2A1200', icon: '🏠' },
@@ -31,6 +31,9 @@ export const CATEGORIES = [
   { name: 'Transferência', color: '#5C5C56', icon: '⇄' },
   { name: 'Outros', color: '#BCBCB8', icon: '📦' },
 ];
+
+/** Lista padrão (compatível com imports antigos `CATEGORIES`) */
+export const CATEGORIES = DEFAULT_CATEGORIES;
 
 export const ACCOUNTS = [
   { name: 'Conta Corrente', icon: '🏦' },

@@ -1,23 +1,83 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
-import { T, fmt } from '../theme';
+import { fmt } from '../theme';
 import { categorizeTransaction } from '../services/ai';
 import { useFinance } from '../context/FinanceContext';
+import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
+
+function createAICategoryStyles(T) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: T.chocolate,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 32,
+    },
+    loadingBox: { alignItems: 'center', gap: 16 },
+    loadingTitle: { fontFamily: 'Poppins_300Light', fontSize: 16, color: '#fff' },
+    loadingSubtitle: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.grayMed },
+    resultBox: { alignItems: 'center', width: '100%' },
+    resultLabel: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.grayMed, marginBottom: 16 },
+    catIcon: {
+      width: 72,
+      height: 72,
+      borderRadius: 72 * 0.23,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 14,
+    },
+    catName: { fontFamily: 'Poppins_600SemiBold', fontSize: 22, color: '#fff', marginBottom: 6 },
+    txInfo: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.grayMed, marginBottom: 4 },
+    btnRow: { flexDirection: 'row', gap: 12, marginTop: 32, width: '100%' },
+    correctBtn: {
+      flex: 1,
+      paddingVertical: 14,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: 'rgba(255,255,255,0.3)',
+      alignItems: 'center',
+    },
+    correctBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: '#fff' },
+    confirmBtn: {
+      flex: 1,
+      paddingVertical: 14,
+      borderRadius: 12,
+      backgroundColor: T.orange,
+      alignItems: 'center',
+      shadowColor: T.orange,
+      shadowOpacity: 0.4,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 6,
+    },
+    confirmBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: '#fff' },
+  });
+}
 
 export default function AICategoryScreen({ navigation, route }) {
   const { txData, excludeCategories } = route.params;
+  const T = useThemeColors();
+  const styles = useMemo(() => createAICategoryStyles(T), [T]);
+  const { categories } = useAppPreferences();
   const { addTransaction, showToast } = useFinance();
   const [loading, setLoading] = useState(true);
   const [suggestion, setSuggestion] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       setLoading(true);
-      const result = await categorizeTransaction(txData.descricao, txData.valor);
-      setSuggestion(result.category);
-      setLoading(false);
+      const result = await categorizeTransaction(txData.descricao, txData.valor, categories);
+      if (!cancelled) {
+        setSuggestion(result.category);
+        setLoading(false);
+      }
     })();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [txData.descricao, txData.valor, categories]);
 
   const handleConfirm = () => {
     const newTx = {
@@ -75,51 +135,3 @@ export default function AICategoryScreen({ navigation, route }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: T.chocolate,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  loadingBox: { alignItems: 'center', gap: 16 },
-  loadingTitle: { fontFamily: 'Poppins_300Light', fontSize: 16, color: T.white },
-  loadingSubtitle: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.grayMed },
-  resultBox: { alignItems: 'center', width: '100%' },
-  resultLabel: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.grayMed, marginBottom: 16 },
-  catIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 72 * 0.23,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-  },
-  catName: { fontFamily: 'Poppins_600SemiBold', fontSize: 22, color: T.white, marginBottom: 6 },
-  txInfo: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.grayMed, marginBottom: 4 },
-  btnRow: { flexDirection: 'row', gap: 12, marginTop: 32, width: '100%' },
-  correctBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.3)',
-    alignItems: 'center',
-  },
-  correctBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.white },
-  confirmBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: T.orange,
-    alignItems: 'center',
-    shadowColor: T.orange,
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
-  confirmBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.white },
-});
