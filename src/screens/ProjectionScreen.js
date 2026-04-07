@@ -1,13 +1,42 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { T, fmt } from '../theme';
+import { fmt } from '../theme';
 import { Header } from '../components/Shared';
 import { useFinance, activeAccounts } from '../context/FinanceContext';
+import { useThemeColors } from '../context/AppPreferencesContext';
 import { parseTxDate } from '../utils/chart';
 import { projectedRecurringOut } from '../utils/recurrence';
 
+function createStyles(T) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: T.offWhite },
+    card: {
+      backgroundColor: T.white,
+      borderRadius: 16,
+      padding: 24,
+      borderWidth: 1,
+      borderColor: T.grayVLight,
+    },
+    rowBetween: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+    cardLabel: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.grayMed },
+    cardValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.graphite },
+    barBg: { height: 12, borderRadius: 6, backgroundColor: T.grayVLight, overflow: 'hidden', marginVertical: 10 },
+    barFill: { height: '100%', borderRadius: 6 },
+    projValue: { fontFamily: 'Poppins_300Light', fontSize: 32, color: T.chocolate, marginVertical: 6 },
+    projStatus: { fontFamily: 'Poppins_600SemiBold', fontSize: 13 },
+    alertsTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.charcoal, marginBottom: 12 },
+    alertBox: { padding: 12, borderRadius: 10, marginBottom: 8, borderWidth: 1 },
+    alertWarn: { backgroundColor: 'rgba(240,80,0,0.06)', borderColor: 'rgba(240,80,0,0.15)' },
+    alertOk: { backgroundColor: 'rgba(224,154,0,0.06)', borderColor: 'rgba(224,154,0,0.15)' },
+    alertText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.charcoal },
+    note: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.grayMed, marginTop: 6 },
+  });
+}
+
 export default function ProjectionScreen({ navigation }) {
+  const T = useThemeColors();
+  const styles = useMemo(() => createStyles(T), [T]);
   const insets = useSafeAreaInsets();
   const { transactions, accounts } = useFinance();
   const meta = 4500;
@@ -68,7 +97,7 @@ export default function ProjectionScreen({ navigation }) {
             style={{ padding: 6 }}
             activeOpacity={0.7}
           >
-            <Text style={{ color: T.white, fontSize: 18 }}>⏱</Text>
+            <Text style={{ color: '#fff', fontSize: 18 }}>⏱</Text>
           </TouchableOpacity>
         }
       />
@@ -120,27 +149,3 @@ export default function ProjectionScreen({ navigation }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: T.offWhite },
-  card: {
-    backgroundColor: T.white,
-    borderRadius: 16,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: T.grayVLight,
-  },
-  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  cardLabel: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.grayMed },
-  cardValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.graphite },
-  barBg: { height: 12, borderRadius: 6, backgroundColor: T.grayVLight, overflow: 'hidden', marginVertical: 10 },
-  barFill: { height: '100%', borderRadius: 6 },
-  projValue: { fontFamily: 'Poppins_300Light', fontSize: 32, color: T.chocolate, marginVertical: 6 },
-  projStatus: { fontFamily: 'Poppins_600SemiBold', fontSize: 13 },
-  alertsTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.charcoal, marginBottom: 12 },
-  alertBox: { padding: 12, borderRadius: 10, marginBottom: 8, borderWidth: 1 },
-  alertWarn: { backgroundColor: 'rgba(240,80,0,0.06)', borderColor: 'rgba(240,80,0,0.15)' },
-  alertOk: { backgroundColor: 'rgba(224,154,0,0.06)', borderColor: 'rgba(224,154,0,0.15)' },
-  alertText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.charcoal },
-  note: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.grayMed, marginTop: 6 },
-});

@@ -1,9 +1,45 @@
-import { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, FlatList, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { T, fmt, CATEGORIES } from '../theme';
+import { fmt } from '../theme';
 import { Header, CatIcon } from '../components/Shared';
 import { useFinance } from '../context/FinanceContext';
+import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
+
+function createStyles(T) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: T.offWhite },
+    filterRow: { paddingHorizontal: 20, paddingVertical: 12, gap: 8 },
+    pill: {
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+      borderRadius: 20,
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+    },
+    pillActive: { backgroundColor: T.orange, borderColor: T.orange },
+    pillText: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.graphite },
+    pillTextActive: { fontFamily: 'Poppins_600SemiBold', color: '#fff' },
+    txRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: T.grayVLight,
+    },
+    txDesc: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.graphite },
+    txMeta: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.grayMed },
+    txValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 14 },
+    emptyText: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 14,
+      color: T.grayMed,
+      textAlign: 'center',
+      marginTop: 40,
+    },
+  });
+}
 
 const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
@@ -26,11 +62,13 @@ function groupByMonth(txList) {
 }
 
 export default function HistoryScreen({ navigation }) {
+  const T = useThemeColors();
+  const styles = useMemo(() => createStyles(T), [T]);
   const insets = useSafeAreaInsets();
   const { transactions } = useFinance();
+  const { categories } = useAppPreferences();
   const [filter, setFilter] = useState('Todos');
-  const cats = ['Todos', ...CATEGORIES.map((c) => c.name)];
-
+  const cats = ['Todos', ...categories.map((c) => c.name)];
   const filtered =
     filter === 'Todos' ? transactions : transactions.filter((t) => t.categoria === filter);
 

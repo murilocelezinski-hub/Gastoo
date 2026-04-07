@@ -10,11 +10,82 @@ import {
   ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { T } from '../theme';
+import { useThemeColors } from '../context/AppPreferencesContext';
 import { Header, PrimaryButton, CatIcon } from '../components/Shared';
 import { useFinance, activeAccounts, activeCreditCards } from '../context/FinanceContext';
 
+function createEditTransactionStyles(T) {
+  return StyleSheet.create({
+    form: { flexGrow: 1, padding: 20, gap: 16 },
+    blockText: { fontFamily: 'Poppins_400Regular', fontSize: 15, color: T.grayMed, lineHeight: 22 },
+    toggle: {
+      flexDirection: 'row',
+      borderRadius: 12,
+      overflow: 'hidden',
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+    },
+    toggleBtn: { flex: 1, paddingVertical: 12, alignItems: 'center' },
+    toggleBtnActive: { backgroundColor: T.orange },
+    toggleText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.graphite },
+    toggleTextActive: { color: '#fff' },
+    field: {},
+    label: { fontFamily: 'Poppins_600SemiBold', fontSize: 12, color: T.charcoal, marginBottom: 6 },
+    input: {
+      backgroundColor: T.white,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 15,
+      color: T.graphite,
+    },
+    valueInput: { paddingLeft: 60, fontSize: 24, fontFamily: 'Poppins_600SemiBold' },
+    currencyPrefix: {
+      position: 'absolute',
+      left: 16,
+      top: 16,
+      zIndex: 1,
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 24,
+      color: T.grayMed,
+    },
+    catRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: T.white,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+      padding: 12,
+    },
+    catName: { flex: 1, fontFamily: 'Poppins_400Regular', fontSize: 15, color: T.graphite },
+    catChange: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.orange },
+    accountRow: { gap: 8, paddingVertical: 2 },
+    accountPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: 20,
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+      backgroundColor: T.white,
+    },
+    accountPillActive: { borderColor: T.orange, backgroundColor: 'rgba(240,80,0,0.06)' },
+    accountIcon: { fontSize: 16 },
+    accountText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.graphite },
+    accountTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.orange },
+  });
+}
+
 export default function EditTransactionScreen({ navigation, route }) {
+  const T = useThemeColors();
+  const styles = useMemo(() => createEditTransactionStyles(T), [T]);
   const insets = useSafeAreaInsets();
   const { tx } = route.params;
   const { accounts, creditCards, updateTransaction, showToast } = useFinance();
@@ -279,70 +350,3 @@ export default function EditTransactionScreen({ navigation, route }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  form: { flexGrow: 1, padding: 20, gap: 16 },
-  blockText: { fontFamily: 'Poppins_400Regular', fontSize: 15, color: T.grayMed, lineHeight: 22 },
-  toggle: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: T.graySilver,
-  },
-  toggleBtn: { flex: 1, paddingVertical: 12, alignItems: 'center' },
-  toggleBtnActive: { backgroundColor: T.orange },
-  toggleText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.graphite },
-  toggleTextActive: { color: T.white },
-  field: {},
-  label: { fontFamily: 'Poppins_600SemiBold', fontSize: 12, color: T.charcoal, marginBottom: 6 },
-  input: {
-    backgroundColor: T.white,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: T.graySilver,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 15,
-    color: T.graphite,
-  },
-  valueInput: { paddingLeft: 60, fontSize: 24, fontFamily: 'Poppins_600SemiBold' },
-  currencyPrefix: {
-    position: 'absolute',
-    left: 16,
-    top: 16,
-    zIndex: 1,
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 24,
-    color: T.grayMed,
-  },
-  catRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: T.white,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: T.graySilver,
-    padding: 12,
-  },
-  catName: { flex: 1, fontFamily: 'Poppins_400Regular', fontSize: 15, color: T.graphite },
-  catChange: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.orange },
-  accountRow: { gap: 8, paddingVertical: 2 },
-  accountPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: T.graySilver,
-    backgroundColor: T.white,
-  },
-  accountPillActive: { borderColor: T.orange, backgroundColor: 'rgba(240,80,0,0.06)' },
-  accountIcon: { fontSize: 16 },
-  accountText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.graphite },
-  accountTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.orange },
-});

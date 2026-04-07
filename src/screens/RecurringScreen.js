@@ -1,12 +1,44 @@
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { T, fmt } from '../theme';
+import { fmt } from '../theme';
 import { Header, CatIcon } from '../components/Shared';
 import { useFinance, accountName, creditCardName } from '../context/FinanceContext';
+import { useThemeColors } from '../context/AppPreferencesContext';
 import { fmtDate, nextOccurrenceDate, PERIOD_LABEL } from '../utils/recurrence';
 
+function createRecurringStyles(T) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: T.offWhite },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: T.white,
+      borderRadius: 16,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: T.grayVLight,
+    },
+    title: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.graphite },
+    meta: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.grayMed, marginTop: 2 },
+    sub: { fontFamily: 'Poppins_400Regular', fontSize: 10, color: T.grayNeutral, marginTop: 2 },
+    value: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.burnt },
+    emptyBox: {
+      backgroundColor: T.white,
+      borderRadius: 16,
+      padding: 18,
+      borderWidth: 1,
+      borderColor: T.grayVLight,
+    },
+    emptyTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.graphite },
+    emptySub: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.grayMed, marginTop: 6, lineHeight: 18 },
+  });
+}
+
 export default function RecurringScreen({ navigation }) {
+  const T = useThemeColors();
+  const styles = useMemo(() => createRecurringStyles(T), [T]);
   const insets = useSafeAreaInsets();
   const { transactions, accounts, creditCards } = useFinance();
 
@@ -70,31 +102,3 @@ export default function RecurringScreen({ navigation }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: T.offWhite },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: T.white,
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: T.grayVLight,
-  },
-  title: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.graphite },
-  meta: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.grayMed, marginTop: 2 },
-  sub: { fontFamily: 'Poppins_400Regular', fontSize: 10, color: T.grayNeutral, marginTop: 2 },
-  value: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.burnt },
-  emptyBox: {
-    backgroundColor: T.white,
-    borderRadius: 16,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: T.grayVLight,
-  },
-  emptyTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.graphite },
-  emptySub: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.grayMed, marginTop: 6, lineHeight: 18 },
-});
-

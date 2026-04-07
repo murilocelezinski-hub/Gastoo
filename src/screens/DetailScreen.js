@@ -1,11 +1,77 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { T, fmt } from '../theme';
+import { fmt } from '../theme';
 import { Header, CatIcon, ConfirmModal } from '../components/Shared';
 import { useFinance, accountName, creditCardName } from '../context/FinanceContext';
+import { useThemeColors } from '../context/AppPreferencesContext';
+
+function createDetailStyles(T) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: T.offWhite },
+    card: {
+      backgroundColor: T.white,
+      borderRadius: 16,
+      padding: 24,
+      borderWidth: 1,
+      borderColor: T.graySilver,
+      shadowColor: '#000',
+      shadowOpacity: 0.04,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 2,
+    },
+    topRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20 },
+    desc: { fontFamily: 'Poppins_600SemiBold', fontSize: 18, color: T.graphite },
+    cat: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.grayMed, marginTop: 2 },
+    valueBox: {
+      backgroundColor: T.offWhite,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 20,
+      alignItems: 'center',
+    },
+    value: { fontFamily: 'Poppins_600SemiBold', fontSize: 28 },
+    infoRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: T.grayVLight,
+    },
+    infoLabel: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.grayMed },
+    infoValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.graphite, flex: 1, textAlign: 'right' },
+    btnRow: { flexDirection: 'row', gap: 10, marginTop: 24 },
+    editBtn: {
+      flex: 1,
+      paddingVertical: 13,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: T.orange,
+      alignItems: 'center',
+    },
+    editBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.orange },
+    deleteBtn: {
+      flex: 1,
+      paddingVertical: 13,
+      borderRadius: 12,
+      backgroundColor: T.burnt,
+      alignItems: 'center',
+    },
+    deleteBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: '#fff' },
+    transferHint: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 11,
+      color: T.grayMed,
+      marginTop: 12,
+      textAlign: 'center',
+    },
+  });
+}
 
 export default function DetailScreen({ navigation, route }) {
+  const T = useThemeColors();
+  const styles = useMemo(() => createDetailStyles(T), [T]);
   const insets = useSafeAreaInsets();
   const { tx } = route.params;
   const { accounts, creditCards, deleteTransaction, showToast } = useFinance();
@@ -102,64 +168,3 @@ export default function DetailScreen({ navigation, route }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: T.offWhite },
-  card: {
-    backgroundColor: T.white,
-    borderRadius: 16,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: T.graySilver,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  topRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20 },
-  desc: { fontFamily: 'Poppins_600SemiBold', fontSize: 18, color: T.graphite },
-  cat: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.grayMed, marginTop: 2 },
-  valueBox: {
-    backgroundColor: T.offWhite,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  value: { fontFamily: 'Poppins_600SemiBold', fontSize: 28 },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: T.grayVLight,
-  },
-  infoLabel: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.grayMed },
-  infoValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.graphite, flex: 1, textAlign: 'right' },
-  btnRow: { flexDirection: 'row', gap: 10, marginTop: 24 },
-  editBtn: {
-    flex: 1,
-    paddingVertical: 13,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: T.orange,
-    alignItems: 'center',
-  },
-  editBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.orange },
-  deleteBtn: {
-    flex: 1,
-    paddingVertical: 13,
-    borderRadius: 12,
-    backgroundColor: T.burnt,
-    alignItems: 'center',
-  },
-  deleteBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.white },
-  transferHint: {
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 11,
-    color: T.grayMed,
-    marginTop: 12,
-    textAlign: 'center',
-  },
-});

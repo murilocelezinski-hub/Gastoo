@@ -1,10 +1,34 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
-import { T } from '../theme';
+import { useThemeColors } from '../context/AppPreferencesContext';
 
 const logo = require('../../assets/logo.png');
 
 export default function SplashScreen({ navigation }) {
+  const T = useThemeColors();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: T.chocolate,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        logo: {
+          width: 280,
+          height: 140,
+        },
+        subtitle: {
+          fontFamily: 'Poppins_300Light',
+          fontSize: 16,
+          color: 'rgba(255,255,255,0.5)',
+          marginTop: 12,
+          letterSpacing: 0.5,
+        },
+      }),
+    [T]
+  );
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.85)).current;
 
@@ -27,27 +51,7 @@ export default function SplashScreen({ navigation }) {
         style={[styles.logo, { opacity, transform: [{ scale }] }]}
         resizeMode="contain"
       />
-      <Animated.Text style={[styles.subtitle, { opacity }]}>
-        Seu companheiro de finanças
-      </Animated.Text>
+      <Animated.Text style={[styles.subtitle, { opacity }]}>Seu companheiro de finanças</Animated.Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1, backgroundColor: T.chocolate,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  logo: {
-    width: 280,
-    height: 140,
-  },
-  subtitle: {
-    fontFamily: 'Poppins_300Light',
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.5)',
-    marginTop: 12,
-    letterSpacing: 0.5,
-  },
-});

@@ -1,4 +1,4 @@
-import { CATEGORIES } from '../theme';
+import { DEFAULT_CATEGORIES } from '../theme';
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
@@ -16,14 +16,16 @@ const KEYWORDS = {
   Investimentos: ['investimento', 'ação', 'fundo', 'cripto', 'tesouro', 'poupança', 'bitcoin'],
 };
 
-function fallbackCategorize(descricao) {
+function fallbackCategorize(descricao, categoryList) {
+  const list = categoryList?.length ? categoryList : DEFAULT_CATEGORIES;
+  const outros = list.find((c) => c.name === 'Outros') || list[list.length - 1];
   const desc = descricao.toLowerCase();
   for (const [cat, words] of Object.entries(KEYWORDS)) {
     if (words.some((w) => desc.includes(w))) {
-      return CATEGORIES.find((c) => c.name === cat);
+      return list.find((c) => c.name === cat) || outros;
     }
   }
-  return CATEGORIES[9]; // Outros
+  return outros;
 }
 
 // ─── Few-shot examples por categoria ───────────────────
@@ -80,7 +82,7 @@ Descrição: "Multa de trânsito", Valor: R$ 293,00 → Outros
 Descrição: "Conserto celular", Valor: R$ 350,00 → Outros`;
 
 // ─── Gemini API call ────────────────────────────────────
-export async function categorizeTransaction(descricao, valor) {
+export async function categorizeTransaction(descricao, valor, categoryList = DEFAULT_CATEGORIES) {
   const prompt = `${FEW_SHOT}
 
 Agora categorize:
@@ -100,10 +102,11 @@ Descrição: "${descricao}", Valor: R$ ${valor.toFixed(2)} →`;
 
     const data = await response.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'Outros';
-    const match = CATEGORIES.find((c) => text.toLowerCase().includes(c.name.toLowerCase()));
-    return { category: match || CATEGORIES[9], fromAI: true };
+    const outros = categoryList.find((c) => c.name === 'Outros') || categoryList[categoryList.length - 1];
+    const match = categoryList.find((c) => text.toLowerCase().includes(c.name.toLowerCase()));
+    return { category: match || outros, fromAI: true };
   } catch (err) {
     console.log('AI fallback:', err.message);
-    return { category: fallbackCategorize(descricao), fromAI: false };
+    return { category: fallbackCategorize(descricao, categoryList), fromAI: false };
   }
 }
