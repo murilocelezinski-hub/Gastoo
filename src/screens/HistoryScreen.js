@@ -17,7 +17,12 @@ export default function HistoryScreen({ navigation }) {
     <View style={styles.container}>
       <Header title="Histórico" />
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterRow}
+        style={styles.filterScroll}
+      >
         {cats.map((c) => (
           <TouchableOpacity key={c} onPress={() => setFilter(c)} style={[styles.pill, filter === c && styles.pillActive]}>
             <Text style={[styles.pillText, filter === c && styles.pillTextActive]}>{c}</Text>
@@ -26,6 +31,7 @@ export default function HistoryScreen({ navigation }) {
       </ScrollView>
 
       <FlatList
+        style={{ flex: 1 }}
         data={filtered}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 + insets.bottom }}
@@ -58,6 +64,7 @@ export default function HistoryScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: T.offWhite },
+  filterScroll: { flexGrow: 0, flexShrink: 0 },
   filterRow: { paddingHorizontal: 20, paddingVertical: 12, gap: 8 },
   pill: {
     paddingHorizontal: 14,
