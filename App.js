@@ -79,7 +79,7 @@ function AppNavigation() {
           <Stack.Screen name="NewTransaction" component={NewTransactionScreen} />
           <Stack.Screen name="AICategory" component={AICategoryScreen} />
           <Stack.Screen name="ManualCategory" component={ManualCategoryScreen} />
-          <Stack.Screen name="Projection" component={ProjectionScreen} />
+          <Stack.Screen name="Reports" component={ProjectionScreen} />
           <Stack.Screen name="EditTransaction" component={EditTransactionScreen} />
           <Stack.Screen name="Accounts" component={AccountsScreen} />
           <Stack.Screen name="CreditCards" component={CreditCardsScreen} />
@@ -145,10 +145,10 @@ function MainTabs() {
         }}
       />
       <Tab.Screen
-        name="ProjectionTab"
+        name="ReportsTab"
         component={ProjectionScreen}
         options={{
-          tabBarLabel: 'Projeção',
+          tabBarLabel: 'Relatórios',
           tabBarIcon: () => <Text style={{ fontSize: 20 }}>📊</Text>,
         }}
       />
