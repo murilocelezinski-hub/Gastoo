@@ -9,6 +9,7 @@ import { useAppPreferences, useThemeColors } from '../context/AppPreferencesCont
 function createStyles(T) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: T.offWhite },
+    filterScroll: { flexGrow: 0, flexShrink: 0 },
     filterRow: { paddingHorizontal: 20, paddingVertical: 12, gap: 8 },
     pill: {
       paddingHorizontal: 14,
@@ -20,10 +21,22 @@ function createStyles(T) {
     pillActive: { backgroundColor: T.orange, borderColor: T.orange },
     pillText: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.graphite },
     pillTextActive: { fontFamily: 'Poppins_600SemiBold', color: '#fff' },
+    monthHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingTop: 20,
+      paddingBottom: 8,
+      backgroundColor: T.offWhite,
+    },
+    monthLabel: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.graphite },
+    monthTotal: { fontFamily: 'Poppins_600SemiBold', fontSize: 13 },
     txRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
+      paddingHorizontal: 20,
       paddingVertical: 12,
       borderBottomWidth: 1,
       borderBottomColor: T.grayVLight,
@@ -136,48 +149,3 @@ export default function HistoryScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: T.offWhite },
-  filterScroll: { flexGrow: 0, flexShrink: 0 },
-  filterRow: { paddingHorizontal: 20, paddingVertical: 12, gap: 8 },
-  pill: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: T.graySilver,
-  },
-  pillActive: { backgroundColor: T.orange, borderColor: T.orange },
-  pillText: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.graphite },
-  pillTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.white },
-  monthHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 8,
-    backgroundColor: T.offWhite,
-  },
-  monthLabel: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.graphite },
-  monthTotal: { fontFamily: 'Poppins_600SemiBold', fontSize: 13 },
-  txRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: T.grayVLight,
-  },
-  txDesc: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.graphite },
-  txMeta: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.grayMed },
-  txValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 14 },
-  emptyText: {
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 14,
-    color: T.grayMed,
-    textAlign: 'center',
-    marginTop: 40,
-  },
-});
