@@ -1,0 +1,73 @@
+import React from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Switch, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Header } from '../components/Shared';
+import { useAppPreferences } from '../context/AppPreferencesContext';
+
+const Row = ({ label, sub, onPress, right, T }) => (
+  <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7} disabled={!onPress}>
+    <View style={{ flex: 1 }}>
+      <Text style={[styles.rowLabel, { color: T.graphite }]}>{label}</Text>
+      {sub ? <Text style={[styles.rowSub, { color: T.grayMed }]}>{sub}</Text> : null}
+    </View>
+    {right ?? <Text style={[styles.chev, { color: T.orange }]}>→</Text>}
+  </TouchableOpacity>
+);
+
+export default function ProfileMenuScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
+  const { colors: T, profile, themeMode, setThemeMode } = useAppPreferences();
+  const isDark = themeMode === 'dark';
+
+  return (
+    <View style={[styles.container, { backgroundColor: T.offWhite }]}>
+      <Header title="Perfil" onBack={() => navigation.goBack()} />
+
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 + insets.bottom, gap: 16 }}>
+        <View style={[styles.card, { backgroundColor: T.white, borderColor: T.grayVLight }]}>
+          <Text style={[styles.sectionTitle, { color: T.charcoal }]}>Conta</Text>
+          <Row
+            T={T}
+            label="Dados do usuário"
+            sub={profile.name || profile.email ? `${profile.name || '—'} · ${profile.email || ''}` : 'Nome e e-mail'}
+            onPress={() => navigation.navigate('UserProfile')}
+          />
+        </View>
+
+        <View style={[styles.card, { backgroundColor: T.white, borderColor: T.grayVLight }]}>
+          <Text style={[styles.sectionTitle, { color: T.charcoal }]}>Aparência</Text>
+          <View style={styles.row}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.rowLabel, { color: T.graphite }]}>Tema escuro</Text>
+              <Text style={[styles.rowSub, { color: T.grayMed }]}>Fundo e cartões mais escuros</Text>
+            </View>
+            <Switch value={isDark} onValueChange={(v) => setThemeMode(v ? 'dark' : 'light')} trackColor={{ false: T.graySilver, true: T.orange }} />
+          </View>
+        </View>
+
+        <View style={[styles.card, { backgroundColor: T.white, borderColor: T.grayVLight }]}>
+          <Text style={[styles.sectionTitle, { color: T.charcoal }]}>Finanças</Text>
+          <Row T={T} label="Contas" onPress={() => navigation.navigate('Accounts')} />
+          <View style={[styles.sep, { backgroundColor: T.grayVLight }]} />
+          <Row T={T} label="Cartões de crédito" onPress={() => navigation.navigate('CreditCards')} />
+          <View style={[styles.sep, { backgroundColor: T.grayVLight }]} />
+          <Row T={T} label="Categorias" sub="Adicionar ou remover" onPress={() => navigation.navigate('CategoriesSettings')} />
+        </View>
+
+        <Text style={[styles.hint, { color: T.grayMed }]}>Ajustes salvos neste aparelho</Text>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  card: { borderRadius: 16, padding: 4, borderWidth: 1 },
+  sectionTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 4 },
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 12, gap: 8 },
+  rowLabel: { fontFamily: 'Poppins_600SemiBold', fontSize: 15 },
+  rowSub: { fontFamily: 'Poppins_400Regular', fontSize: 11, marginTop: 2 },
+  chev: { fontFamily: 'Poppins_600SemiBold', fontSize: 16 },
+  sep: { height: 1, marginLeft: 12 },
+  hint: { fontFamily: 'Poppins_400Regular', fontSize: 11, textAlign: 'center', marginTop: 8 },
+});

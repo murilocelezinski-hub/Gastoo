@@ -7,8 +7,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useFonts, Poppins_100Thin, Poppins_300Light, Poppins_400Regular, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
 import * as SplashScreenExpo from 'expo-splash-screen';
-import { T } from './src/theme';
 import { FinanceProvider, useFinance } from './src/context/FinanceContext';
+import { AppPreferencesProvider, useAppPreferences, useThemeColors } from './src/context/AppPreferencesContext';
 import { Toast } from './src/components/Shared';
 
 import SplashScreen from './src/screens/SplashScreen';
@@ -23,6 +23,10 @@ import ProjectionScreen from './src/screens/ProjectionScreen';
 import EditTransactionScreen from './src/screens/EditTransactionScreen';
 import AccountsScreen from './src/screens/AccountsScreen';
 import CreditCardsScreen from './src/screens/CreditCardsScreen';
+import RecurringScreen from './src/screens/RecurringScreen';
+import ProfileMenuScreen from './src/screens/ProfileMenuScreen';
+import UserProfileScreen from './src/screens/UserProfileScreen';
+import CategoriesSettingsScreen from './src/screens/CategoriesSettingsScreen';
 
 SplashScreenExpo.preventAutoHideAsync();
 
@@ -33,8 +37,15 @@ function ToastHost() {
   return <Toast message={toast || ''} show={!!toast} />;
 }
 
+function ThemedStatusBar() {
+  const { themeMode } = useAppPreferences();
+  return <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />;
+}
+
 function AppNavigation() {
-  const { ready } = useFinance();
+  const { ready: financeReady } = useFinance();
+  const { ready: prefsReady } = useAppPreferences();
+  const ready = financeReady && prefsReady;
   const [fontsLoaded] = useFonts({
     Poppins_100Thin,
     Poppins_300Light,
@@ -53,7 +64,7 @@ function AppNavigation() {
   return (
     <View style={{ flex: 1 }}>
       <NavigationContainer onReady={onLayoutReady}>
-        <StatusBar style="light" />
+        <ThemedStatusBar />
         <Stack.Navigator
           screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
           initialRouteName="Splash"
@@ -72,6 +83,10 @@ function AppNavigation() {
           <Stack.Screen name="EditTransaction" component={EditTransactionScreen} />
           <Stack.Screen name="Accounts" component={AccountsScreen} />
           <Stack.Screen name="CreditCards" component={CreditCardsScreen} />
+          <Stack.Screen name="Recurring" component={RecurringScreen} />
+          <Stack.Screen name="ProfileMenu" component={ProfileMenuScreen} />
+          <Stack.Screen name="UserProfile" component={UserProfileScreen} />
+          <Stack.Screen name="CategoriesSettings" component={CategoriesSettingsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       <ToastHost />
@@ -83,7 +98,9 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <FinanceProvider>
-        <AppNavigation />
+        <AppPreferencesProvider>
+          <AppNavigation />
+        </AppPreferencesProvider>
       </FinanceProvider>
     </SafeAreaProvider>
   );
@@ -94,6 +111,7 @@ const Tab = createBottomTabNavigator();
 function MainTabs() {
   const insets = useSafeAreaInsets();
   const bottomPad = Math.max(insets.bottom, 10);
+  const T = useThemeColors();
   return (
     <Tab.Navigator
       screenOptions={{

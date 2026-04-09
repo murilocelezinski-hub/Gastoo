@@ -10,21 +10,99 @@ import {
   ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { T } from '../theme';
+import { useThemeColors } from '../context/AppPreferencesContext';
 import { Header, PrimaryButton, CatIcon } from '../components/Shared';
-import { useFinance, activeAccounts } from '../context/FinanceContext';
+import { useFinance, activeAccounts, activeCreditCards } from '../context/FinanceContext';
+
+function createEditTransactionStyles(T) {
+  return StyleSheet.create({
+    form: { flexGrow: 1, padding: 20, gap: 16 },
+    blockText: { fontFamily: 'Poppins_400Regular', fontSize: 15, color: T.grayMed, lineHeight: 22 },
+    toggle: {
+      flexDirection: 'row',
+      borderRadius: 12,
+      overflow: 'hidden',
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+    },
+    toggleBtn: { flex: 1, paddingVertical: 12, alignItems: 'center' },
+    toggleBtnActive: { backgroundColor: T.orange },
+    toggleText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.graphite },
+    toggleTextActive: { color: '#fff' },
+    field: {},
+    label: { fontFamily: 'Poppins_600SemiBold', fontSize: 12, color: T.charcoal, marginBottom: 6 },
+    input: {
+      backgroundColor: T.white,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 15,
+      color: T.graphite,
+    },
+    valueInput: { paddingLeft: 60, fontSize: 24, fontFamily: 'Poppins_600SemiBold' },
+    currencyPrefix: {
+      position: 'absolute',
+      left: 16,
+      top: 16,
+      zIndex: 1,
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 24,
+      color: T.grayMed,
+    },
+    catRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: T.white,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+      padding: 12,
+    },
+    catName: { flex: 1, fontFamily: 'Poppins_400Regular', fontSize: 15, color: T.graphite },
+    catChange: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.orange },
+    accountRow: { gap: 8, paddingVertical: 2 },
+    accountPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: 20,
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+      backgroundColor: T.white,
+    },
+    accountPillActive: { borderColor: T.orange, backgroundColor: 'rgba(240,80,0,0.06)' },
+    accountIcon: { fontSize: 16 },
+    accountText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.graphite },
+    accountTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.orange },
+  });
+}
 
 export default function EditTransactionScreen({ navigation, route }) {
+  const T = useThemeColors();
+  const styles = useMemo(() => createEditTransactionStyles(T), [T]);
   const insets = useSafeAreaInsets();
   const { tx } = route.params;
-  const { accounts, updateTransaction, showToast } = useFinance();
+  const { accounts, creditCards, updateTransaction, showToast } = useFinance();
   const act = useMemo(() => activeAccounts(accounts), [accounts]);
+  const cardsAct = useMemo(() => activeCreditCards(creditCards), [creditCards]);
   const accountPickerList = useMemo(() => {
     const cur = accounts.find((a) => a.id === tx.accountId);
     if (!cur) return act;
     if (act.some((a) => a.id === cur.id)) return act;
     return [...act, cur];
   }, [act, accounts, tx.accountId]);
+  const cardPickerList = useMemo(() => {
+    const cur = creditCards.find((c) => String(c.id) === String(tx.creditCardId));
+    if (!cur) return cardsAct;
+    if (cardsAct.some((c) => c.id === cur.id)) return cardsAct;
+    return [...cardsAct, cur];
+  }, [cardsAct, creditCards, tx.creditCardId]);
 
   const [tipo, setTipo] = useState(tx.tipo);
   const [valor, setValor] = useState(String(tx.valor));
@@ -33,6 +111,9 @@ export default function EditTransactionScreen({ navigation, route }) {
   const [obs, setObs] = useState(tx.obs || '');
   const [categoria, setCategoria] = useState(tx.categoria);
   const [accountId, setAccountId] = useState(tx.accountId || accounts[0]?.id);
+  const [creditCardId, setCreditCardId] = useState(tx.creditCardId || null);
+  const [gastoTipo, setGastoTipo] = useState(tx.gastoTipo || 'nenhum');
+  const [periodicidade, setPeriodicidade] = useState(tx.periodicidade || 'mensal');
 
   useEffect(() => {
     if (route.params?.selectedCategory) {
@@ -56,6 +137,17 @@ export default function EditTransactionScreen({ navigation, route }) {
 
   const displayValor = valor ? parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '';
 
+  const PERIODS = [
+    { key: 'diaria', label: 'Diária' },
+    { key: 'semanal', label: 'Semanal' },
+    { key: 'quinzenal', label: 'Quinzenal' },
+    { key: 'mensal', label: 'Mensal' },
+    { key: 'bimensal', label: 'Bimensal' },
+    { key: 'trimestral', label: 'Trimestral' },
+    { key: 'semestral', label: 'Semestral' },
+    { key: 'anual', label: 'Anual' },
+  ];
+
   const handleSave = () => {
     const updated = {
       ...tx,
@@ -66,6 +158,8 @@ export default function EditTransactionScreen({ navigation, route }) {
       obs,
       categoria,
       accountId,
+      creditCardId: creditCardId || null,
+      ...(gastoTipo === 'nenhum' ? { gastoTipo: 'nenhum', periodicidade: undefined } : { gastoTipo, periodicidade }),
     };
     updateTransaction(updated);
     showToast('Transação atualizada! ✓');
@@ -172,6 +266,72 @@ export default function EditTransactionScreen({ navigation, route }) {
           </View>
 
           <View style={styles.field}>
+            <Text style={styles.label}>Cartão (opcional)</Text>
+            {cardPickerList.length ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountRow}>
+                <TouchableOpacity
+                  onPress={() => setCreditCardId(null)}
+                  style={[styles.accountPill, !creditCardId && styles.accountPillActive]}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.accountIcon}>—</Text>
+                  <Text style={[styles.accountText, !creditCardId && styles.accountTextActive]}>Nenhum</Text>
+                </TouchableOpacity>
+                {cardPickerList.map((c) => (
+                  <TouchableOpacity
+                    key={c.id}
+                    onPress={() => setCreditCardId(c.id)}
+                    style={[styles.accountPill, String(creditCardId) === String(c.id) && styles.accountPillActive]}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.accountIcon}>{c.icon}</Text>
+                    <Text style={[styles.accountText, String(creditCardId) === String(c.id) && styles.accountTextActive]}>{c.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : (
+              <Text style={styles.blockText}>Você ainda não cadastrou cartões.</Text>
+            )}
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Tipo de gasto</Text>
+            <View style={styles.toggle}>
+              {[
+                { key: 'nenhum', label: 'Normal' },
+                { key: 'fixo', label: 'Fixo' },
+                { key: 'parcelado', label: 'Parcelado' },
+              ].map((o) => (
+                <TouchableOpacity
+                  key={o.key}
+                  onPress={() => setGastoTipo(o.key)}
+                  style={[styles.toggleBtn, gastoTipo === o.key && styles.toggleBtnActive]}
+                >
+                  <Text style={[styles.toggleText, gastoTipo === o.key && styles.toggleTextActive]}>{o.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {gastoTipo !== 'nenhum' ? (
+            <View style={styles.field}>
+              <Text style={styles.label}>Periodicidade</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountRow}>
+                {PERIODS.map((p) => (
+                  <TouchableOpacity
+                    key={p.key}
+                    onPress={() => setPeriodicidade(p.key)}
+                    style={[styles.accountPill, periodicidade === p.key && styles.accountPillActive]}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.accountText, periodicidade === p.key && styles.accountTextActive]}>{p.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          ) : null}
+
+          <View style={styles.field}>
             <Text style={styles.label}>Categoria</Text>
             <TouchableOpacity
               style={styles.catRow}
@@ -199,70 +359,3 @@ export default function EditTransactionScreen({ navigation, route }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  form: { flexGrow: 1, padding: 20, gap: 16 },
-  blockText: { fontFamily: 'Poppins_400Regular', fontSize: 15, color: T.grayMed, lineHeight: 22 },
-  toggle: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: T.graySilver,
-  },
-  toggleBtn: { flex: 1, paddingVertical: 12, alignItems: 'center' },
-  toggleBtnActive: { backgroundColor: T.orange },
-  toggleText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.graphite },
-  toggleTextActive: { color: T.white },
-  field: {},
-  label: { fontFamily: 'Poppins_600SemiBold', fontSize: 12, color: T.charcoal, marginBottom: 6 },
-  input: {
-    backgroundColor: T.white,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: T.graySilver,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 15,
-    color: T.graphite,
-  },
-  valueInput: { paddingLeft: 60, fontSize: 24, fontFamily: 'Poppins_600SemiBold' },
-  currencyPrefix: {
-    position: 'absolute',
-    left: 16,
-    top: 16,
-    zIndex: 1,
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 24,
-    color: T.grayMed,
-  },
-  catRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: T.white,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: T.graySilver,
-    padding: 12,
-  },
-  catName: { flex: 1, fontFamily: 'Poppins_400Regular', fontSize: 15, color: T.graphite },
-  catChange: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.orange },
-  accountRow: { gap: 8, paddingVertical: 2 },
-  accountPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: T.graySilver,
-    backgroundColor: T.white,
-  },
-  accountPillActive: { borderColor: T.orange, backgroundColor: 'rgba(240,80,0,0.06)' },
-  accountIcon: { fontSize: 16 },
-  accountText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.graphite },
-  accountTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.orange },
-});
