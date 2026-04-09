@@ -168,7 +168,6 @@ export default function HistoryScreen({ navigation }) {
   );
 }
 
-<<<<<<< HEAD
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: T.offWhite },
   tipoToggle: {
@@ -228,5 +227,3 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
 });
-=======
->>>>>>> main
