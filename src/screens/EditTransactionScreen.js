@@ -46,6 +46,14 @@ export default function EditTransactionScreen({ navigation, route }) {
     setValor(num === '0.00' ? '' : num);
   };
 
+  const handleData = (text) => {
+    const digits = text.replace(/\D/g, '').slice(0, 8);
+    let masked = digits;
+    if (digits.length > 4) masked = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+    else if (digits.length > 2) masked = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    setData(masked);
+  };
+
   const displayValor = valor ? parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '';
 
   const handleSave = () => {
@@ -126,10 +134,11 @@ export default function EditTransactionScreen({ navigation, route }) {
             <Text style={styles.label}>Data</Text>
             <TextInput
               value={data}
-              onChangeText={setData}
+              onChangeText={handleData}
               placeholder="DD/MM/AAAA"
               placeholderTextColor={T.grayNeutral}
               keyboardType="numeric"
+              maxLength={10}
               style={styles.input}
             />
           </View>
