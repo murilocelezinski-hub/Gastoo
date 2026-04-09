@@ -22,7 +22,6 @@ export default function SplashScreen({ navigation }) {
         subtitle: {
           fontFamily: 'Poppins_300Light',
           fontSize: 16,
-          color: 'rgba(255,255,255,0.5)',
           marginTop: 12,
           letterSpacing: 0.5,
         },
@@ -51,7 +50,7 @@ export default function SplashScreen({ navigation }) {
         style={[styles.logo, { opacity, transform: [{ scale }] }]}
         resizeMode="contain"
       />
-      <Animated.Text style={[styles.subtitle, { opacity }]}>Seu companheiro de finanças</Animated.Text>
+      <Animated.Text style={[styles.subtitle, { opacity, color: T.brandFgMuted }]}>Seu companheiro de finanças</Animated.Text>
     </View>
   );
 }

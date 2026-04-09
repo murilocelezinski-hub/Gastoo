@@ -1,20 +1,154 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MOCK_TRANSACTIONS } from '../theme';
 
 const STORAGE_KEY = '@gastoo_finance_v2';
 
 export const DEFAULT_ACCOUNT_ID = 'acc-seed-default';
+export const ACC_SEED_POUP = 'acc-seed-poup';
+const CARD_SEED_DEMO = 'card-seed-demo';
 
 function seedAccounts() {
-  return [{ id: DEFAULT_ACCOUNT_ID, name: 'Conta Corrente', icon: '🏦', saldoInicial: 0, archived: false }];
+  return [
+    { id: DEFAULT_ACCOUNT_ID, name: 'Conta Corrente', icon: '🏦', saldoInicial: 4100, archived: false },
+    { id: ACC_SEED_POUP, name: 'Poupança', icon: '💰', saldoInicial: 1200, archived: false },
+  ];
+}
+
+/** Lançamentos de demonstração (~3 meses): receitas, despesas, transferências e cartão. */
+function buildDemoSeedTransactions() {
+  const a1 = DEFAULT_ACCOUNT_ID;
+  const a2 = ACC_SEED_POUP;
+  const card = CARD_SEED_DEMO;
+  let nid = 1;
+  const t = (tx) => ({ ...tx, id: nid++, obs: tx.obs ?? '', creditCardId: tx.creditCardId ?? null });
+  const out = [];
+
+  const trf1 = 'trf-seed-1';
+  out.push(t({ tipo: 'entrada', valor: 4800, descricao: 'Salário jan.', categoria: 'Outros', data: '05/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída', valor: 220, descricao: 'Supermercado', categoria: 'Alimentação', data: '07/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída', valor: 89.9, descricao: 'Streaming', categoria: 'Assinaturas', data: '09/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída', valor: 1560, descricao: 'Aluguel', categoria: 'Moradia', data: '10/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída', valor: 420, descricao: 'Posto', categoria: 'Transporte', data: '14/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída', valor: 280, descricao: 'Farmácia', categoria: 'Saúde', data: '16/01/2026', accountId: a1, creditCardId: card }));
+  out.push(t({ tipo: 'saída', valor: 350, descricao: 'Restaurante', categoria: 'Alimentação', data: '19/01/2026', accountId: a1, creditCardId: card }));
+  out.push(
+    t({
+      tipo: 'saída',
+      valor: 500,
+      descricao: '→ Poupança',
+      categoria: 'Transferência',
+      data: '22/01/2026',
+      accountId: a1,
+      isTransfer: true,
+      transferGroupId: trf1,
+    })
+  );
+  out.push(
+    t({
+      tipo: 'entrada',
+      valor: 500,
+      descricao: '← Conta Corrente',
+      categoria: 'Transferência',
+      data: '22/01/2026',
+      accountId: a2,
+      isTransfer: true,
+      transferGroupId: trf1,
+    })
+  );
+  out.push(t({ tipo: 'entrada', valor: 350, descricao: 'Freelance', categoria: 'Outros', data: '28/01/2026', accountId: a1 }));
+
+  const trf2 = 'trf-seed-2';
+  out.push(t({ tipo: 'entrada', valor: 4800, descricao: 'Salário fev.', categoria: 'Outros', data: '05/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída', valor: 198, descricao: 'Mercado', categoria: 'Alimentação', data: '06/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída', valor: 1560, descricao: 'Aluguel', categoria: 'Moradia', data: '10/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída', valor: 112, descricao: 'Uber', categoria: 'Transporte', data: '11/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída', valor: 640, descricao: 'Parcela notebook', categoria: 'Educação', data: '14/02/2026', accountId: a1, creditCardId: card }));
+  out.push(t({ tipo: 'saída', valor: 120, descricao: 'Cinema', categoria: 'Lazer', data: '16/02/2026', accountId: a1 }));
+  out.push(
+    t({
+      tipo: 'saída',
+      valor: 200,
+      descricao: '→ Poupança',
+      categoria: 'Transferência',
+      data: '20/02/2026',
+      accountId: a1,
+      isTransfer: true,
+      transferGroupId: trf2,
+    })
+  );
+  out.push(
+    t({
+      tipo: 'entrada',
+      valor: 200,
+      descricao: '← Conta Corrente',
+      categoria: 'Transferência',
+      data: '20/02/2026',
+      accountId: a2,
+      isTransfer: true,
+      transferGroupId: trf2,
+    })
+  );
+  out.push(t({ tipo: 'entrada', valor: 900, descricao: 'Bônus', categoria: 'Outros', data: '25/02/2026', accountId: a1 }));
+
+  const trf3 = 'trf-seed-3';
+  out.push(t({ tipo: 'entrada', valor: 5100, descricao: 'Salário mar.', categoria: 'Outros', data: '05/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída', valor: 310, descricao: 'Compras', categoria: 'Vestuário', data: '07/03/2026', accountId: a1, creditCardId: card }));
+  out.push(t({ tipo: 'saída', valor: 1560, descricao: 'Aluguel', categoria: 'Moradia', data: '10/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída', valor: 75.5, descricao: 'Padaria', categoria: 'Alimentação', data: '12/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída', valor: 450, descricao: 'Energia', categoria: 'Moradia', data: '15/03/2026', accountId: a1 }));
+  out.push(
+    t({
+      tipo: 'saída',
+      valor: 800,
+      descricao: '→ Poupança',
+      categoria: 'Transferência',
+      data: '18/03/2026',
+      accountId: a1,
+      isTransfer: true,
+      transferGroupId: trf3,
+    })
+  );
+  out.push(
+    t({
+      tipo: 'entrada',
+      valor: 800,
+      descricao: '← Conta Corrente',
+      categoria: 'Transferência',
+      data: '18/03/2026',
+      accountId: a2,
+      isTransfer: true,
+      transferGroupId: trf3,
+    })
+  );
+  out.push(t({ tipo: 'saída', valor: 129.9, descricao: 'Livros', categoria: 'Educação', data: '22/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'entrada', valor: 250, descricao: 'Reembolso', categoria: 'Outros', data: '27/03/2026', accountId: a1 }));
+
+  out.push(t({ tipo: 'entrada', valor: 5100, descricao: 'Salário abr.', categoria: 'Outros', data: '05/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída', valor: 145, descricao: 'iFood', categoria: 'Alimentação', data: '06/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída', valor: 890, descricao: 'Compras cartão', categoria: 'Lazer', data: '08/04/2026', accountId: a1, creditCardId: card }));
+  out.push(t({ tipo: 'saída', valor: 67, descricao: 'Padaria', categoria: 'Alimentação', data: '09/04/2026', accountId: a1 }));
+
+  return out;
 }
 
 function seedTransactions() {
-  return MOCK_TRANSACTIONS.map((tx) => ({
-    ...tx,
-    accountId: DEFAULT_ACCOUNT_ID,
-  }));
+  return buildDemoSeedTransactions();
+}
+
+/** Cartão de demonstração para testes (aba Cartões). */
+function seedCreditCards() {
+  return [
+    {
+      id: CARD_SEED_DEMO,
+      name: 'Cartão 1',
+      icon: '💳',
+      limite: 10000,
+      diaFechamento: 5,
+      diaVencimento: 10,
+      accountId: DEFAULT_ACCOUNT_ID,
+      archived: false,
+    },
+  ];
 }
 
 function migrateTransactions(transactions, accounts) {
@@ -34,7 +168,9 @@ function migrateLoaded(parsed) {
   }));
   let txs = parsed.transactions?.length ? parsed.transactions : seedTransactions();
   txs = migrateTransactions(txs, accounts);
-  const creditCards = (parsed.creditCards || []).map((c) => ({
+  const cardsSource =
+    parsed.creditCards !== undefined && parsed.creditCards !== null ? parsed.creditCards : seedCreditCards();
+  const creditCards = cardsSource.map((c) => ({
     ...c,
     archived: Boolean(c.archived),
     limite: Number(c.limite) || 0,
@@ -84,7 +220,7 @@ const FinanceContext = createContext(null);
 export function FinanceProvider({ children }) {
   const [accounts, setAccounts] = useState(seedAccounts);
   const [transactions, setTransactions] = useState(seedTransactions);
-  const [creditCards, setCreditCards] = useState([]);
+  const [creditCards, setCreditCards] = useState(seedCreditCards);
   const [ready, setReady] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -130,6 +266,20 @@ export function FinanceProvider({ children }) {
     return id;
   }, []);
 
+  const updateAccount = useCallback((accountId, { name, icon, saldoInicial }) => {
+    setAccounts((prev) =>
+      prev.map((a) => {
+        if (a.id !== accountId) return a;
+        return {
+          ...a,
+          ...(name != null && { name: String(name).trim() }),
+          ...(icon != null && { icon }),
+          ...(saldoInicial !== undefined && { saldoInicial: Number(saldoInicial) || 0 }),
+        };
+      })
+    );
+  }, []);
+
   const archiveAccount = useCallback((accountId) => {
     setAccounts((prev) => prev.map((a) => (a.id === accountId ? { ...a, archived: true } : a)));
   }, []);
@@ -152,6 +302,26 @@ export function FinanceProvider({ children }) {
     };
     setCreditCards((prev) => [...prev, card]);
     return id;
+  }, []);
+
+  const updateCreditCard = useCallback((cardId, updates) => {
+    setCreditCards((prev) =>
+      prev.map((c) => {
+        if (c.id !== cardId) return c;
+        const next = { ...c, ...updates };
+        if (updates.name != null) next.name = String(updates.name).trim();
+        if (updates.limite !== undefined) next.limite = Number(updates.limite) || 0;
+        if (updates.diaFechamento !== undefined) {
+          next.diaFechamento = Math.min(31, Math.max(1, parseInt(updates.diaFechamento, 10) || 10));
+        }
+        if (updates.diaVencimento !== undefined) {
+          next.diaVencimento = Math.min(31, Math.max(1, parseInt(updates.diaVencimento, 10) || 15));
+        }
+        if (updates.accountId != null) next.accountId = updates.accountId;
+        if (updates.icon != null) next.icon = updates.icon;
+        return next;
+      })
+    );
   }, []);
 
   const deleteCreditCard = useCallback(
@@ -247,6 +417,13 @@ export function FinanceProvider({ children }) {
     });
   }, []);
 
+  const renameTransactionsCategory = useCallback((fromName, toName) => {
+    if (!fromName || !toName || fromName === toName) return;
+    setTransactions((prev) =>
+      prev.map((t) => (t.categoria === fromName ? { ...t, categoria: toName } : t))
+    );
+  }, []);
+
   const value = useMemo(
     () => ({
       ready,
@@ -256,10 +433,12 @@ export function FinanceProvider({ children }) {
       toast,
       showToast,
       addAccount,
+      updateAccount,
       deleteAccount,
       archiveAccount,
       unarchiveAccount,
       addCreditCard,
+      updateCreditCard,
       deleteCreditCard,
       archiveCreditCard,
       unarchiveCreditCard,
@@ -267,6 +446,7 @@ export function FinanceProvider({ children }) {
       addTransfer,
       updateTransaction,
       deleteTransaction,
+      renameTransactionsCategory,
     }),
     [
       ready,
@@ -276,10 +456,12 @@ export function FinanceProvider({ children }) {
       toast,
       showToast,
       addAccount,
+      updateAccount,
       deleteAccount,
       archiveAccount,
       unarchiveAccount,
       addCreditCard,
+      updateCreditCard,
       deleteCreditCard,
       archiveCreditCard,
       unarchiveCreditCard,
@@ -287,6 +469,7 @@ export function FinanceProvider({ children }) {
       addTransfer,
       updateTransaction,
       deleteTransaction,
+      renameTransactionsCategory,
     ]
   );
 

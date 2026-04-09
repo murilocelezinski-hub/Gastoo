@@ -16,16 +16,103 @@ import { Header, PrimaryButton, ConfirmModal } from '../components/Shared';
 import { useAppPreferences } from '../context/AppPreferencesContext';
 import { useFinance } from '../context/FinanceContext';
 
-const PRESET_COLORS = ['#F05000', '#3C3C34', '#2A1200', '#989890', '#CB7D00', '#844213', '#797970', '#C96A1E', '#E09A00', '#5C5C56', '#BCBCB8'];
-const PRESET_ICONS = ['🍽', '🚗', '🏠', '💊', '🎮', '📚', '👕', '📱', '📈', '📦', '🎁', '⚡', '🏥', '✈️'];
+const PRESET_COLORS = [
+  '#F05000',
+  '#3C3C34',
+  '#2A1200',
+  '#989890',
+  '#CB7D00',
+  '#844213',
+  '#797970',
+  '#C96A1E',
+  '#E09A00',
+  '#5C5C56',
+  '#BCBCB8',
+  '#1E88E5',
+  '#43A047',
+  '#8E24AA',
+  '#FDD835',
+  '#E53935',
+  '#00897B',
+  '#6D4C41',
+  '#3949AB',
+  '#D81B60',
+  '#00ACC1',
+  '#7CB342',
+  '#FF7043',
+  '#5E35B1',
+  '#546E7A',
+  '#C0CA33',
+  '#FFB300',
+  '#00BFA5',
+  '#5D4037',
+  '#283593',
+];
+
+const PRESET_ICONS = [
+  '🍽',
+  '🚗',
+  '🏠',
+  '💊',
+  '🎮',
+  '📚',
+  '👕',
+  '📱',
+  '📈',
+  '📦',
+  '🎁',
+  '⚡',
+  '🏥',
+  '✈️',
+  '🐕',
+  '🐱',
+  '☕',
+  '🍕',
+  '🎬',
+  '🎵',
+  '⚽',
+  '🧾',
+  '💡',
+  '🔧',
+  '🧹',
+  '👶',
+  '💼',
+  '🛒',
+  '🚲',
+  '🏋️',
+  '🎨',
+  '📝',
+  '💻',
+  '🌐',
+  '🎯',
+  '🍔',
+  '🥗',
+  '🍺',
+  '☂️',
+  '🎓',
+  '🔑',
+  '🛠',
+  '🧴',
+  '🪴',
+  '🎸',
+  '📷',
+  '🚕',
+  '⛽',
+  '🏖',
+  '🎂',
+  '💳',
+  '🧸',
+];
 
 const PROTECTED = new Set(['Transferência', 'Outros']);
 
 export default function CategoriesSettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { colors: T, categories, addCategory, removeCategory } = useAppPreferences();
-  const { transactions, showToast } = useFinance();
-  const [modal, setModal] = useState(false);
+  const { colors: T, categories, addCategory, updateCategory, removeCategory } = useAppPreferences();
+  const { transactions, showToast, renameTransactionsCategory } = useFinance();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMode, setModalMode] = useState('add');
+  const [editingOriginalName, setEditingOriginalName] = useState(null);
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('📁');
   const [color, setColor] = useState(PRESET_COLORS[0]);
@@ -40,18 +127,56 @@ export default function CategoriesSettingsScreen({ navigation }) {
     return m;
   }, [transactions]);
 
-  const submitAdd = () => {
-    setErr('');
-    const res = addCategory({ name, color, icon });
-    if (!res.ok) {
-      setErr(res.error || 'Não foi possível adicionar.');
-      return;
-    }
-    showToast('Categoria adicionada.');
+  const openAdd = () => {
+    setModalMode('add');
+    setEditingOriginalName(null);
     setName('');
     setIcon('📁');
     setColor(PRESET_COLORS[0]);
-    setModal(false);
+    setErr('');
+    setModalVisible(true);
+  };
+
+  const openEdit = (cat) => {
+    setModalMode('edit');
+    setEditingOriginalName(cat.name);
+    setName(cat.name);
+    setIcon(cat.icon || '📁');
+    setColor(cat.color || PRESET_COLORS[0]);
+    setErr('');
+    setModalVisible(true);
+  };
+
+  const submitModal = () => {
+    setErr('');
+    if (modalMode === 'add') {
+      const res = addCategory({ name, color, icon });
+      if (!res.ok) {
+        setErr(res.error || 'Não foi possível adicionar.');
+        return;
+      }
+      showToast('Categoria adicionada.');
+      setModalVisible(false);
+      return;
+    }
+    const trimmed = name.trim();
+    if (
+      trimmed !== editingOriginalName &&
+      categories.some((c) => c.name.toLowerCase() === trimmed.toLowerCase() && c.name !== editingOriginalName)
+    ) {
+      setErr('Já existe uma categoria com esse nome.');
+      return;
+    }
+    if (trimmed !== editingOriginalName) {
+      renameTransactionsCategory(editingOriginalName, trimmed);
+    }
+    const res = updateCategory(editingOriginalName, { name: trimmed, color, icon });
+    if (!res.ok) {
+      setErr(res.error || 'Não foi possível salvar.');
+      return;
+    }
+    showToast('Categoria atualizada.');
+    setModalVisible(false);
   };
 
   const tryDelete = (cat) => {
@@ -75,6 +200,8 @@ export default function CategoriesSettingsScreen({ navigation }) {
     else showToast('Categoria removida.');
   };
 
+  const nameLocked = modalMode === 'edit' && editingOriginalName && PROTECTED.has(editingOriginalName);
+
   return (
     <View style={[styles.container, { backgroundColor: T.offWhite }]}>
       <Header title="Categorias" onBack={() => navigation.goBack()} />
@@ -84,7 +211,7 @@ export default function CategoriesSettingsScreen({ navigation }) {
         keyExtractor={(item) => item.name}
         contentContainerStyle={{ padding: 20, paddingBottom: 100 + insets.bottom }}
         ListHeaderComponent={
-          <TouchableOpacity style={[styles.addBtn, { borderColor: T.orange }]} onPress={() => setModal(true)} activeOpacity={0.8}>
+          <TouchableOpacity style={[styles.addBtn, { borderColor: T.orange }]} onPress={openAdd} activeOpacity={0.8}>
             <Text style={[styles.addBtnText, { color: T.orange }]}>+ Nova categoria</Text>
           </TouchableOpacity>
         }
@@ -92,14 +219,18 @@ export default function CategoriesSettingsScreen({ navigation }) {
           const locked = PROTECTED.has(item.name);
           const n = countByCat[item.name] || 0;
           return (
-            <View style={[styles.row, { backgroundColor: T.white, borderColor: T.grayVLight }]}>
+            <TouchableOpacity
+              style={[styles.row, { backgroundColor: T.white, borderColor: T.grayVLight }]}
+              onPress={() => openEdit(item)}
+              activeOpacity={0.75}
+            >
               <View style={[styles.iconBox, { backgroundColor: item.color }]}>
                 <Text style={{ fontSize: 22 }}>{item.icon}</Text>
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowName, { color: T.graphite }]}>{item.name}</Text>
                 <Text style={[styles.rowMeta, { color: T.grayMed }]}>
-                  {locked ? 'Obrigatória' : `${n} lançamento(s)`}
+                  {locked ? 'Obrigatória · toque para editar cor/ícone' : `${n} lançamento(s)`}
                 </Text>
               </View>
               {!locked ? (
@@ -107,51 +238,67 @@ export default function CategoriesSettingsScreen({ navigation }) {
                   <Text style={{ fontSize: 18 }}>🗑</Text>
                 </TouchableOpacity>
               ) : null}
-            </View>
+            </TouchableOpacity>
           );
         }}
       />
 
-      <Modal visible={modal} transparent animationType="fade" onRequestClose={() => setModal(false)}>
+      <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={() => setModalVisible(false)}>
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <View style={[styles.modalCard, { backgroundColor: T.white }]}>
-            <Text style={[styles.modalTitle, { color: T.graphite }]}>Nova categoria</Text>
-            {err ? <Text style={{ color: T.burnt, fontSize: 12, marginBottom: 8 }}>{err}</Text> : null}
-            <Text style={[styles.label, { color: T.charcoal }]}>Nome</Text>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="Ex: Pets"
-              placeholderTextColor={T.grayNeutral}
-              style={[styles.input, { borderColor: T.graySilver, color: T.graphite }]}
-            />
-            <Text style={[styles.label, { color: T.charcoal }]}>Ícone</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
-              {PRESET_ICONS.map((ic) => (
-                <TouchableOpacity key={ic} onPress={() => setIcon(ic)} style={[styles.iconPill, icon === ic && { borderColor: T.orange }]}>
-                  <Text style={{ fontSize: 22 }}>{ic}</Text>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingVertical: 24 }}
+            style={{ maxHeight: '88%' }}
+          >
+            <View style={[styles.modalCard, { backgroundColor: T.white }]}>
+              <Text style={[styles.modalTitle, { color: T.graphite }]}>
+                {modalMode === 'add' ? 'Nova categoria' : 'Editar categoria'}
+              </Text>
+              {err ? <Text style={{ color: T.burnt, fontSize: 12, marginBottom: 8 }}>{err}</Text> : null}
+              <Text style={[styles.label, { color: T.charcoal }]}>Nome</Text>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder="Ex: Pets"
+                placeholderTextColor={T.grayNeutral}
+                editable={!nameLocked}
+                style={[
+                  styles.input,
+                  { borderColor: T.graySilver, color: T.graphite },
+                  nameLocked && { opacity: 0.65 },
+                ]}
+              />
+              {nameLocked ? (
+                <Text style={{ fontSize: 11, color: T.grayMed, marginBottom: 8 }}>Nome fixo para categorias do sistema.</Text>
+              ) : null}
+              <Text style={[styles.label, { color: T.charcoal }]}>Ícone</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
+                {PRESET_ICONS.map((ic) => (
+                  <TouchableOpacity key={ic} onPress={() => setIcon(ic)} style={[styles.iconPill, icon === ic && { borderColor: T.orange }]}>
+                    <Text style={{ fontSize: 22 }}>{ic}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <Text style={[styles.label, { color: T.charcoal }]}>Cor</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
+                {PRESET_COLORS.map((c) => (
+                  <TouchableOpacity
+                    key={c}
+                    onPress={() => setColor(c)}
+                    style={[styles.colorDot, { backgroundColor: c }, color === c && { borderColor: T.orange, borderWidth: 3 }]}
+                  />
+                ))}
+              </ScrollView>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+                <TouchableOpacity style={[styles.modalBtn, { borderColor: T.graySilver }]} onPress={() => setModalVisible(false)}>
+                  <Text style={{ fontFamily: 'Poppins_600SemiBold', color: T.graphite }}>Cancelar</Text>
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <Text style={[styles.label, { color: T.charcoal }]}>Cor</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
-              {PRESET_COLORS.map((c) => (
-                <TouchableOpacity
-                  key={c}
-                  onPress={() => setColor(c)}
-                  style={[styles.colorDot, { backgroundColor: c }, color === c && { borderColor: T.orange, borderWidth: 3 }]}
-                />
-              ))}
-            </ScrollView>
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-              <TouchableOpacity style={[styles.modalBtn, { borderColor: T.graySilver }]} onPress={() => setModal(false)}>
-                <Text style={{ fontFamily: 'Poppins_600SemiBold', color: T.graphite }}>Cancelar</Text>
-              </TouchableOpacity>
-              <View style={{ flex: 1 }}>
-                <PrimaryButton label="Adicionar" onPress={submitAdd} disabled={!name.trim()} />
+                <View style={{ flex: 1 }}>
+                  <PrimaryButton label={modalMode === 'add' ? 'Adicionar' : 'Salvar'} onPress={submitModal} disabled={!name.trim()} />
+                </View>
               </View>
             </View>
-          </View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </Modal>
 

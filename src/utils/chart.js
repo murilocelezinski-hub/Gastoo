@@ -7,6 +7,86 @@ export function parseTxDate(str) {
   return new Date(y, m - 1, d);
 }
 
+function endOfCalendarDay(d) {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setHours(23, 59, 59, 999);
+  return x;
+}
+
+/** Saldo total (ou de uma conta) após todos os lançamentos até o fim do dia `endDate`. */
+export function balanceTotalAt(accounts, transactions, selectedAccountId, endDate) {
+  const end = endOfCalendarDay(endDate);
+  const accs = selectedAccountId
+    ? accounts.filter((a) => a.id === selectedAccountId && !a.archived)
+    : accounts.filter((a) => !a.archived);
+  let sum = 0;
+  for (const a of accs) {
+    let b = Number(a.saldoInicial) || 0;
+    for (const t of transactions) {
+      if (t.accountId !== a.id) continue;
+      const td = parseTxDate(t.data);
+      if (td.getTime() === 0 || td.getTime() > end.getTime()) continue;
+      if (t.tipo === 'entrada') b += t.valor;
+      else if (t.tipo === 'saída') b -= t.valor;
+    }
+    sum += b;
+  }
+  return sum;
+}
+
+const MONTH_SHORT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+/**
+ * Série para gráfico de evolução do saldo.
+ * @param {'current_month' | 'prev_month' | 'last_6m' | 'last_12m'} mode
+ */
+export function buildBalanceEvolutionSeries(accounts, transactions, selectedAccountId, mode, referenceDate = new Date()) {
+  const ref = new Date(referenceDate);
+  const points = [];
+
+  if (mode === 'current_month') {
+    const y = ref.getFullYear();
+    const m = ref.getMonth();
+    const lastDay = ref.getDate();
+    for (let d = 1; d <= lastDay; d++) {
+      const day = new Date(y, m, d);
+      points.push({
+        label: String(d),
+        balance: balanceTotalAt(accounts, transactions, selectedAccountId, day),
+        date: day,
+      });
+    }
+  } else if (mode === 'prev_month') {
+    const first = new Date(ref.getFullYear(), ref.getMonth() - 1, 1);
+    const last = new Date(ref.getFullYear(), ref.getMonth(), 0);
+    for (let d = 1; d <= last.getDate(); d++) {
+      const day = new Date(first.getFullYear(), first.getMonth(), d);
+      points.push({
+        label: String(d),
+        balance: balanceTotalAt(accounts, transactions, selectedAccountId, day),
+        date: day,
+      });
+    }
+  } else if (mode === 'last_6m' || mode === 'last_12m') {
+    const n = mode === 'last_6m' ? 6 : 12;
+    for (let i = n - 1; i >= 0; i--) {
+      const monthStart = new Date(ref.getFullYear(), ref.getMonth() - i, 1);
+      const isCurrent =
+        monthStart.getMonth() === ref.getMonth() && monthStart.getFullYear() === ref.getFullYear();
+      const cut = isCurrent
+        ? ref
+        : new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
+      points.push({
+        label: `${MONTH_SHORT[monthStart.getMonth()]}/${String(monthStart.getFullYear()).slice(-2)}`,
+        balance: balanceTotalAt(accounts, transactions, selectedAccountId, cut),
+        date: cut,
+      });
+    }
+  }
+
+  return points;
+}
+
 const MONTH_LABELS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 /**

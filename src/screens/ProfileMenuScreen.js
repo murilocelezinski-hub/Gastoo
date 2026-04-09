@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Switch, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Switch, StyleSheet, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header } from '../components/Shared';
 import { useAppPreferences } from '../context/AppPreferencesContext';
@@ -26,21 +26,34 @@ export default function ProfileMenuScreen({ navigation }) {
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 + insets.bottom, gap: 16 }}>
         <View style={[styles.card, { backgroundColor: T.white, borderColor: T.grayVLight }]}>
           <Text style={[styles.sectionTitle, { color: T.charcoal }]}>Conta</Text>
-          <Row
-            T={T}
-            label="Dados do usuário"
-            sub={profile.name || profile.email ? `${profile.name || '—'} · ${profile.email || ''}` : 'Nome e e-mail'}
+          <TouchableOpacity
+            style={styles.row}
             onPress={() => navigation.navigate('UserProfile')}
-          />
+            activeOpacity={0.7}
+          >
+            {profile.avatarUri ? (
+              <Image source={{ uri: profile.avatarUri }} style={styles.miniAvatar} resizeMode="cover" />
+            ) : (
+              <View style={[styles.miniAvatarPlaceholder, { backgroundColor: T.grayVLight }]}>
+                <Text style={{ fontSize: 18 }}>👤</Text>
+              </View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.rowLabel, { color: T.graphite }]}>Dados do usuário</Text>
+              <Text style={[styles.rowSub, { color: T.grayMed }]}>
+                {profile.name || profile.email
+                  ? `${profile.name || '—'} · ${profile.email || ''}`
+                  : 'Nome, e-mail e foto'}
+              </Text>
+            </View>
+            <Text style={[styles.chev, { color: T.orange }]}>→</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={[styles.card, { backgroundColor: T.white, borderColor: T.grayVLight }]}>
           <Text style={[styles.sectionTitle, { color: T.charcoal }]}>Aparência</Text>
           <View style={styles.row}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.rowLabel, { color: T.graphite }]}>Tema escuro</Text>
-              <Text style={[styles.rowSub, { color: T.grayMed }]}>Fundo e cartões mais escuros</Text>
-            </View>
+            <Text style={[styles.rowLabel, { color: T.graphite, flex: 1 }]}>Visual do aplicativo</Text>
             <Switch value={isDark} onValueChange={(v) => setThemeMode(v ? 'dark' : 'light')} trackColor={{ false: T.graySilver, true: T.orange }} />
           </View>
         </View>
@@ -64,7 +77,15 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   card: { borderRadius: 16, padding: 4, borderWidth: 1 },
   sectionTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 4 },
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 12, gap: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 12, gap: 12 },
+  miniAvatar: { width: 40, height: 40, borderRadius: 20 },
+  miniAvatarPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   rowLabel: { fontFamily: 'Poppins_600SemiBold', fontSize: 15 },
   rowSub: { fontFamily: 'Poppins_400Regular', fontSize: 11, marginTop: 2 },
   chev: { fontFamily: 'Poppins_600SemiBold', fontSize: 16 },

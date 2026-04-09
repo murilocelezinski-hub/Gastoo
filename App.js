@@ -118,13 +118,13 @@ function MainTabs() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: T.chocolate,
-          borderTopColor: 'rgba(255,255,255,0.08)',
+          borderTopColor: T.homeHairline,
           height: 56 + bottomPad,
           paddingBottom: bottomPad,
           paddingTop: 8,
         },
         tabBarActiveTintColor: T.orange,
-        tabBarInactiveTintColor: T.grayMed,
+        tabBarInactiveTintColor: T.brandFgMuted,
         tabBarLabelStyle: { fontFamily: 'Poppins_400Regular', fontSize: 11 },
       }}
     >

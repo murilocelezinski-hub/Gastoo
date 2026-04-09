@@ -129,20 +129,19 @@ function createStyles(T) {
     legendRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     legendDot: { width: 10, height: 10, borderRadius: 5 },
     legendText: { flex: 1, fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.graphite },
-    legendPct: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.chocolate },
+    legendPct: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.graphite },
     presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   });
 }
 
 export default function ProjectionScreen({ navigation }) {
   const T = useThemeColors();
-  const { themeMode } = useAppPreferences();
+  const { themeMode, categories } = useAppPreferences();
   const styles = useMemo(() => createStyles(T), [T]);
   const insets = useSafeAreaInsets();
   const { transactions, accounts, creditCards } = useFinance();
-  const { categories } = useAppPreferences();
 
-  const pieStroke = themeMode === 'dark' ? 'rgba(255,255,255,0.14)' : '#FFFFFF';
+  const pieStroke = themeMode === 'dark' ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.1)';
 
   const [dateFrom, setDateFrom] = useState(() => monthRangeContaining(new Date()).from);
   const [dateTo, setDateTo] = useState(() => monthRangeContaining(new Date()).to);
@@ -176,7 +175,7 @@ export default function ProjectionScreen({ navigation }) {
   const expenseTotal = useMemo(() => expenseSlices.reduce((s, x) => s + x.value, 0), [expenseSlices]);
   const incomeTotal = useMemo(() => incomeSlices.reduce((s, x) => s + x.value, 0), [incomeSlices]);
 
-  const chartSize = Math.min(220, Dimensions.get('window').width - 80);
+  const chartSize = Math.max(180, Math.min(240, Dimensions.get('window').width - 72));
 
   const applyPreset = useCallback((key) => {
     if (key === 'month') {
@@ -236,7 +235,7 @@ export default function ProjectionScreen({ navigation }) {
             style={{ padding: 6 }}
             activeOpacity={0.7}
           >
-            <Text style={{ color: '#fff', fontSize: 18 }}>⏱</Text>
+            <Text style={{ color: T.brandFg, fontSize: 18 }}>⏱</Text>
           </TouchableOpacity>
         }
       />

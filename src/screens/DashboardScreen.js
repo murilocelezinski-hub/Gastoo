@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Polyline, Line } from 'react-native-svg';
 import { fmt } from '../theme';
 import { CatIcon } from '../components/Shared';
 import {
@@ -9,8 +10,72 @@ import {
   totalBalance,
   activeAccounts,
 } from '../context/FinanceContext';
-import { useThemeColors } from '../context/AppPreferencesContext';
-import { buildChartData } from '../utils/chart';
+import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
+import { buildBalanceEvolutionSeries } from '../utils/chart';
+
+const BALANCE_MODES = [
+  { key: 'current_month', short: 'Mês' },
+  { key: 'prev_month', short: 'Ant.' },
+  { key: 'last_6m', short: '6 m' },
+  { key: 'last_12m', short: '12 m' },
+];
+
+function BalanceLineChart({ points, width, height, lineColor, zeroColor, mutedColor }) {
+  const padL = 2;
+  const padR = 4;
+  const padT = 6;
+  const padB = 4;
+  const innerW = Math.max(width - padL - padR, 1);
+  const innerH = Math.max(height - padT - padB, 1);
+  if (!points.length) {
+    return (
+      <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: 12, color: mutedColor, textAlign: 'center' }}>
+        Sem dados neste período
+      </Text>
+    );
+  }
+  const vals = points.map((p) => p.balance);
+  let minV = Math.min(...vals);
+  let maxV = Math.max(...vals);
+  if (maxV === minV) {
+    minV -= 1;
+    maxV += 1;
+  }
+  const span = maxV - minV;
+  const n = Math.max(points.length - 1, 1);
+  const coords = points.map((p, i) => {
+    const x = padL + (i / n) * innerW;
+    const y = padT + innerH - ((p.balance - minV) / span) * innerH;
+    return { x, y };
+  });
+  const pointsStr = coords.map((c) => `${c.x},${c.y}`).join(' ');
+  const yZero = padT + innerH - ((0 - minV) / span) * innerH;
+  const showZero = yZero >= padT && yZero <= padT + innerH;
+
+  return (
+    <Svg width={width} height={height}>
+      {showZero ? (
+        <Line
+          x1={padL}
+          y1={yZero}
+          x2={width - padR}
+          y2={yZero}
+          stroke={zeroColor}
+          strokeWidth={1}
+          strokeDasharray="3,5"
+        />
+      ) : null}
+      <Polyline
+        points={pointsStr}
+        fill="none"
+        stroke={lineColor}
+        strokeWidth={2.5}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
 
 const logo = require('../../assets/logo.png');
 
@@ -29,9 +94,10 @@ function createStyles(T) {
       width: 36,
       height: 36,
       borderRadius: 18,
-      backgroundColor: 'rgba(255,255,255,0.1)',
+      backgroundColor: T.homeGlass,
       alignItems: 'center',
       justifyContent: 'center',
+      overflow: 'hidden',
     },
     accountsSection: { marginBottom: 16 },
     accountsRow: { paddingHorizontal: 20, gap: 10 },
@@ -40,26 +106,26 @@ function createStyles(T) {
       borderRadius: 16,
       padding: 14,
       gap: 4,
-      backgroundColor: 'rgba(255,255,255,0.06)',
+      backgroundColor: T.homeGlass,
       borderWidth: 1.5,
-      borderColor: 'rgba(255,255,255,0.08)',
+      borderColor: T.homeHairline,
     },
     accountCardActive: {
-      backgroundColor: 'rgba(240,80,0,0.15)',
+      backgroundColor: 'rgba(240,80,0,0.18)',
       borderColor: T.orange,
     },
     accountCardIcon: { fontSize: 20 },
     accountCardName: {
       fontFamily: 'Poppins_400Regular',
       fontSize: 11,
-      color: T.grayMed,
+      color: T.brandFgMuted,
       marginTop: 2,
     },
-    accountCardNameActive: { color: '#fff' },
+    accountCardNameActive: { color: T.brandFg },
     accountCardBalance: {
       fontFamily: 'Poppins_600SemiBold',
       fontSize: 13,
-      color: T.graySilver,
+      color: T.brandFgMuted,
     },
     accountCardBalanceActive: { color: T.orange },
     saldoCard: {
@@ -82,20 +148,28 @@ function createStyles(T) {
     miniLabel: { fontFamily: 'Poppins_400Regular', fontSize: 10, color: 'rgba(255,255,255,0.6)' },
     miniValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 15 },
     chartBox: {
-      backgroundColor: 'rgba(255,255,255,0.06)',
+      backgroundColor: T.homeGlass,
       borderRadius: 16,
       padding: 16,
       marginHorizontal: 20,
       marginBottom: 20,
     },
-    chartTitle: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.graySilver, marginBottom: 14 },
-    chartRow: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end' },
-    chartCol: { alignItems: 'center', gap: 4 },
-    chartLabel: { fontFamily: 'Poppins_400Regular', fontSize: 9, color: T.grayMed },
-    legendRow: { flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 10 },
-    legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    legendDot: { width: 8, height: 8, borderRadius: 2 },
-    legendText: { fontFamily: 'Poppins_400Regular', fontSize: 10, color: T.grayMed },
+    chartHead: { marginBottom: 10 },
+    chartTitle: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.brandFgMuted, marginBottom: 8 },
+    filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
+    filterChip: {
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: T.homeHairline,
+      backgroundColor: 'transparent',
+    },
+    filterChipOn: { borderColor: T.orange, backgroundColor: 'rgba(240,80,0,0.12)' },
+    filterChipText: { fontFamily: 'Poppins_400Regular', fontSize: 10, color: T.brandFgMuted },
+    filterChipTextOn: { fontFamily: 'Poppins_600SemiBold', fontSize: 10, color: T.orange },
+    chartLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6, paddingHorizontal: 2 },
+    chartLabelMini: { fontFamily: 'Poppins_400Regular', fontSize: 9, color: T.brandFgMuted },
     recentHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -103,7 +177,7 @@ function createStyles(T) {
       marginHorizontal: 20,
       marginBottom: 12,
     },
-    recentTitle: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.graySilver },
+    recentTitle: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.brandFgMuted },
     seeAllText: { fontFamily: 'Poppins_600SemiBold', fontSize: 12, color: T.orange },
     txRow: {
       flexDirection: 'row',
@@ -112,10 +186,10 @@ function createStyles(T) {
       paddingVertical: 10,
       marginHorizontal: 20,
       borderBottomWidth: 1,
-      borderBottomColor: 'rgba(255,255,255,0.06)',
+      borderBottomColor: T.homeHairline,
     },
-    txDesc: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: '#fff' },
-    txDate: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.grayMed },
+    txDesc: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.brandFg },
+    txDate: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.brandFgMuted },
     txValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 14 },
     fab: {
       position: 'absolute',
@@ -139,20 +213,35 @@ function createStyles(T) {
 
 export default function DashboardScreen({ navigation }) {
   const T = useThemeColors();
+  const { profile } = useAppPreferences();
   const styles = useMemo(() => createStyles(T), [T]);
   const insets = useSafeAreaInsets();
+  const { width: winW } = useWindowDimensions();
   const { accounts, transactions } = useFinance();
   const act = activeAccounts(accounts);
   const activeIds = useMemo(() => new Set(act.map((a) => a.id)), [act]);
   const [hidden, setHidden] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const [balanceMode, setBalanceMode] = useState('current_month');
   const mask = '••••••';
 
-  const chartTx = selectedAccount
-    ? transactions.filter((t) => t.accountId === selectedAccount)
-    : transactions.filter((t) => activeIds.has(t.accountId));
-  const chartData = buildChartData(chartTx);
-  const maxVal = Math.max(...chartData.map((d) => Math.max(d.income, d.expense)), 1);
+  const balanceSeries = useMemo(
+    () => buildBalanceEvolutionSeries(accounts, transactions, selectedAccount, balanceMode, new Date()),
+    [accounts, transactions, selectedAccount, balanceMode]
+  );
+
+  const chartW = Math.max(260, winW - 72);
+  const chartH = 130;
+
+  const labelIndexes = useMemo(() => {
+    const pts = balanceSeries;
+    if (pts.length <= 6) return pts.map((_, i) => i);
+    const out = [0];
+    const mid = Math.floor(pts.length / 2);
+    if (mid > 0) out.push(mid);
+    if (pts.length - 1 > mid) out.push(pts.length - 1);
+    return [...new Set(out)].sort((a, b) => a - b);
+  }, [balanceSeries]);
 
   const filtered = selectedAccount
     ? transactions.filter((t) => t.accountId === selectedAccount)
@@ -185,7 +274,11 @@ export default function DashboardScreen({ navigation }) {
           onPress={() => navigation.navigate('ProfileMenu')}
           activeOpacity={0.7}
         >
-          <Text style={{ fontSize: 18 }}>👤</Text>
+          {profile.avatarUri ? (
+            <Image source={{ uri: profile.avatarUri }} style={{ width: 36, height: 36 }} resizeMode="cover" />
+          ) : (
+            <Text style={{ fontSize: 18 }}>👤</Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -195,16 +288,6 @@ export default function DashboardScreen({ navigation }) {
       >
         <View style={styles.accountsSection}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountsRow}>
-            <TouchableOpacity
-              style={styles.accountCard}
-              onPress={() => navigation.navigate('ProfileMenu')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.accountCardIcon}>⚙️</Text>
-              <Text style={styles.accountCardName}>Perfil</Text>
-              <Text style={[styles.accountCardBalance, { fontSize: 11 }]}>Ajustes</Text>
-            </TouchableOpacity>
-
             {act.length > 0 ? (
               <>
                 <TouchableOpacity
@@ -263,45 +346,38 @@ export default function DashboardScreen({ navigation }) {
         </View>
 
         <View style={styles.chartBox}>
-          <Text style={styles.chartTitle}>Últimos 6 meses</Text>
-          <View style={styles.chartRow}>
-            {chartData.map((d, i) => (
-              <View key={i} style={styles.chartCol}>
-                <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 2, height: 100 }}>
-                  <View
-                    style={{
-                      width: 10,
-                      height: (d.income / maxVal) * 100,
-                      backgroundColor: T.gold,
-                      borderTopLeftRadius: 3,
-                      borderTopRightRadius: 3,
-                      opacity: 0.5,
-                    }}
-                  />
-                  <View
-                    style={{
-                      width: 10,
-                      height: (d.expense / maxVal) * 100,
-                      backgroundColor: T.orange,
-                      borderTopLeftRadius: 3,
-                      borderTopRightRadius: 3,
-                    }}
-                  />
-                </View>
-                <Text style={styles.chartLabel}>{d.month}</Text>
-              </View>
-            ))}
-          </View>
-          <View style={styles.legendRow}>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: T.gold, opacity: 0.5 }]} />
-              <Text style={styles.legendText}>Entradas</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: T.orange }]} />
-              <Text style={styles.legendText}>Saídas</Text>
+          <View style={styles.chartHead}>
+            <Text style={styles.chartTitle}>Evolução do saldo</Text>
+            <View style={styles.filterRow}>
+              {BALANCE_MODES.map(({ key, short }) => (
+                <TouchableOpacity
+                  key={key}
+                  onPress={() => setBalanceMode(key)}
+                  style={[styles.filterChip, balanceMode === key && styles.filterChipOn]}
+                  activeOpacity={0.75}
+                >
+                  <Text style={[styles.filterChipText, balanceMode === key && styles.filterChipTextOn]}>{short}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
+          <BalanceLineChart
+            points={balanceSeries}
+            width={chartW}
+            height={chartH}
+            lineColor={T.orange}
+            zeroColor={T.brandFgMuted}
+            mutedColor={T.brandFgMuted}
+          />
+          {balanceSeries.length > 0 ? (
+            <View style={styles.chartLabels}>
+              {labelIndexes.map((i) => (
+                <Text key={i} style={styles.chartLabelMini} numberOfLines={1}>
+                  {balanceSeries[i]?.label}
+                </Text>
+              ))}
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.recentHeader}>

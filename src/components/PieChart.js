@@ -15,14 +15,19 @@ function describeSlice(cx, cy, r, startAngle, endAngle) {
 /**
  * @param {{ label: string, value: number, color: string }[]} data
  */
-export default function PieChart({ data, size = 200, strokeColor = '#fff', emptyLabel = 'Sem dados' }) {
+export default function PieChart({
+  data,
+  size = 200,
+  strokeColor = 'rgba(0,0,0,0.12)',
+  emptyLabel = 'Sem dados',
+}) {
   const total = useMemo(() => data.reduce((s, d) => s + d.value, 0), [data]);
 
   const paths = useMemo(() => {
     if (total <= 0) return [];
     const cx = size / 2;
     const cy = size / 2;
-    const r = size / 2 - 6;
+    const r = Math.max(size / 2 - 8, 4);
     let angle = -Math.PI / 2;
     return data.map((d, i) => {
       const sweep = (d.value / total) * 2 * Math.PI;
@@ -46,17 +51,21 @@ export default function PieChart({ data, size = 200, strokeColor = '#fff', empty
   }
 
   return (
-    <Svg width={size} height={size}>
-      <G>
-        {paths.map((p) => (
-          <Path key={p.key} d={p.d} fill={p.fill} stroke={strokeColor} strokeWidth={2} />
-        ))}
-      </G>
-    </Svg>
+    <View style={[styles.holder, { width: size, height: size }]}>
+      <Svg width={size} height={size} style={styles.svg}>
+        <G>
+          {paths.map((p) => (
+            <Path key={p.key} d={p.d} fill={p.fill} stroke={strokeColor} strokeWidth={1.25} strokeLinejoin="round" />
+          ))}
+        </G>
+      </Svg>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  emptyWrap: { alignItems: 'center', justifyContent: 'center' },
-  emptyText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: '#888' },
+  holder: { alignItems: 'center', justifyContent: 'center' },
+  svg: { backgroundColor: 'transparent' },
+  emptyWrap: { alignItems: 'center', justifyContent: 'center', borderRadius: 8 },
+  emptyText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: '#888', textAlign: 'center', paddingHorizontal: 12 },
 });

@@ -9,6 +9,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
 import { fmt, ACCOUNTS } from '../theme';
 import { Header, PrimaryButton, ConfirmModal } from '../components/Shared';
@@ -99,6 +100,39 @@ function createCreditCardsStyles(T) {
     accountIcon: { fontSize: 15 },
     accountText: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.graphite },
     accountTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.orange },
+    archiveLink: {
+      paddingVertical: 12,
+      alignItems: 'center',
+      marginTop: 8,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+    },
+    archiveLinkText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.grayMed },
+    sheet: {
+      backgroundColor: T.white,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      maxHeight: '78%',
+    },
+    sheetTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 17, color: T.graphite, marginBottom: 12 },
+    sheetEmpty: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.grayMed, textAlign: 'center', paddingVertical: 24 },
+    headerArchiveBtn: { padding: 6, position: 'relative' },
+    archiveBadge: {
+      position: 'absolute',
+      top: -2,
+      right: -6,
+      minWidth: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: T.orange,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+    },
+    archiveBadgeText: { color: '#fff', fontSize: 10, fontFamily: 'Poppins_600SemiBold' },
   });
 }
 
@@ -111,6 +145,7 @@ export default function CreditCardsScreen({ navigation }) {
     creditCards,
     transactions,
     addCreditCard,
+    updateCreditCard,
     deleteCreditCard,
     archiveCreditCard,
     unarchiveCreditCard,
@@ -131,7 +166,15 @@ export default function CreditCardsScreen({ navigation }) {
     setLinkAccountId((id) => (id && act.some((a) => a.id === id) ? id : act[0].id));
   }, [act]);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [editTarget, setEditTarget] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editIcon, setEditIcon] = useState('💳');
+  const [editLimiteRaw, setEditLimiteRaw] = useState('');
+  const [editDiaFech, setEditDiaFech] = useState('10');
+  const [editDiaVen, setEditDiaVen] = useState('15');
+  const [editLinkAccountId, setEditLinkAccountId] = useState(null);
   const [error, setError] = useState('');
+  const [showArchivedModal, setShowArchivedModal] = useState(false);
 
   const cardsActive = creditCards.filter((c) => !c.archived);
   const cardsArchived = creditCards.filter((c) => c.archived);
@@ -145,6 +188,52 @@ export default function CreditCardsScreen({ navigation }) {
   const displayLimite = limiteRaw
     ? parseFloat(limiteRaw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
     : '';
+
+  const displayEditLimite = editLimiteRaw
+    ? parseFloat(editLimiteRaw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+    : '';
+
+  const handleEditLimite = (text) => {
+    const raw = text.replace(/\D/g, '');
+    const num = (parseInt(raw || '0') / 100).toFixed(2);
+    setEditLimiteRaw(num === '0.00' ? '' : num);
+  };
+
+  const openEdit = (c) => {
+    setError('');
+    setEditTarget(c);
+    setEditName(c.name);
+    setEditIcon(c.icon || '💳');
+    setEditLimiteRaw(c.limite ? Number(c.limite).toFixed(2) : '');
+    setEditDiaFech(String(c.diaFechamento ?? 10));
+    setEditDiaVen(String(c.diaVencimento ?? 15));
+    setEditLinkAccountId(c.accountId);
+  };
+
+  const saveEdit = () => {
+    if (!editTarget) return;
+    setError('');
+    if (!editName.trim()) {
+      setError('Informe o nome do cartão.');
+      return;
+    }
+    if (!editLinkAccountId || !act.some((a) => a.id === editLinkAccountId)) {
+      setError('Selecione uma conta bancária ativa.');
+      return;
+    }
+    const df = Math.min(31, Math.max(1, parseInt(editDiaFech, 10) || 10));
+    const dv = Math.min(31, Math.max(1, parseInt(editDiaVen, 10) || 15));
+    updateCreditCard(editTarget.id, {
+      name: editName.trim(),
+      icon: editIcon,
+      limite: editLimiteRaw ? parseFloat(editLimiteRaw) : 0,
+      diaFechamento: df,
+      diaVencimento: dv,
+      accountId: editLinkAccountId,
+    });
+    showToast('Cartão atualizado.');
+    setEditTarget(null);
+  };
 
   const submit = () => {
     setError('');
@@ -183,9 +272,32 @@ export default function CreditCardsScreen({ navigation }) {
 
   const txCountForCard = (id) => transactions.filter((t) => String(t.creditCardId) === String(id)).length;
 
+  const archiveFromEdit = () => {
+    if (!editTarget) return;
+    archiveCreditCard(editTarget.id);
+    showToast('Cartão arquivado.');
+    setEditTarget(null);
+  };
+
+  const headerArchive = (
+    <TouchableOpacity
+      onPress={() => setShowArchivedModal(true)}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      style={styles.headerArchiveBtn}
+      accessibilityLabel="Ver cartões arquivados"
+    >
+      <Text style={{ fontSize: 22, color: T.brandFg }}>🗃️</Text>
+      {cardsArchived.length > 0 ? (
+        <View style={styles.archiveBadge}>
+          <Text style={styles.archiveBadgeText}>{cardsArchived.length > 9 ? '9+' : cardsArchived.length}</Text>
+        </View>
+      ) : null}
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
-      <Header title="Cartões de crédito" onBack={() => navigation.goBack()} />
+      <Header title="Cartões de crédito" onBack={() => navigation.goBack()} right={headerArchive} />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
@@ -196,46 +308,28 @@ export default function CreditCardsScreen({ navigation }) {
 
           {cardsActive.map((c) => (
             <View key={c.id} style={styles.row}>
-              <Text style={styles.rowIcon}>{c.icon}</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowName}>{c.name}</Text>
-                <Text style={styles.rowMeta}>
-                  Limite {fmt(c.limite)} · Fecha dia {c.diaFechamento} · Vence dia {c.diaVencimento}
-                </Text>
-                <Text style={styles.rowSub}>
-                  Conta: {accountName(accounts, c.accountId)}
-                  {txCountForCard(c.id) > 0 ? ` · ${txCountForCard(c.id)} lançamentos` : ''}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={() => archiveCreditCard(c.id)} style={styles.smallBtn}>
-                <Text style={styles.smallBtnText}>Arquivar</Text>
+              <TouchableOpacity
+                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                onPress={() => openEdit(c)}
+                activeOpacity={0.65}
+              >
+                <Text style={styles.rowIcon}>{c.icon}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowName}>{c.name}</Text>
+                  <Text style={styles.rowMeta}>
+                    Limite {fmt(c.limite)} · Fecha dia {c.diaFechamento} · Vence dia {c.diaVencimento}
+                  </Text>
+                  <Text style={styles.rowSub}>
+                    Conta: {accountName(accounts, c.accountId)}
+                    {txCountForCard(c.id) > 0 ? ` · ${txCountForCard(c.id)} lançamentos` : ''}
+                  </Text>
+                </View>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setDeleteTarget(c)} hitSlop={12} style={styles.trash}>
                 <Text style={styles.trashText}>🗑</Text>
               </TouchableOpacity>
             </View>
           ))}
-
-          {cardsArchived.length > 0 ? (
-            <>
-              <Text style={styles.sectionTitle}>Arquivados</Text>
-              {cardsArchived.map((c) => (
-                <View key={c.id} style={[styles.row, { opacity: 0.85 }]}>
-                  <Text style={styles.rowIcon}>{c.icon}</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.rowName}>{c.name}</Text>
-                    <Text style={styles.rowMeta}>Conta: {accountName(accounts, c.accountId)}</Text>
-                  </View>
-                  <TouchableOpacity onPress={() => unarchiveCreditCard(c.id)} style={styles.smallBtn}>
-                    <Text style={styles.smallBtnText}>Restaurar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setDeleteTarget(c)} hitSlop={12} style={styles.trash}>
-                    <Text style={styles.trashText}>🗑</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </>
-          ) : null}
 
           <Text style={styles.sectionTitle}>Novo cartão</Text>
           <View style={styles.field}>
@@ -316,6 +410,164 @@ export default function CreditCardsScreen({ navigation }) {
           <PrimaryButton label="Adicionar cartão" onPress={submit} disabled={!act.length || !linkAccountId} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal visible={!!editTarget} transparent animationType="fade" onRequestClose={() => setEditTarget(null)}>
+        <KeyboardAvoidingView
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', padding: 16 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            style={{ maxHeight: '90%' }}
+            contentContainerStyle={{
+              backgroundColor: T.offWhite,
+              borderRadius: 16,
+              padding: 20,
+              paddingBottom: 24 + insets.bottom,
+            }}
+          >
+            <Text style={[styles.sectionTitle, { marginTop: 0 }]}>Editar cartão</Text>
+            {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
+            <View style={styles.field}>
+              <Text style={styles.label}>Nome</Text>
+              <TextInput
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Nome"
+                placeholderTextColor={T.grayNeutral}
+                style={[styles.input, { backgroundColor: T.white }]}
+              />
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>Limite</Text>
+              <View style={{ position: 'relative' }}>
+                <Text style={styles.currencyPrefix}>R$</Text>
+                <TextInput
+                  value={displayEditLimite}
+                  onChangeText={handleEditLimite}
+                  placeholder="0,00"
+                  placeholderTextColor={T.grayNeutral}
+                  keyboardType="numeric"
+                  style={[styles.input, styles.valueInput]}
+                />
+              </View>
+            </View>
+            <View style={styles.rowFields}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Fechamento (dia)</Text>
+                <TextInput
+                  value={editDiaFech}
+                  onChangeText={(t) => setEditDiaFech(t.replace(/\D/g, '').slice(0, 2))}
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Vencimento (dia)</Text>
+                <TextInput
+                  value={editDiaVen}
+                  onChangeText={(t) => setEditDiaVen(t.replace(/\D/g, '').slice(0, 2))}
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
+              </View>
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>Ícone (banco)</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
+                {ACCOUNTS.map((p) => (
+                  <TouchableOpacity
+                    key={p.name}
+                    onPress={() => setEditIcon(p.icon)}
+                    style={[styles.iconPill, editIcon === p.icon && styles.iconPillActive]}
+                  >
+                    <Text style={styles.iconEmoji}>{p.icon}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>Conta para pagamento da fatura</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountRow}>
+                {act.map((ac) => (
+                  <TouchableOpacity
+                    key={ac.id}
+                    onPress={() => setEditLinkAccountId(ac.id)}
+                    style={[styles.accountPill, editLinkAccountId === ac.id && styles.accountPillActive]}
+                  >
+                    <Text style={styles.accountIcon}>{ac.icon}</Text>
+                    <Text style={[styles.accountText, editLinkAccountId === ac.id && styles.accountTextActive]}>{ac.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+            <TouchableOpacity style={styles.archiveLink} onPress={archiveFromEdit} activeOpacity={0.75}>
+              <Text style={styles.archiveLinkText}>Arquivar este cartão</Text>
+            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  borderWidth: 1.5,
+                  borderColor: T.graySilver,
+                  alignItems: 'center',
+                }}
+                onPress={() => {
+                  setEditTarget(null);
+                  setError('');
+                }}
+              >
+                <Text style={{ fontFamily: 'Poppins_600SemiBold', color: T.graphite }}>Cancelar</Text>
+              </TouchableOpacity>
+              <View style={{ flex: 1 }}>
+                <PrimaryButton label="Salvar" onPress={saveEdit} />
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal visible={showArchivedModal} transparent animationType="slide" onRequestClose={() => setShowArchivedModal(false)}>
+        <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+          <TouchableOpacity
+            style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' }}
+            activeOpacity={1}
+            onPress={() => setShowArchivedModal(false)}
+          />
+          <View style={[styles.sheet, { paddingBottom: 20 + insets.bottom }]}>
+            <Text style={styles.sheetTitle}>Cartões arquivados</Text>
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              {cardsArchived.length === 0 ? (
+                <Text style={styles.sheetEmpty}>Nenhum cartão arquivado.</Text>
+              ) : (
+                cardsArchived.map((c) => (
+                  <View key={c.id} style={[styles.row, { marginBottom: 10 }]}>
+                    <Text style={styles.rowIcon}>{c.icon}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.rowName}>{c.name}</Text>
+                      <Text style={styles.rowMeta}>Conta: {accountName(accounts, c.accountId)}</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => unarchiveCreditCard(c.id)} style={styles.smallBtn}>
+                      <Text style={styles.smallBtnText}>Restaurar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setDeleteTarget(c)} hitSlop={12} style={styles.trash}>
+                      <Text style={styles.trashText}>🗑</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))
+              )}
+            </ScrollView>
+            <TouchableOpacity
+              onPress={() => setShowArchivedModal(false)}
+              style={{ paddingVertical: 14, alignItems: 'center', marginTop: 8 }}
+            >
+              <Text style={{ fontFamily: 'Poppins_600SemiBold', color: T.orange }}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <ConfirmModal
         show={!!deleteTarget}

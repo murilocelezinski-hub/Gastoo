@@ -78,7 +78,7 @@ export function Toast({ message, show }) {
         shadowOffset: { width: 0, height: 4 },
       }}
     >
-      <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.chocolate }}>{message}</Text>
+      <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.graphite }}>{message}</Text>
     </View>
   );
 }
@@ -142,10 +142,10 @@ export function Header({ title, onBack, right }) {
     <View style={[styles.header, { paddingTop: Math.max(16, 8 + insets.top), backgroundColor: T.chocolate }]}>
       {onBack ? (
         <TouchableOpacity onPress={onBack} hitSlop={12} style={{ padding: 4 }}>
-          <Text style={{ color: '#fff', fontSize: 22 }}>←</Text>
+          <Text style={{ color: T.brandFg, fontSize: 22 }}>←</Text>
         </TouchableOpacity>
       ) : null}
-      <Text style={[styles.headerTitle, { color: '#fff' }]}>{title}</Text>
+      <Text style={[styles.headerTitle, { color: T.brandFg }]}>{title}</Text>
       {right || <View style={{ width: 30 }} />}
     </View>
   );

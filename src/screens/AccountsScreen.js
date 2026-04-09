@@ -20,19 +20,6 @@ function createAccountsStyles(T) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: T.offWhite },
     scroll: { padding: 20, gap: 12 },
-    linkRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      backgroundColor: T.white,
-      padding: 16,
-      borderRadius: 14,
-      borderWidth: 1,
-      borderColor: T.graySilver,
-      marginBottom: 4,
-    },
-    linkText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.orange },
-    linkArrow: { fontSize: 18, color: T.orange },
     errorBanner: {
       fontFamily: 'Poppins_400Regular',
       fontSize: 13,
@@ -135,6 +122,39 @@ function createAccountsStyles(T) {
     modalBtnCancel: { borderWidth: 1.5, borderColor: T.graySilver },
     modalBtnOk: { backgroundColor: T.orange },
     modalBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14 },
+    archiveLink: {
+      paddingVertical: 12,
+      alignItems: 'center',
+      marginTop: 8,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+    },
+    archiveLinkText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.grayMed },
+    sheet: {
+      backgroundColor: T.white,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      maxHeight: '78%',
+    },
+    sheetTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 17, color: T.graphite, marginBottom: 12 },
+    sheetEmpty: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.grayMed, textAlign: 'center', paddingVertical: 24 },
+    headerArchiveBtn: { padding: 6, position: 'relative' },
+    archiveBadge: {
+      position: 'absolute',
+      top: -2,
+      right: -6,
+      minWidth: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: T.orange,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+    },
+    archiveBadgeText: { color: '#fff', fontSize: 10, fontFamily: 'Poppins_600SemiBold' },
   });
 }
 
@@ -146,6 +166,7 @@ export default function AccountsScreen({ navigation }) {
     accounts,
     transactions,
     addAccount,
+    updateAccount,
     deleteAccount,
     archiveAccount,
     unarchiveAccount,
@@ -155,10 +176,15 @@ export default function AccountsScreen({ navigation }) {
   const [name, setName] = useState('');
   const [icon, setIcon] = useState(ACCOUNTS[0].icon);
   const [saldoRaw, setSaldoRaw] = useState('');
+  const [editTarget, setEditTarget] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editIcon, setEditIcon] = useState(ACCOUNTS[0].icon);
+  const [editSaldoRaw, setEditSaldoRaw] = useState('');
   const [deleteEmptyTarget, setDeleteEmptyTarget] = useState(null);
   const [mergeFrom, setMergeFrom] = useState(null);
   const [mergeIntoId, setMergeIntoId] = useState(null);
   const [error, setError] = useState('');
+  const [showArchivedModal, setShowArchivedModal] = useState(false);
 
   const act = activeAccounts(accounts);
   const archived = accounts.filter((a) => a.archived);
@@ -166,11 +192,22 @@ export default function AccountsScreen({ navigation }) {
   const tryArchive = (ac) => {
     setError('');
     if (act.length <= 1) {
-      setError('Não é possível arquivar a única conta ativa.');
+      showToast('Não é possível arquivar a única conta ativa.');
       return;
     }
     archiveAccount(ac.id);
     showToast('Conta arquivada.');
+  };
+
+  const archiveFromEdit = () => {
+    if (!editTarget) return;
+    if (act.length <= 1) {
+      showToast('Não é possível arquivar a única conta ativa.');
+      return;
+    }
+    archiveAccount(editTarget.id);
+    showToast('Conta arquivada.');
+    setEditTarget(null);
   };
 
   const handleSaldo = (text) => {
@@ -182,6 +219,38 @@ export default function AccountsScreen({ navigation }) {
   const displaySaldo = saldoRaw
     ? parseFloat(saldoRaw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
     : '';
+
+  const displayEditSaldo = editSaldoRaw
+    ? parseFloat(editSaldoRaw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+    : '';
+
+  const handleEditSaldo = (text) => {
+    const raw = text.replace(/\D/g, '');
+    const num = (parseInt(raw || '0') / 100).toFixed(2);
+    setEditSaldoRaw(num === '0.00' ? '' : num);
+  };
+
+  const openEdit = (ac) => {
+    setEditTarget(ac);
+    setEditName(ac.name);
+    setEditIcon(ac.icon || ACCOUNTS[0].icon);
+    setEditSaldoRaw(ac.saldoInicial ? Number(ac.saldoInicial).toFixed(2) : '');
+  };
+
+  const saveEdit = () => {
+    if (!editTarget) return;
+    if (!editName.trim()) {
+      showToast('Informe o nome da conta.');
+      return;
+    }
+    updateAccount(editTarget.id, {
+      name: editName.trim(),
+      icon: editIcon,
+      saldoInicial: editSaldoRaw ? parseFloat(editSaldoRaw) : 0,
+    });
+    showToast('Conta atualizada.');
+    setEditTarget(null);
+  };
 
   const submit = () => {
     setError('');
@@ -233,20 +302,31 @@ export default function AccountsScreen({ navigation }) {
     setMergeIntoId(null);
   };
 
+  const headerArchive = (
+    <TouchableOpacity
+      onPress={() => setShowArchivedModal(true)}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      style={styles.headerArchiveBtn}
+      accessibilityLabel="Ver contas arquivadas"
+    >
+      <Text style={{ fontSize: 22, color: T.brandFg }}>🗃️</Text>
+      {archived.length > 0 ? (
+        <View style={styles.archiveBadge}>
+          <Text style={styles.archiveBadgeText}>{archived.length > 9 ? '9+' : archived.length}</Text>
+        </View>
+      ) : null}
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
-      <Header title="Contas" onBack={() => navigation.goBack()} />
+      <Header title="Contas" onBack={() => navigation.goBack()} right={headerArchive} />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           contentContainerStyle={[styles.scroll, { paddingBottom: 40 + insets.bottom }]}
           keyboardShouldPersistTaps="handled"
         >
-          <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('CreditCards')} activeOpacity={0.7}>
-            <Text style={styles.linkText}>Cartões de crédito</Text>
-            <Text style={styles.linkArrow}>→</Text>
-          </TouchableOpacity>
-
           {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
 
           {act.map((ac) => {
@@ -254,16 +334,19 @@ export default function AccountsScreen({ navigation }) {
             const count = transactions.filter((t) => t.accountId === ac.id).length;
             return (
               <View key={ac.id} style={styles.row}>
-                <Text style={styles.rowIcon}>{ac.icon}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowName}>{ac.name}</Text>
-                  <Text style={styles.rowMeta}>
-                    Inicial {fmt(ac.saldoInicial || 0)} · Atual {fmt(bal)}
-                    {count > 0 ? ` · ${count} trans.` : ''}
-                  </Text>
-                </View>
-                <TouchableOpacity onPress={() => tryArchive(ac)} style={styles.smallBtn}>
-                  <Text style={styles.smallBtnText}>Arquivar</Text>
+                <TouchableOpacity
+                  style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                  onPress={() => openEdit(ac)}
+                  activeOpacity={0.65}
+                >
+                  <Text style={styles.rowIcon}>{ac.icon}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.rowName}>{ac.name}</Text>
+                    <Text style={styles.rowMeta}>
+                      Inicial {fmt(ac.saldoInicial || 0)} · Atual {fmt(bal)}
+                      {count > 0 ? ` · ${count} trans.` : ''}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => openDelete(ac)} hitSlop={12} style={styles.trash}>
                   <Text style={styles.trashText}>🗑</Text>
@@ -271,27 +354,6 @@ export default function AccountsScreen({ navigation }) {
               </View>
             );
           })}
-
-          {archived.length > 0 ? (
-            <>
-              <Text style={styles.sectionTitle}>Arquivadas</Text>
-              {archived.map((ac) => {
-                const bal = balanceForAccount(accounts, transactions, ac.id);
-                return (
-                  <View key={ac.id} style={[styles.row, { opacity: 0.9 }]}>
-                    <Text style={styles.rowIcon}>{ac.icon}</Text>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.rowName}>{ac.name}</Text>
-                      <Text style={styles.rowMeta}>Atual {fmt(bal)}</Text>
-                    </View>
-                    <TouchableOpacity onPress={() => unarchiveAccount(ac.id)} style={styles.smallBtn}>
-                      <Text style={styles.smallBtnText}>Restaurar</Text>
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-            </>
-          ) : null}
 
           <Text style={styles.sectionTitle}>Nova conta</Text>
           <View style={styles.field}>
@@ -345,6 +407,105 @@ export default function AccountsScreen({ navigation }) {
         onCancel={() => setDeleteEmptyTarget(null)}
         onConfirm={confirmDeleteEmpty}
       />
+
+      <Modal visible={!!editTarget} transparent animationType="fade" onRequestClose={() => setEditTarget(null)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>Editar conta</Text>
+              <Text style={styles.label}>Nome</Text>
+              <TextInput
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Nome"
+                placeholderTextColor={T.grayNeutral}
+                style={styles.input}
+              />
+              <Text style={styles.label}>Saldo inicial</Text>
+              <View style={{ position: 'relative' }}>
+                <Text style={styles.currencyPrefix}>R$</Text>
+                <TextInput
+                  value={displayEditSaldo}
+                  onChangeText={handleEditSaldo}
+                  placeholder="0,00"
+                  placeholderTextColor={T.grayNeutral}
+                  keyboardType="numeric"
+                  style={[styles.input, styles.valueInput]}
+                />
+              </View>
+              <Text style={styles.label}>Ícone</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
+                {ACCOUNTS.map((p) => (
+                  <TouchableOpacity
+                    key={p.name}
+                    onPress={() => setEditIcon(p.icon)}
+                    style={[styles.iconPill, editIcon === p.icon && styles.iconPillActive]}
+                  >
+                    <Text style={styles.iconEmoji}>{p.icon}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <TouchableOpacity style={styles.archiveLink} onPress={archiveFromEdit} activeOpacity={0.75}>
+                <Text style={styles.archiveLinkText}>Arquivar esta conta</Text>
+              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+                <TouchableOpacity style={[styles.modalBtn, styles.modalBtnCancel]} onPress={() => setEditTarget(null)}>
+                  <Text style={[styles.modalBtnText, { color: T.graphite }]}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.modalBtn, styles.modalBtnOk]} onPress={saveEdit}>
+                  <Text style={[styles.modalBtnText, { color: T.white }]}>Salvar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal visible={showArchivedModal} transparent animationType="slide" onRequestClose={() => setShowArchivedModal(false)}>
+        <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+          <TouchableOpacity
+            style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' }}
+            activeOpacity={1}
+            onPress={() => setShowArchivedModal(false)}
+          />
+          <View style={[styles.sheet, { paddingBottom: 20 + insets.bottom }]}>
+            <Text style={styles.sheetTitle}>Contas arquivadas</Text>
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              {archived.length === 0 ? (
+                <Text style={styles.sheetEmpty}>Nenhuma conta arquivada.</Text>
+              ) : (
+                archived.map((ac) => {
+                  const bal = balanceForAccount(accounts, transactions, ac.id);
+                  return (
+                    <View key={ac.id} style={[styles.row, { marginBottom: 10 }]}>
+                      <Text style={styles.rowIcon}>{ac.icon}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.rowName}>{ac.name}</Text>
+                        <Text style={styles.rowMeta}>Atual {fmt(bal)}</Text>
+                      </View>
+                      <TouchableOpacity onPress={() => unarchiveAccount(ac.id)} style={styles.smallBtn}>
+                        <Text style={styles.smallBtnText}>Restaurar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => openDelete(ac)} hitSlop={12} style={styles.trash}>
+                        <Text style={styles.trashText}>🗑</Text>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })
+              )}
+            </ScrollView>
+            <TouchableOpacity
+              onPress={() => setShowArchivedModal(false)}
+              style={{ paddingVertical: 14, alignItems: 'center', marginTop: 8 }}
+            >
+              <Text style={{ fontFamily: 'Poppins_600SemiBold', color: T.orange }}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <Modal visible={!!mergeFrom} transparent animationType="fade" onRequestClose={() => setMergeFrom(null)}>
         <View style={styles.modalOverlay}>

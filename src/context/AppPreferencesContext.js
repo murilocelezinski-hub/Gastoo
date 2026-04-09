@@ -15,6 +15,7 @@ function migratePrefs(parsed) {
   const profile = {
     name: typeof parsed?.profile?.name === 'string' ? parsed.profile.name : '',
     email: typeof parsed?.profile?.email === 'string' ? parsed.profile.email : '',
+    avatarUri: typeof parsed?.profile?.avatarUri === 'string' ? parsed.profile.avatarUri : '',
   };
   const themeMode = parsed?.themeMode === 'dark' ? 'dark' : 'light';
   let categories = Array.isArray(parsed?.categories) && parsed.categories.length ? cloneCategories(parsed.categories) : cloneCategories(DEFAULT_CATEGORIES);
@@ -29,7 +30,7 @@ const AppPreferencesContext = createContext(null);
 
 export function AppPreferencesProvider({ children }) {
   const [ready, setReady] = useState(false);
-  const [profile, setProfileState] = useState({ name: '', email: '' });
+  const [profile, setProfileState] = useState({ name: '', email: '', avatarUri: '' });
   const [themeMode, setThemeModeState] = useState('light');
   const [categories, setCategoriesState] = useState(() => cloneCategories(DEFAULT_CATEGORIES));
 
@@ -90,6 +91,37 @@ export function AppPreferencesProvider({ children }) {
     return { ok: true };
   }, []);
 
+  const updateCategory = useCallback((oldName, { name, color, icon }) => {
+    const n = String(name || '').trim();
+    if (!n) return { ok: false, error: 'Informe o nome.' };
+    if (PROTECTED_CATEGORY_NAMES.has(oldName) && n !== oldName) {
+      return { ok: false, error: 'O nome desta categoria não pode ser alterado.' };
+    }
+    if (PROTECTED_CATEGORY_NAMES.has(n) && n !== oldName) {
+      return { ok: false, error: 'Este nome é reservado ao sistema.' };
+    }
+    let out = { ok: true };
+    setCategoriesState((prev) => {
+      const idx = prev.findIndex((c) => c.name === oldName);
+      if (idx < 0) {
+        out = { ok: false, error: 'Categoria não encontrada.' };
+        return prev;
+      }
+      if (prev.some((c, i) => i !== idx && c.name.toLowerCase() === n.toLowerCase())) {
+        out = { ok: false, error: 'Já existe uma categoria com esse nome.' };
+        return prev;
+      }
+      const next = [...prev];
+      next[idx] = {
+        name: n,
+        color: color ?? next[idx].color,
+        icon: icon ?? next[idx].icon,
+      };
+      return next;
+    });
+    return out;
+  }, []);
+
   const value = useMemo(
     () => ({
       ready,
@@ -100,9 +132,10 @@ export function AppPreferencesProvider({ children }) {
       colors,
       categories,
       addCategory,
+      updateCategory,
       removeCategory,
     }),
-    [ready, profile, setProfile, themeMode, setThemeMode, colors, categories, addCategory, removeCategory]
+    [ready, profile, setProfile, themeMode, setThemeMode, colors, categories, addCategory, updateCategory, removeCategory]
   );
 
   return <AppPreferencesContext.Provider value={value}>{children}</AppPreferencesContext.Provider>;

@@ -21,8 +21,8 @@ function createStyles(T) {
       paddingVertical: 18,
       borderRadius: 16,
       borderWidth: 2,
-      borderColor: 'rgba(255,255,255,0.08)',
-      backgroundColor: 'rgba(255,255,255,0.04)',
+      borderColor: T.homeHairline,
+      backgroundColor: T.homeGlass,
       gap: 8,
       position: 'relative',
     },
@@ -48,7 +48,7 @@ function createStyles(T) {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    catLabel: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: '#fff' },
+    catLabel: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.brandFg },
   });
 }
 
