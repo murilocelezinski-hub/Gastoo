@@ -27,6 +27,7 @@ import RecurringScreen from './src/screens/RecurringScreen';
 import ProfileMenuScreen from './src/screens/ProfileMenuScreen';
 import UserProfileScreen from './src/screens/UserProfileScreen';
 import CategoriesSettingsScreen from './src/screens/CategoriesSettingsScreen';
+import SpendingGoalsScreen from './src/screens/SpendingGoalsScreen';
 
 SplashScreenExpo.preventAutoHideAsync();
 
@@ -61,13 +62,14 @@ function AppNavigation() {
 
   if (!fontsLoaded || !ready) return null;
 
+  // Sem backend de usuários: abre direto no app. Com auth: trocar para initialRouteName="Splash" no Stack abaixo.
   return (
     <View style={{ flex: 1 }}>
       <NavigationContainer onReady={onLayoutReady}>
         <ThemedStatusBar />
         <Stack.Navigator
           screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
-          initialRouteName="Splash"
+          initialRouteName="Main"
         >
           <Stack.Screen name="Splash" component={SplashScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
@@ -111,20 +113,20 @@ const Tab = createBottomTabNavigator();
 function MainTabs() {
   const insets = useSafeAreaInsets();
   const bottomPad = Math.max(insets.bottom, 10);
-  const T = useThemeColors();
+  const theme = useThemeColors();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: T.chocolate,
-          borderTopColor: T.homeHairline,
+          backgroundColor: theme.chocolate,
+          borderTopColor: theme.homeHairline,
           height: 56 + bottomPad,
           paddingBottom: bottomPad,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: T.orange,
-        tabBarInactiveTintColor: T.brandFgMuted,
+        tabBarActiveTintColor: theme.orange,
+        tabBarInactiveTintColor: theme.brandFgMuted,
         tabBarLabelStyle: { fontFamily: 'Poppins_400Regular', fontSize: 11 },
       }}
     >
@@ -150,6 +152,14 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Relatórios',
           tabBarIcon: () => <Text style={{ fontSize: 20 }}>📊</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="SpendingGoalsTab"
+        component={SpendingGoalsScreen}
+        options={{
+          tabBarLabel: 'Metas',
+          tabBarIcon: () => <Text style={{ fontSize: 20 }}>🎯</Text>,
         }}
       />
     </Tab.Navigator>

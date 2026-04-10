@@ -1,7 +1,16 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  PanResponder,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Polyline, Line } from 'react-native-svg';
+import Svg, { Polyline, Line, Circle } from 'react-native-svg';
 import { fmt } from '../theme';
 import { CatIcon } from '../components/Shared';
 import {
@@ -20,13 +29,83 @@ const BALANCE_MODES = [
   { key: 'last_12m', short: '12 m' },
 ];
 
-function BalanceLineChart({ points, width, height, lineColor, zeroColor, mutedColor }) {
-  const padL = 2;
-  const padR = 4;
-  const padT = 6;
-  const padB = 4;
-  const innerW = Math.max(width - padL - padR, 1);
-  const innerH = Math.max(height - padT - padB, 1);
+function formatTooltipDate(d) {
+  if (!d || !(d instanceof Date) || Number.isNaN(d.getTime())) return '—';
+  const day = String(d.getDate()).padStart(2, '0');
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  return `${day}/${m}/${d.getFullYear()}`;
+}
+
+function BalanceLineChart({
+  points,
+  width,
+  height,
+  lineColor,
+  zeroColor,
+  mutedColor,
+  fmtMoney,
+  hidden,
+  mask,
+  tooltipStyle,
+  tooltipDateStyle,
+  tooltipValueStyle,
+}) {
+  const [activeIndex, setActiveIndex] = useState(null);
+
+  const geom = useMemo(() => {
+    const padL = 2;
+    const padR = 4;
+    const padT = 6;
+    const padB = 4;
+    const innerW = Math.max(width - padL - padR, 1);
+    const innerH = Math.max(height - padT - padB, 1);
+    if (!points.length) {
+      return { padL, padR, padT, padB, innerW, innerH, coords: [], minV: 0, maxV: 1, span: 1, n: 1, yZero: 0, showZero: false };
+    }
+    const vals = points.map((p) => p.balance);
+    let minV = Math.min(...vals);
+    let maxV = Math.max(...vals);
+    if (maxV === minV) {
+      minV -= 1;
+      maxV += 1;
+    }
+    const span = maxV - minV;
+    const n = Math.max(points.length - 1, 1);
+    const coords = points.map((p, i) => {
+      const x = padL + (i / n) * innerW;
+      const y = padT + innerH - ((p.balance - minV) / span) * innerH;
+      return { x, y };
+    });
+    const yZero = padT + innerH - ((0 - minV) / span) * innerH;
+    const showZero = yZero >= padT && yZero <= padT + innerH;
+    return { padL, padR, padT, padB, innerW, innerH, coords, minV, maxV, span, n, yZero, showZero };
+  }, [points, width, height]);
+
+  const xToIndex = useCallback(
+    (x) => {
+      if (!points.length) return null;
+      const { padL, innerW } = geom;
+      const nSeg = Math.max(points.length - 1, 1);
+      const t = (x - padL) / innerW;
+      const i = Math.round(t * nSeg);
+      return Math.max(0, Math.min(points.length - 1, i));
+    },
+    [geom, points.length]
+  );
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => points.length > 0,
+        onMoveShouldSetPanResponder: () => points.length > 0,
+        onPanResponderGrant: (e) => setActiveIndex(xToIndex(e.nativeEvent.locationX)),
+        onPanResponderMove: (e) => setActiveIndex(xToIndex(e.nativeEvent.locationX)),
+        onPanResponderRelease: () => setActiveIndex(null),
+        onPanResponderTerminate: () => setActiveIndex(null),
+      }),
+    [points.length, xToIndex]
+  );
+
   if (!points.length) {
     return (
       <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: 12, color: mutedColor, textAlign: 'center' }}>
@@ -34,46 +113,63 @@ function BalanceLineChart({ points, width, height, lineColor, zeroColor, mutedCo
       </Text>
     );
   }
-  const vals = points.map((p) => p.balance);
-  let minV = Math.min(...vals);
-  let maxV = Math.max(...vals);
-  if (maxV === minV) {
-    minV -= 1;
-    maxV += 1;
-  }
-  const span = maxV - minV;
-  const n = Math.max(points.length - 1, 1);
-  const coords = points.map((p, i) => {
-    const x = padL + (i / n) * innerW;
-    const y = padT + innerH - ((p.balance - minV) / span) * innerH;
-    return { x, y };
-  });
+
+  const { padL, padR, padT, innerW, innerH, coords, yZero, showZero } = geom;
   const pointsStr = coords.map((c) => `${c.x},${c.y}`).join(' ');
-  const yZero = padT + innerH - ((0 - minV) / span) * innerH;
-  const showZero = yZero >= padT && yZero <= padT + innerH;
+  const scrub = activeIndex !== null && coords[activeIndex];
+  const pt = scrub ? points[activeIndex] : null;
 
   return (
-    <Svg width={width} height={height}>
-      {showZero ? (
-        <Line
-          x1={padL}
-          y1={yZero}
-          x2={width - padR}
-          y2={yZero}
-          stroke={zeroColor}
-          strokeWidth={1}
-          strokeDasharray="3,5"
-        />
+    <View style={{ width }}>
+      <View {...panResponder.panHandlers} style={{ width, height }}>
+        <Svg width={width} height={height}>
+          {showZero ? (
+            <Line
+              x1={padL}
+              y1={yZero}
+              x2={width - padR}
+              y2={yZero}
+              stroke={zeroColor}
+              strokeWidth={1}
+              strokeDasharray="3,5"
+            />
+          ) : null}
+          <Polyline
+            points={pointsStr}
+            fill="none"
+            stroke={lineColor}
+            strokeWidth={2.5}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+          {scrub ? (
+            <>
+              <Line
+                x1={coords[activeIndex].x}
+                y1={padT}
+                x2={coords[activeIndex].x}
+                y2={padT + innerH}
+                stroke={lineColor}
+                strokeWidth={1}
+                opacity={0.45}
+              />
+              <Circle cx={coords[activeIndex].x} cy={coords[activeIndex].y} r={6} fill={lineColor} opacity={0.35} />
+              <Circle cx={coords[activeIndex].x} cy={coords[activeIndex].y} r={4} fill={lineColor} />
+            </>
+          ) : null}
+        </Svg>
+      </View>
+      {scrub && pt ? (
+        <View style={tooltipStyle} accessibilityLiveRegion="polite">
+          <Text style={tooltipDateStyle} numberOfLines={1}>
+            {formatTooltipDate(pt.date)}
+          </Text>
+          <Text style={tooltipValueStyle}>
+            {hidden ? mask : fmtMoney(pt.balance)}
+          </Text>
+        </View>
       ) : null}
-      <Polyline
-        points={pointsStr}
-        fill="none"
-        stroke={lineColor}
-        strokeWidth={2.5}
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-    </Svg>
+    </View>
   );
 }
 
@@ -168,8 +264,23 @@ function createStyles(T) {
     filterChipOn: { borderColor: T.orange, backgroundColor: 'rgba(240,80,0,0.12)' },
     filterChipText: { fontFamily: 'Poppins_400Regular', fontSize: 10, color: T.brandFgMuted },
     filterChipTextOn: { fontFamily: 'Poppins_600SemiBold', fontSize: 10, color: T.orange },
-    chartLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6, paddingHorizontal: 2 },
-    chartLabelMini: { fontFamily: 'Poppins_400Regular', fontSize: 9, color: T.brandFgMuted },
+    chartLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6, paddingHorizontal: 2, gap: 2 },
+    chartLabelMini: { fontFamily: 'Poppins_400Regular', fontSize: 9, color: T.brandFgMuted, flex: 1, textAlign: 'center' },
+    chartScrubReadout: {
+      marginTop: 10,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 10,
+      backgroundColor: 'rgba(0,0,0,0.14)',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 10,
+      borderWidth: 1,
+      borderColor: T.homeHairline,
+    },
+    chartTooltipDate: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.brandFgMuted, flex: 1 },
+    chartTooltipValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.orange, flexShrink: 0 },
     recentHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -231,17 +342,26 @@ export default function DashboardScreen({ navigation }) {
   );
 
   const chartW = Math.max(260, winW - 72);
-  const chartH = 130;
+  const chartH = 148;
 
   const labelIndexes = useMemo(() => {
-    const pts = balanceSeries;
-    if (pts.length <= 6) return pts.map((_, i) => i);
-    const out = [0];
-    const mid = Math.floor(pts.length / 2);
-    if (mid > 0) out.push(mid);
-    if (pts.length - 1 > mid) out.push(pts.length - 1);
-    return [...new Set(out)].sort((a, b) => a - b);
-  }, [balanceSeries]);
+    const len = balanceSeries.length;
+    if (len === 0) return [];
+    const maxLabels = Math.min(14, Math.max(6, Math.floor(chartW / 30)));
+    if (len <= maxLabels) return balanceSeries.map((_, i) => i);
+    const idx = [];
+    for (let k = 0; k < maxLabels; k++) {
+      idx.push(Math.round((k / (maxLabels - 1)) * (len - 1)));
+    }
+    return [...new Set(idx)].sort((a, b) => a - b);
+  }, [balanceSeries, chartW]);
+
+  const xAxisFontSize = useMemo(() => {
+    const n = labelIndexes.length;
+    if (n > 11) return 7;
+    if (n > 8) return 8;
+    return 9;
+  }, [labelIndexes.length]);
 
   const filtered = selectedAccount
     ? transactions.filter((t) => t.accountId === selectedAccount)
@@ -368,11 +488,23 @@ export default function DashboardScreen({ navigation }) {
             lineColor={T.orange}
             zeroColor={T.brandFgMuted}
             mutedColor={T.brandFgMuted}
+            fmtMoney={fmt}
+            hidden={hidden}
+            mask={mask}
+            tooltipStyle={styles.chartScrubReadout}
+            tooltipDateStyle={styles.chartTooltipDate}
+            tooltipValueStyle={styles.chartTooltipValue}
           />
           {balanceSeries.length > 0 ? (
             <View style={styles.chartLabels}>
               {labelIndexes.map((i) => (
-                <Text key={i} style={styles.chartLabelMini} numberOfLines={1}>
+                <Text
+                  key={i}
+                  style={[styles.chartLabelMini, { fontSize: xAxisFontSize }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.85}
+                >
                   {balanceSeries[i]?.label}
                 </Text>
               ))}

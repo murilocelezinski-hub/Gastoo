@@ -128,6 +128,16 @@ function buildDemoSeedTransactions() {
   out.push(t({ tipo: 'saída', valor: 890, descricao: 'Compras cartão', categoria: 'Lazer', data: '08/04/2026', accountId: a1, creditCardId: card }));
   out.push(t({ tipo: 'saída', valor: 67, descricao: 'Padaria', categoria: 'Alimentação', data: '09/04/2026', accountId: a1 }));
 
+  // Receitas extras (demo) — várias categorias no mês atual para o gráfico de relatórios
+  out.push(t({ tipo: 'entrada', valor: 380, descricao: 'Dividendos FII', categoria: 'Investimentos', data: '01/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'entrada', valor: 520, descricao: 'Aluguel recebido', categoria: 'Moradia', data: '03/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'entrada', valor: 150, descricao: 'Reembolso médico', categoria: 'Saúde', data: '04/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'entrada', valor: 640, descricao: 'Freelance design', categoria: 'Outros', data: '07/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'entrada', valor: 95, descricao: 'Cashback cartão', categoria: 'Lazer', data: '08/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'entrada', valor: 210, descricao: 'Venda curso online', categoria: 'Educação', data: '09/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'entrada', valor: 175, descricao: 'Reembolso VT', categoria: 'Transporte', data: '10/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'entrada', valor: 88, descricao: 'Venda peça', categoria: 'Vestuário', data: '10/04/2026', accountId: a1 }));
+
   return out;
 }
 

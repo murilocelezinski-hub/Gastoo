@@ -3,7 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_CATEGORIES } from '../theme';
 import { lightPalette, darkPalette } from '../theme/palettes';
 
-const PREFS_KEY = '@gastoo_prefs_v1';
+const PREFS_KEY = '@gastoo_prefs_v2';
+const PREFS_KEY_LEGACY = '@gastoo_prefs_v1';
 
 const PROTECTED_CATEGORY_NAMES = new Set(['Transferência', 'Outros']);
 
@@ -23,7 +24,9 @@ function migratePrefs(parsed) {
   for (const req of DEFAULT_CATEGORIES.filter((c) => PROTECTED_CATEGORY_NAMES.has(c.name))) {
     if (!categories.some((c) => c.name === req.name)) categories.push({ ...req });
   }
-  return { profile, themeMode, categories };
+  const spendingGoals =
+    parsed?.spendingGoals && typeof parsed.spendingGoals === 'object' ? parsed.spendingGoals : {};
+  return { profile, themeMode, categories, spendingGoals };
 }
 
 const AppPreferencesContext = createContext(null);
@@ -33,16 +36,19 @@ export function AppPreferencesProvider({ children }) {
   const [profile, setProfileState] = useState({ name: '', email: '', avatarUri: '' });
   const [themeMode, setThemeModeState] = useState('light');
   const [categories, setCategoriesState] = useState(() => cloneCategories(DEFAULT_CATEGORIES));
+  const [spendingGoals, setSpendingGoalsState] = useState({});
 
   useEffect(() => {
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(PREFS_KEY);
+        let raw = await AsyncStorage.getItem(PREFS_KEY);
+        if (!raw) raw = await AsyncStorage.getItem(PREFS_KEY_LEGACY);
         if (raw) {
           const m = migratePrefs(JSON.parse(raw));
           setProfileState(m.profile);
           setThemeModeState(m.themeMode);
           setCategoriesState(m.categories);
+          setSpendingGoalsState(m.spendingGoals || {});
         }
       } catch (e) {
         console.warn(e);
@@ -55,9 +61,9 @@ export function AppPreferencesProvider({ children }) {
     if (!ready) return;
     AsyncStorage.setItem(
       PREFS_KEY,
-      JSON.stringify({ profile, themeMode, categories })
+      JSON.stringify({ profile, themeMode, categories, spendingGoals })
     ).catch(() => {});
-  }, [profile, themeMode, categories, ready]);
+  }, [profile, themeMode, categories, spendingGoals, ready]);
 
   const colors = useMemo(() => (themeMode === 'dark' ? darkPalette : lightPalette), [themeMode]);
 
@@ -122,6 +128,56 @@ export function AppPreferencesProvider({ children }) {
     return out;
   }, []);
 
+  const setCategorySpendingGoal = useCallback((monthKey, categoryName, next) => {
+    if (!monthKey || !categoryName) return;
+    setSpendingGoalsState((prev) => {
+      const byMonth = prev && typeof prev === 'object' && !Array.isArray(prev) ? prev : {};
+      const rawBucket = byMonth[monthKey];
+      const bucket =
+        rawBucket && typeof rawBucket === 'object' && !Array.isArray(rawBucket) ? rawBucket : {};
+      const rawCats = bucket.categories;
+      const categoriesMap =
+        rawCats && typeof rawCats === 'object' && !Array.isArray(rawCats) ? rawCats : {};
+      const limit = next?.limit === '' || next?.limit == null ? null : Number(next.limit);
+      const kind = next?.kind === 'fixed' ? 'fixed' : 'variable';
+      const prevCat =
+        categoriesMap[categoryName] && typeof categoriesMap[categoryName] === 'object'
+          ? categoriesMap[categoryName]
+          : {};
+      const nextLimit =
+        limit !== null && !Number.isFinite(limit)
+          ? prevCat.limit
+          : limit === null
+            ? 0
+            : Math.max(0, limit);
+      const updatedCat = {
+        ...prevCat,
+        limit: nextLimit,
+        kind,
+      };
+      return {
+        ...byMonth,
+        [monthKey]: {
+          ...bucket,
+          categories: {
+            ...categoriesMap,
+            [categoryName]: updatedCat,
+          },
+        },
+      };
+    });
+  }, []);
+
+  const copySpendingGoals = useCallback((fromMonthKey, toMonthKey) => {
+    if (!fromMonthKey || !toMonthKey || fromMonthKey === toMonthKey) return;
+    setSpendingGoalsState((prev) => {
+      const byMonth = prev && typeof prev === 'object' ? prev : {};
+      const src = byMonth[fromMonthKey];
+      if (!src || typeof src !== 'object') return byMonth;
+      return { ...byMonth, [toMonthKey]: JSON.parse(JSON.stringify(src)) };
+    });
+  }, []);
+
   const value = useMemo(
     () => ({
       ready,
@@ -134,8 +190,25 @@ export function AppPreferencesProvider({ children }) {
       addCategory,
       updateCategory,
       removeCategory,
+      spendingGoals,
+      setCategorySpendingGoal,
+      copySpendingGoals,
     }),
-    [ready, profile, setProfile, themeMode, setThemeMode, colors, categories, addCategory, updateCategory, removeCategory]
+    [
+      ready,
+      profile,
+      setProfile,
+      themeMode,
+      setThemeMode,
+      colors,
+      categories,
+      addCategory,
+      updateCategory,
+      removeCategory,
+      spendingGoals,
+      setCategorySpendingGoal,
+      copySpendingGoals,
+    ]
   );
 
   return <AppPreferencesContext.Provider value={value}>{children}</AppPreferencesContext.Provider>;
@@ -150,5 +223,5 @@ export function useAppPreferences() {
 /** Atalho para estilos: `const T = useThemeColors()` */
 export function useThemeColors() {
   const { colors } = useAppPreferences();
-  return colors;
+  return colors ?? lightPalette;
 }

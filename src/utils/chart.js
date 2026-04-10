@@ -44,6 +44,8 @@ export function buildBalanceEvolutionSeries(accounts, transactions, selectedAcco
   const ref = new Date(referenceDate);
   const points = [];
 
+  const pad2 = (n) => String(n).padStart(2, '0');
+
   if (mode === 'current_month') {
     const y = ref.getFullYear();
     const m = ref.getMonth();
@@ -51,7 +53,7 @@ export function buildBalanceEvolutionSeries(accounts, transactions, selectedAcco
     for (let d = 1; d <= lastDay; d++) {
       const day = new Date(y, m, d);
       points.push({
-        label: String(d),
+        label: `${pad2(d)}/${pad2(m + 1)}`,
         balance: balanceTotalAt(accounts, transactions, selectedAccountId, day),
         date: day,
       });
@@ -61,8 +63,9 @@ export function buildBalanceEvolutionSeries(accounts, transactions, selectedAcco
     const last = new Date(ref.getFullYear(), ref.getMonth(), 0);
     for (let d = 1; d <= last.getDate(); d++) {
       const day = new Date(first.getFullYear(), first.getMonth(), d);
+      const mo = first.getMonth();
       points.push({
-        label: String(d),
+        label: `${pad2(d)}/${pad2(mo + 1)}`,
         balance: balanceTotalAt(accounts, transactions, selectedAccountId, day),
         date: day,
       });

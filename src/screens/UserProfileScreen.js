@@ -14,12 +14,13 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, PrimaryButton } from '../components/Shared';
-import { useAppPreferences } from '../context/AppPreferencesContext';
+import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { useFinance } from '../context/FinanceContext';
 
 export default function UserProfileScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { colors: T, profile, setProfile, ready } = useAppPreferences();
+  const { profile, setProfile, ready } = useAppPreferences();
+  const theme = useThemeColors();
   const { showToast } = useFinance();
   const [name, setName] = useState(profile.name);
   const [email, setEmail] = useState(profile.email);
@@ -60,17 +61,17 @@ export default function UserProfileScreen({ navigation }) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: T.offWhite }]}>
+    <View style={[styles.container, { backgroundColor: theme.offWhite }]}>
       <Header title="Dados do usuário" onBack={() => navigation.goBack()} />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 24 + insets.bottom, gap: 16 }}>
-          <Text style={[styles.label, { color: T.charcoal }]}>Foto de perfil</Text>
+          <Text style={[styles.label, { color: theme.charcoal }]}>Foto de perfil</Text>
           <View style={styles.avatarRow}>
             <TouchableOpacity
               onPress={pickImage}
               activeOpacity={0.85}
-              style={[styles.avatarWrap, { borderColor: T.graySilver, backgroundColor: T.white }]}
+              style={[styles.avatarWrap, { borderColor: theme.graySilver, backgroundColor: theme.white }]}
             >
               {avatarUri ? (
                 <Image source={{ uri: avatarUri }} style={styles.avatarImg} resizeMode="cover" />
@@ -80,33 +81,33 @@ export default function UserProfileScreen({ navigation }) {
             </TouchableOpacity>
             <View style={{ flex: 1, gap: 8 }}>
               <TouchableOpacity onPress={pickImage} activeOpacity={0.8}>
-                <Text style={[styles.link, { color: T.orange }]}>Escolher da galeria</Text>
+                <Text style={[styles.link, { color: theme.orange }]}>Escolher da galeria</Text>
               </TouchableOpacity>
               {avatarUri ? (
                 <TouchableOpacity onPress={clearPhoto} activeOpacity={0.8}>
-                  <Text style={[styles.linkMuted, { color: T.grayMed }]}>Remover foto</Text>
+                  <Text style={[styles.linkMuted, { color: theme.grayMed }]}>Remover foto</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
           </View>
 
-          <Text style={[styles.label, { color: T.charcoal }]}>Nome</Text>
+          <Text style={[styles.label, { color: theme.charcoal }]}>Nome</Text>
           <TextInput
             value={name}
             onChangeText={setName}
             placeholder="Seu nome"
-            placeholderTextColor={T.grayNeutral}
-            style={[styles.input, { backgroundColor: T.white, borderColor: T.graySilver, color: T.graphite }]}
+            placeholderTextColor={theme.grayNeutral}
+            style={[styles.input, { backgroundColor: theme.white, borderColor: theme.graySilver, color: theme.graphite }]}
           />
-          <Text style={[styles.label, { color: T.charcoal }]}>E-mail</Text>
+          <Text style={[styles.label, { color: theme.charcoal }]}>E-mail</Text>
           <TextInput
             value={email}
             onChangeText={setEmail}
             placeholder="email@exemplo.com"
-            placeholderTextColor={T.grayNeutral}
+            placeholderTextColor={theme.grayNeutral}
             keyboardType="email-address"
             autoCapitalize="none"
-            style={[styles.input, { backgroundColor: T.white, borderColor: T.graySilver, color: T.graphite }]}
+            style={[styles.input, { backgroundColor: theme.white, borderColor: theme.graySilver, color: theme.graphite }]}
           />
           <PrimaryButton label="Salvar" onPress={save} />
         </ScrollView>
