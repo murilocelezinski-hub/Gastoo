@@ -74,16 +74,23 @@ function groupByMonth(txList) {
     });
 }
 
+const TIPO_OPTIONS = [
+  { key: 'todos', label: 'Todos' },
+  { key: 'entrada', label: 'Receitas' },
+  { key: 'saída', label: 'Despesas' },
+];
+
 export default function HistoryScreen({ navigation }) {
   const T = useThemeColors();
   const styles = useMemo(() => createStyles(T), [T]);
   const insets = useSafeAreaInsets();
   const { transactions } = useFinance();
-  const { categories } = useAppPreferences();
+  const [tipoFilter, setTipoFilter] = useState('todos');
   const [filter, setFilter] = useState('Todos');
-  const cats = ['Todos', ...categories.map((c) => c.name)];
-  const filtered =
-    filter === 'Todos' ? transactions : transactions.filter((t) => t.categoria === filter);
+  const cats = ['Todos', ...CATEGORIES.map((c) => c.name)];
+
+  const byTipo = tipoFilter === 'todos' ? transactions : transactions.filter((t) => t.tipo === tipoFilter);
+  const filtered = filter === 'Todos' ? byTipo : byTipo.filter((t) => t.categoria === filter);
 
   const groups = groupByMonth(filtered);
 
@@ -95,6 +102,18 @@ export default function HistoryScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <Header title="Histórico" />
+
+      <View style={styles.tipoToggle}>
+        {TIPO_OPTIONS.map((o) => (
+          <TouchableOpacity
+            key={o.key}
+            onPress={() => setTipoFilter(o.key)}
+            style={[styles.tipoBtn, tipoFilter === o.key && styles.tipoBtnActive]}
+          >
+            <Text style={[styles.tipoText, tipoFilter === o.key && styles.tipoTextActive]}>{o.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
       <ScrollView
         horizontal
@@ -149,3 +168,62 @@ export default function HistoryScreen({ navigation }) {
   );
 }
 
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: T.offWhite },
+  tipoToggle: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginTop: 12,
+    marginBottom: 4,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: T.graySilver,
+  },
+  tipoBtn: { flex: 1, paddingVertical: 9, alignItems: 'center', backgroundColor: T.white },
+  tipoBtnActive: { backgroundColor: T.orange },
+  tipoText: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.graphite },
+  tipoTextActive: { color: T.white },
+  filterScroll: { flexGrow: 0, flexShrink: 0 },
+  filterRow: { paddingHorizontal: 20, paddingVertical: 12, gap: 8 },
+  pill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: T.graySilver,
+  },
+  pillActive: { backgroundColor: T.orange, borderColor: T.orange },
+  pillText: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.graphite },
+  pillTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.white },
+  monthHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 8,
+    backgroundColor: T.offWhite,
+  },
+  monthLabel: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.graphite },
+  monthTotal: { fontFamily: 'Poppins_600SemiBold', fontSize: 13 },
+  txRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: T.grayVLight,
+  },
+  txDesc: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.graphite },
+  txMeta: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.grayMed },
+  txValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 14 },
+  emptyText: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 14,
+    color: T.grayMed,
+    textAlign: 'center',
+    marginTop: 40,
+  },
+});
