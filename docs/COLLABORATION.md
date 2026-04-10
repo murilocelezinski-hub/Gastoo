@@ -7,8 +7,8 @@ Guia para hospedar o projeto remotamente e trabalhar em equipe.
 | Branch | Quem usa | Função |
 |--------|----------|--------|
 | **`main`** | Integração | Código “oficial” reunindo o trabalho dos dois. |
-| **`murilo`** | Você | Suas alterações pessoais antes de integrar na `main`. |
-| **`vinicius`** | Colega | Alterações do Vinícius antes de integrar na `main`. |
+| **`murilo`** |  Alterações antes de integrar na `main`. |
+| **`vinicius`** |  Alterações antes de integrar na `main`. |
 
 ```mermaid
 flowchart LR
