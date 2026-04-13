@@ -19,6 +19,7 @@ function migratePrefs(parsed) {
     avatarUri: typeof parsed?.profile?.avatarUri === 'string' ? parsed.profile.avatarUri : '',
   };
   const themeMode = parsed?.themeMode === 'dark' ? 'dark' : 'light';
+  const transactionListOrder = parsed?.transactionListOrder === 'asc' ? 'asc' : 'desc';
   let categories = Array.isArray(parsed?.categories) && parsed.categories.length ? cloneCategories(parsed.categories) : cloneCategories(DEFAULT_CATEGORIES);
   // garante categorias protegidas existam
   for (const req of DEFAULT_CATEGORIES.filter((c) => PROTECTED_CATEGORY_NAMES.has(c.name))) {
@@ -26,7 +27,7 @@ function migratePrefs(parsed) {
   }
   const spendingGoals =
     parsed?.spendingGoals && typeof parsed.spendingGoals === 'object' ? parsed.spendingGoals : {};
-  return { profile, themeMode, categories, spendingGoals };
+  return { profile, themeMode, transactionListOrder, categories, spendingGoals };
 }
 
 const AppPreferencesContext = createContext(null);
@@ -35,6 +36,7 @@ export function AppPreferencesProvider({ children }) {
   const [ready, setReady] = useState(false);
   const [profile, setProfileState] = useState({ name: '', email: '', avatarUri: '' });
   const [themeMode, setThemeModeState] = useState('light');
+  const [transactionListOrder, setTransactionListOrderState] = useState('desc');
   const [categories, setCategoriesState] = useState(() => cloneCategories(DEFAULT_CATEGORIES));
   const [spendingGoals, setSpendingGoalsState] = useState({});
 
@@ -47,6 +49,7 @@ export function AppPreferencesProvider({ children }) {
           const m = migratePrefs(JSON.parse(raw));
           setProfileState(m.profile);
           setThemeModeState(m.themeMode);
+          setTransactionListOrderState(m.transactionListOrder);
           setCategoriesState(m.categories);
           setSpendingGoalsState(m.spendingGoals || {});
         }
@@ -61,9 +64,9 @@ export function AppPreferencesProvider({ children }) {
     if (!ready) return;
     AsyncStorage.setItem(
       PREFS_KEY,
-      JSON.stringify({ profile, themeMode, categories, spendingGoals })
+      JSON.stringify({ profile, themeMode, transactionListOrder, categories, spendingGoals })
     ).catch(() => {});
-  }, [profile, themeMode, categories, spendingGoals, ready]);
+  }, [profile, themeMode, transactionListOrder, categories, spendingGoals, ready]);
 
   const colors = useMemo(() => (themeMode === 'dark' ? darkPalette : lightPalette), [themeMode]);
 
@@ -73,6 +76,10 @@ export function AppPreferencesProvider({ children }) {
 
   const setThemeMode = useCallback((mode) => {
     setThemeModeState(mode === 'dark' ? 'dark' : 'light');
+  }, []);
+
+  const setTransactionListOrder = useCallback((order) => {
+    setTransactionListOrderState(order === 'asc' ? 'asc' : 'desc');
   }, []);
 
   const addCategory = useCallback(({ name, color, icon }) => {
@@ -185,6 +192,8 @@ export function AppPreferencesProvider({ children }) {
       setProfile,
       themeMode,
       setThemeMode,
+      transactionListOrder,
+      setTransactionListOrder,
       colors,
       categories,
       addCategory,
@@ -200,6 +209,8 @@ export function AppPreferencesProvider({ children }) {
       setProfile,
       themeMode,
       setThemeMode,
+      transactionListOrder,
+      setTransactionListOrder,
       colors,
       categories,
       addCategory,

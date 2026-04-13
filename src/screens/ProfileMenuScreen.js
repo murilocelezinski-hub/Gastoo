@@ -16,7 +16,7 @@ const Row = ({ label, sub, onPress, right, palette }) => (
 
 export default function ProfileMenuScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { profile, themeMode, setThemeMode } = useAppPreferences();
+  const { profile, themeMode, setThemeMode, transactionListOrder, setTransactionListOrder } = useAppPreferences();
   const theme = useThemeColors();
   const isDark = themeMode === 'dark';
 
@@ -57,6 +57,53 @@ export default function ProfileMenuScreen({ navigation }) {
             <Text style={[styles.rowLabel, { color: theme.graphite, flex: 1 }]}>Visual do aplicativo</Text>
             <Switch value={isDark} onValueChange={(v) => setThemeMode(v ? 'dark' : 'light')} trackColor={{ false: theme.graySilver, true: theme.orange }} />
           </View>
+          <View style={[styles.sep, { backgroundColor: theme.grayVLight }]} />
+          <View style={styles.row}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.rowLabel, { color: theme.graphite }]}>Ordem de visualização</Text>
+              <Text style={[styles.rowSub, { color: theme.grayMed }]}>
+                {transactionListOrder === 'asc' ? 'Crescente (mais antigas primeiro)' : 'Decrescente (mais recentes primeiro)'}
+              </Text>
+            </View>
+            <View style={[styles.segment, { borderColor: theme.graySilver, backgroundColor: theme.white }]}>
+              <TouchableOpacity
+                onPress={() => setTransactionListOrder('asc')}
+                activeOpacity={0.8}
+                style={[
+                  styles.segmentBtn,
+                  transactionListOrder === 'asc' && { backgroundColor: theme.orange, borderColor: theme.orange },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.segmentText,
+                    { color: theme.graphite },
+                    transactionListOrder === 'asc' && { color: theme.white, fontFamily: 'Poppins_600SemiBold' },
+                  ]}
+                >
+                  Cresc.
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setTransactionListOrder('desc')}
+                activeOpacity={0.8}
+                style={[
+                  styles.segmentBtn,
+                  transactionListOrder !== 'asc' && { backgroundColor: theme.orange, borderColor: theme.orange },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.segmentText,
+                    { color: theme.graphite },
+                    transactionListOrder !== 'asc' && { color: theme.white, fontFamily: 'Poppins_600SemiBold' },
+                  ]}
+                >
+                  Decr.
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
         <View style={[styles.card, { backgroundColor: theme.white, borderColor: theme.grayVLight }]}>
@@ -92,4 +139,17 @@ const styles = StyleSheet.create({
   chev: { fontFamily: 'Poppins_600SemiBold', fontSize: 16 },
   sep: { height: 1, marginLeft: 12 },
   hint: { fontFamily: 'Poppins_400Regular', fontSize: 11, textAlign: 'center', marginTop: 8 },
+  segment: {
+    flexDirection: 'row',
+    borderWidth: 1.5,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  segmentBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  segmentText: { fontFamily: 'Poppins_400Regular', fontSize: 12 },
 });
