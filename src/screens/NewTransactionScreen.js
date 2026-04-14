@@ -111,13 +111,9 @@ export default function NewTransactionScreen({ navigation }) {
   const [kind, setKind] = useState('despesa'); // despesa | receita | transfer
   const [valor, setValor] = useState('');
   const [descricao, setDescricao] = useState('');
-<<<<<<< HEAD
-  const [data, setData] = useState(formatTodayBr());
-=======
   const [dataObj, setDataObj] = useState(() => new Date());
   const [data, setData] = useState(() => formatBrDate(new Date()));
   const [showDatePicker, setShowDatePicker] = useState(false);
->>>>>>> murilo
   const [accountId, setAccountId] = useState(act[0]?.id);
   const [creditCardId, setCreditCardId] = useState(null);
   const [gastoTipo, setGastoTipo] = useState('nenhum'); // nenhum | fixo | parcelado
