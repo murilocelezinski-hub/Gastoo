@@ -82,7 +82,7 @@ Descrição: "Multa de trânsito", Valor: R$ 293,00 → Outros
 Descrição: "Conserto celular", Valor: R$ 350,00 → Outros`;
 
 // ─── Gemini API call ────────────────────────────────────
-export async function categorizeTransaction(descricao, valor, categoryList = DEFAULT_CATEGORIES) {
+export async function categorizeTransaction(descricao, valor, categoryList = DEFAULT_CATEGORIES, signal) {
   const prompt = `${FEW_SHOT}
 
 Agora categorize:
@@ -96,6 +96,7 @@ Descrição: "${descricao}", Valor: R$ ${valor.toFixed(2)} →`;
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { maxOutputTokens: 10, temperature: 0 },
       }),
+      signal,
     });
 
     if (!response.ok) throw new Error(`Gemini error: ${response.status}`);
@@ -106,6 +107,7 @@ Descrição: "${descricao}", Valor: R$ ${valor.toFixed(2)} →`;
     const match = categoryList.find((c) => text.toLowerCase().includes(c.name.toLowerCase()));
     return { category: match || outros, fromAI: true };
   } catch (err) {
+    if (err.name === 'AbortError') throw err;
     console.log('AI fallback:', err.message);
     return { category: fallbackCategorize(descricao, categoryList), fromAI: false };
   }

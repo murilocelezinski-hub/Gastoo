@@ -65,17 +65,21 @@ export default function AICategoryScreen({ navigation, route }) {
   const [suggestion, setSuggestion] = useState(null);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     (async () => {
       setLoading(true);
-      const result = await categorizeTransaction(txData.descricao, txData.valor, categories);
-      if (!cancelled) {
+      try {
+        const result = await categorizeTransaction(txData.descricao, txData.valor, categories, controller.signal);
         setSuggestion(result.category);
         setLoading(false);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          setLoading(false);
+        }
       }
     })();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [txData.descricao, txData.valor, categories]);
 
