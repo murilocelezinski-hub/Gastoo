@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { secureGet, secureSet, secureRemove } from '../services/secureStorage';
 
 const STORAGE_KEY = '@gastoo_finance_v2';
 
@@ -238,10 +238,11 @@ export function FinanceProvider({ children }) {
     (async () => {
       let raw = null;
       try {
-        raw = await AsyncStorage.getItem(STORAGE_KEY);
-        if (!raw) raw = await AsyncStorage.getItem('@gastoo_finance_v1');
+        // secureGet já tenta migrar automaticamente dados legados do AsyncStorage
+        raw = await secureGet(STORAGE_KEY);
+        if (!raw) raw = await secureGet('@gastoo_finance_v1');
       } catch (e) {
-        console.warn('[FinanceContext] Erro ao ler AsyncStorage:', e);
+        console.warn('[FinanceContext] Erro ao ler SecureStore:', e);
       }
 
       if (raw) {
@@ -252,9 +253,9 @@ export function FinanceProvider({ children }) {
           setTransactions(m.transactions);
           setCreditCards(m.creditCards);
         } catch (e) {
-          console.warn('[FinanceContext] Dado corrompido no AsyncStorage, limpando:', e);
-          await AsyncStorage.removeItem(STORAGE_KEY);
-          await AsyncStorage.removeItem('@gastoo_finance_v1');
+          console.warn('[FinanceContext] Dado corrompido, limpando:', e);
+          await secureRemove(STORAGE_KEY);
+          await secureRemove('@gastoo_finance_v1');
         }
       }
       setReady(true);
@@ -263,7 +264,7 @@ export function FinanceProvider({ children }) {
 
   useEffect(() => {
     if (!ready) return;
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ accounts, transactions, creditCards })).catch(() => {});
+    secureSet(STORAGE_KEY, JSON.stringify({ accounts, transactions, creditCards })).catch(() => {});
   }, [accounts, transactions, creditCards, ready]);
 
   const showToast = useCallback((msg) => {

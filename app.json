@@ -32,7 +32,8 @@
         {
           "photosPermission": "Permitir acesso às fotos para definir sua imagem de perfil."
         }
-      ]
+      ],
+      "expo-secure-store"
     ]
   }
 }
