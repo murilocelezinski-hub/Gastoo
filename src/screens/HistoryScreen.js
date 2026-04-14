@@ -4,6 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { T, fmt, CATEGORIES } from '../theme';
 import { Header, CatIcon } from '../components/Shared';
 import { useFinance } from '../context/FinanceContext';
+import { useAppPreferences } from '../context/AppPreferencesContext';
+import { sortTransactionsByDate } from '../utils/txSort';
 
 const MONTHS_PT = [
   'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -27,6 +29,7 @@ function offsetMonth(month, year, delta) {
 export default function HistoryScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { transactions } = useFinance();
+  const { transactionListOrder } = useAppPreferences();
 
   const now = new Date();
   const [selMonth, setSelMonth] = useState(now.getMonth() + 1); // 1-12
@@ -58,6 +61,11 @@ export default function HistoryScreen({ navigation }) {
   const filtered = useMemo(() =>
     catFilter === 'Todos' ? byTipo : byTipo.filter((t) => t.categoria === catFilter),
     [byTipo, catFilter]
+  );
+
+  const ordered = useMemo(
+    () => sortTransactionsByDate(filtered, transactionListOrder),
+    [filtered, transactionListOrder]
   );
 
   // resumo do mês (sobre byMonth, sem filtros de tipo/cat)
@@ -160,7 +168,7 @@ export default function HistoryScreen({ navigation }) {
       {/* ── lista ── */}
       <FlatList
         style={{ flex: 1 }}
-        data={filtered}
+        data={ordered}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 + insets.bottom }}
         ListEmptyComponent={<Text style={styles.emptyText}>Nenhuma transação encontrada</Text>}

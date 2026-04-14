@@ -185,6 +185,7 @@ export default function AccountsScreen({ navigation }) {
   const [mergeIntoId, setMergeIntoId] = useState(null);
   const [error, setError] = useState('');
   const [showArchivedModal, setShowArchivedModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const act = activeAccounts(accounts);
   const archived = accounts.filter((a) => a.archived);
@@ -263,6 +264,15 @@ export default function AccountsScreen({ navigation }) {
     setName('');
     setSaldoRaw('');
     setIcon(ACCOUNTS[0].icon);
+    setShowAddModal(false);
+  };
+
+  const openAdd = () => {
+    setError('');
+    setName('');
+    setSaldoRaw('');
+    setIcon(ACCOUNTS[0].icon);
+    setShowAddModal(true);
   };
 
   const openDelete = (ac) => {
@@ -318,9 +328,29 @@ export default function AccountsScreen({ navigation }) {
     </TouchableOpacity>
   );
 
+  const headerAdd = (
+    <TouchableOpacity
+      onPress={openAdd}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      style={{ padding: 6 }}
+      accessibilityLabel="Adicionar conta"
+    >
+      <Text style={{ fontSize: 26, color: T.brandFg, marginTop: -2 }}>+</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
-      <Header title="Contas" onBack={() => navigation.goBack()} right={headerArchive} />
+      <Header
+        title="Contas"
+        onBack={() => navigation.goBack()}
+        right={
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {headerArchive}
+            {headerAdd}
+          </View>
+        }
+      />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
@@ -354,49 +384,65 @@ export default function AccountsScreen({ navigation }) {
               </View>
             );
           })}
-
-          <Text style={styles.sectionTitle}>Nova conta</Text>
-          <View style={styles.field}>
-            <Text style={styles.label}>Nome</Text>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="Ex: Nubank"
-              placeholderTextColor={T.grayNeutral}
-              style={styles.input}
-            />
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Saldo inicial</Text>
-            <View style={{ position: 'relative' }}>
-              <Text style={styles.currencyPrefix}>R$</Text>
-              <TextInput
-                value={displaySaldo}
-                onChangeText={handleSaldo}
-                placeholder="0,00"
-                placeholderTextColor={T.grayNeutral}
-                keyboardType="numeric"
-                style={[styles.input, styles.valueInput]}
-              />
-            </View>
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Ícone</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
-              {ACCOUNTS.map((p) => (
-                <TouchableOpacity
-                  key={p.name}
-                  onPress={() => setIcon(p.icon)}
-                  style={[styles.iconPill, icon === p.icon && styles.iconPillActive]}
-                >
-                  <Text style={styles.iconEmoji}>{p.icon}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-          <PrimaryButton label="Adicionar conta" onPress={submit} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal visible={showAddModal} transparent animationType="fade" onRequestClose={() => setShowAddModal(false)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }} keyboardShouldPersistTaps="handled">
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>Nova conta</Text>
+              {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
+              <View style={styles.field}>
+                <Text style={styles.label}>Nome</Text>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Ex: Nubank"
+                  placeholderTextColor={T.grayNeutral}
+                  style={styles.input}
+                />
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>Saldo inicial</Text>
+                <View style={{ position: 'relative' }}>
+                  <Text style={styles.currencyPrefix}>R$</Text>
+                  <TextInput
+                    value={displaySaldo}
+                    onChangeText={handleSaldo}
+                    placeholder="0,00"
+                    placeholderTextColor={T.grayNeutral}
+                    keyboardType="numeric"
+                    style={[styles.input, styles.valueInput]}
+                  />
+                </View>
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>Ícone</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
+                  {ACCOUNTS.map((p) => (
+                    <TouchableOpacity
+                      key={p.name}
+                      onPress={() => setIcon(p.icon)}
+                      style={[styles.iconPill, icon === p.icon && styles.iconPillActive]}
+                    >
+                      <Text style={styles.iconEmoji}>{p.icon}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+              <PrimaryButton label="Adicionar conta" onPress={submit} />
+              <TouchableOpacity
+                onPress={() => setShowAddModal(false)}
+                activeOpacity={0.75}
+                style={{ marginTop: 10, alignItems: 'center', paddingVertical: 10 }}
+              >
+                <Text style={{ fontFamily: 'Poppins_600SemiBold', color: T.grayMed }}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </Modal>
 
       <ConfirmModal
         show={!!deleteEmptyTarget}

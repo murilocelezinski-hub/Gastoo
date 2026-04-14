@@ -21,6 +21,7 @@ import {
 } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { buildBalanceEvolutionSeries } from '../utils/chart';
+import { sortTransactionsByDate } from '../utils/txSort';
 
 const BALANCE_MODES = [
   { key: 'current_month', short: 'Mês' },
@@ -324,7 +325,7 @@ function createStyles(T) {
 
 export default function DashboardScreen({ navigation }) {
   const T = useThemeColors();
-  const { profile } = useAppPreferences();
+  const { profile, transactionListOrder } = useAppPreferences();
   const styles = useMemo(() => createStyles(T), [T]);
   const insets = useSafeAreaInsets();
   const { width: winW } = useWindowDimensions();
@@ -366,6 +367,11 @@ export default function DashboardScreen({ navigation }) {
   const filtered = selectedAccount
     ? transactions.filter((t) => t.accountId === selectedAccount)
     : transactions.filter((t) => activeIds.has(t.accountId));
+
+  const orderedRecent = useMemo(
+    () => sortTransactionsByDate(filtered, transactionListOrder).slice(0, 5),
+    [filtered, transactionListOrder]
+  );
 
   const baseTotals = selectedAccount
     ? transactions.filter((t) => t.accountId === selectedAccount)
@@ -519,7 +525,7 @@ export default function DashboardScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {filtered.slice(0, 5).map((tx) => (
+        {orderedRecent.map((tx) => (
           <TouchableOpacity
             key={tx.id}
             style={styles.txRow}

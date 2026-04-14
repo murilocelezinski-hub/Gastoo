@@ -175,6 +175,7 @@ export default function CreditCardsScreen({ navigation }) {
   const [editLinkAccountId, setEditLinkAccountId] = useState(null);
   const [error, setError] = useState('');
   const [showArchivedModal, setShowArchivedModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const cardsActive = creditCards.filter((c) => !c.archived);
   const cardsArchived = creditCards.filter((c) => c.archived);
@@ -260,6 +261,18 @@ export default function CreditCardsScreen({ navigation }) {
     setLimiteRaw('');
     setDiaFech('10');
     setDiaVen('15');
+    setShowAddModal(false);
+  };
+
+  const openAdd = () => {
+    setError('');
+    setName('');
+    setIcon('💳');
+    setLimiteRaw('');
+    setDiaFech('10');
+    setDiaVen('15');
+    setLinkAccountId((id) => (id && act.some((a) => a.id === id) ? id : act[0]?.id ?? null));
+    setShowAddModal(true);
   };
 
   const confirmDelete = () => {
@@ -295,9 +308,29 @@ export default function CreditCardsScreen({ navigation }) {
     </TouchableOpacity>
   );
 
+  const headerAdd = (
+    <TouchableOpacity
+      onPress={openAdd}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      style={{ padding: 6 }}
+      accessibilityLabel="Adicionar cartão"
+    >
+      <Text style={{ fontSize: 26, color: T.brandFg, marginTop: -2 }}>+</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
-      <Header title="Cartões de crédito" onBack={() => navigation.goBack()} right={headerArchive} />
+      <Header
+        title="Cartões de crédito"
+        onBack={() => navigation.goBack()}
+        right={
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {headerArchive}
+            {headerAdd}
+          </View>
+        }
+      />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
@@ -330,86 +363,110 @@ export default function CreditCardsScreen({ navigation }) {
               </TouchableOpacity>
             </View>
           ))}
-
-          <Text style={styles.sectionTitle}>Novo cartão</Text>
-          <View style={styles.field}>
-            <Text style={styles.label}>Nome</Text>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="Ex: Visa Nubank"
-              placeholderTextColor={T.grayNeutral}
-              style={styles.input}
-            />
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Limite</Text>
-            <View style={{ position: 'relative' }}>
-              <Text style={styles.currencyPrefix}>R$</Text>
-              <TextInput
-                value={displayLimite}
-                onChangeText={handleLimite}
-                placeholder="0,00"
-                placeholderTextColor={T.grayNeutral}
-                keyboardType="numeric"
-                style={[styles.input, styles.valueInput]}
-              />
-            </View>
-          </View>
-          <View style={styles.rowFields}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Fechamento (dia)</Text>
-              <TextInput
-                value={diaFech}
-                onChangeText={(t) => setDiaFech(t.replace(/\D/g, '').slice(0, 2))}
-                placeholder="10"
-                keyboardType="numeric"
-                style={styles.input}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Vencimento (dia)</Text>
-              <TextInput
-                value={diaVen}
-                onChangeText={(t) => setDiaVen(t.replace(/\D/g, '').slice(0, 2))}
-                placeholder="15"
-                keyboardType="numeric"
-                style={styles.input}
-              />
-            </View>
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Ícone (banco)</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
-              {ACCOUNTS.map((p) => (
-                <TouchableOpacity
-                  key={p.name}
-                  onPress={() => setIcon(p.icon)}
-                  style={[styles.iconPill, icon === p.icon && styles.iconPillActive]}
-                >
-                  <Text style={styles.iconEmoji}>{p.icon}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Conta para pagamento da fatura</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountRow}>
-              {act.map((ac) => (
-                <TouchableOpacity
-                  key={ac.id}
-                  onPress={() => setLinkAccountId(ac.id)}
-                  style={[styles.accountPill, linkAccountId === ac.id && styles.accountPillActive]}
-                >
-                  <Text style={styles.accountIcon}>{ac.icon}</Text>
-                  <Text style={[styles.accountText, linkAccountId === ac.id && styles.accountTextActive]}>{ac.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-          <PrimaryButton label="Adicionar cartão" onPress={submit} disabled={!act.length || !linkAccountId} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal visible={showAddModal} transparent animationType="fade" onRequestClose={() => setShowAddModal(false)}>
+        <KeyboardAvoidingView
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', padding: 16 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: '90%' }}>
+            <View
+              style={{
+                backgroundColor: T.offWhite,
+                borderRadius: 16,
+                padding: 20,
+                paddingBottom: 24 + insets.bottom,
+              }}
+            >
+              <Text style={[styles.sectionTitle, { marginTop: 0 }]}>Novo cartão</Text>
+              {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
+
+              <View style={styles.field}>
+                <Text style={styles.label}>Nome</Text>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Ex: Visa Nubank"
+                  placeholderTextColor={T.grayNeutral}
+                  style={[styles.input, { backgroundColor: T.white }]}
+                />
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>Limite</Text>
+                <View style={{ position: 'relative' }}>
+                  <Text style={styles.currencyPrefix}>R$</Text>
+                  <TextInput
+                    value={displayLimite}
+                    onChangeText={handleLimite}
+                    placeholder="0,00"
+                    placeholderTextColor={T.grayNeutral}
+                    keyboardType="numeric"
+                    style={[styles.input, styles.valueInput, { backgroundColor: T.white }]}
+                  />
+                </View>
+              </View>
+              <View style={styles.rowFields}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.label}>Fechamento (dia)</Text>
+                  <TextInput
+                    value={diaFech}
+                    onChangeText={(t) => setDiaFech(t.replace(/\D/g, '').slice(0, 2))}
+                    placeholder="10"
+                    keyboardType="numeric"
+                    style={[styles.input, { backgroundColor: T.white }]}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.label}>Vencimento (dia)</Text>
+                  <TextInput
+                    value={diaVen}
+                    onChangeText={(t) => setDiaVen(t.replace(/\D/g, '').slice(0, 2))}
+                    placeholder="15"
+                    keyboardType="numeric"
+                    style={[styles.input, { backgroundColor: T.white }]}
+                  />
+                </View>
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>Ícone (banco)</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
+                  {ACCOUNTS.map((p) => (
+                    <TouchableOpacity
+                      key={p.name}
+                      onPress={() => setIcon(p.icon)}
+                      style={[styles.iconPill, icon === p.icon && styles.iconPillActive, { backgroundColor: T.white }]}
+                    >
+                      <Text style={styles.iconEmoji}>{p.icon}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.label}>Conta para pagamento da fatura</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountRow}>
+                  {act.map((ac) => (
+                    <TouchableOpacity
+                      key={ac.id}
+                      onPress={() => setLinkAccountId(ac.id)}
+                      style={[styles.accountPill, linkAccountId === ac.id && styles.accountPillActive, { backgroundColor: T.white }]}
+                    >
+                      <Text style={styles.accountIcon}>{ac.icon}</Text>
+                      <Text style={[styles.accountText, linkAccountId === ac.id && styles.accountTextActive]}>{ac.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              <PrimaryButton label="Adicionar cartão" onPress={submit} disabled={!act.length || !linkAccountId} />
+              <TouchableOpacity onPress={() => setShowAddModal(false)} activeOpacity={0.75} style={{ marginTop: 10, alignItems: 'center', paddingVertical: 10 }}>
+                <Text style={{ fontFamily: 'Poppins_600SemiBold', color: T.grayMed }}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </Modal>
 
       <Modal visible={!!editTarget} transparent animationType="fade" onRequestClose={() => setEditTarget(null)}>
         <KeyboardAvoidingView
