@@ -101,7 +101,7 @@ export default function NewTransactionScreen({ navigation }) {
   const [tipo, setTipo] = useState('saída');
   const [valor, setValor] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [data, setData] = useState(formatTodayBr);
+  const [data, setData] = useState(formatTodayBr());
   const [accountId, setAccountId] = useState(act[0]?.id);
   const [creditCardId, setCreditCardId] = useState(null);
   const [gastoTipo, setGastoTipo] = useState('nenhum'); // nenhum | fixo | parcelado
