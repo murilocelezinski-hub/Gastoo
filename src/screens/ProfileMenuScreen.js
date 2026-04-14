@@ -41,11 +41,6 @@ export default function ProfileMenuScreen({ navigation }) {
             )}
             <View style={{ flex: 1 }}>
               <Text style={[styles.rowLabel, { color: theme.graphite }]}>Dados do usuário</Text>
-              <Text style={[styles.rowSub, { color: theme.grayMed }]}>
-                {profile.name || profile.email
-                  ? `${profile.name || '—'} · ${profile.email || ''}`
-                  : 'Nome, e-mail e foto'}
-              </Text>
             </View>
             <Text style={[styles.chev, { color: theme.orange }]}>→</Text>
           </TouchableOpacity>
@@ -61,9 +56,6 @@ export default function ProfileMenuScreen({ navigation }) {
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.rowLabel, { color: theme.graphite }]}>Ordem de visualização</Text>
-              <Text style={[styles.rowSub, { color: theme.grayMed }]}>
-                {transactionListOrder === 'asc' ? 'Crescente (mais antigas primeiro)' : 'Decrescente (mais recentes primeiro)'}
-              </Text>
             </View>
             <View style={[styles.segment, { borderColor: theme.graySilver, backgroundColor: theme.white }]}>
               <TouchableOpacity
@@ -112,7 +104,7 @@ export default function ProfileMenuScreen({ navigation }) {
           <View style={[styles.sep, { backgroundColor: theme.grayVLight }]} />
           <Row palette={theme} label="Cartões de crédito" onPress={() => navigation.navigate('CreditCards')} />
           <View style={[styles.sep, { backgroundColor: theme.grayVLight }]} />
-          <Row palette={theme} label="Categorias" sub="Adicionar ou remover" onPress={() => navigation.navigate('CategoriesSettings')} />
+          <Row palette={theme} label="Categorias" onPress={() => navigation.navigate('CategoriesSettings')} />
         </View>
 
         <Text style={[styles.hint, { color: theme.grayMed }]}>Ajustes salvos neste aparelho</Text>

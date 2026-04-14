@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,28 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../context/AppPreferencesContext';
 import { Header, PrimaryButton, CatIcon } from '../components/Shared';
 import { useFinance, activeAccounts, activeCreditCards } from '../context/FinanceContext';
+
+function parseBrDate(s) {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const dd = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  const yy = parseInt(m[3], 10);
+  const d = new Date(yy, mm - 1, dd);
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
+}
+
+function formatBrDate(d) {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
 
 function createEditTransactionStyles(T) {
   return StyleSheet.create({
@@ -80,6 +98,16 @@ function createEditTransactionStyles(T) {
     accountIcon: { fontSize: 16 },
     accountText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.graphite },
     accountTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.orange },
+    datePill: {
+      backgroundColor: T.white,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      justifyContent: 'center',
+    },
+    dateText: { fontFamily: 'Poppins_400Regular', fontSize: 15, color: T.graphite },
   });
 }
 
@@ -108,12 +136,15 @@ export default function EditTransactionScreen({ navigation, route }) {
   const [valor, setValor] = useState(String(tx.valor));
   const [descricao, setDescricao] = useState(tx.descricao);
   const [data, setData] = useState(tx.data);
+  const [dataObj, setDataObj] = useState(() => parseBrDate(tx.data) || new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [obs, setObs] = useState(tx.obs || '');
   const [categoria, setCategoria] = useState(tx.categoria);
   const [accountId, setAccountId] = useState(tx.accountId || accounts[0]?.id);
   const [creditCardId, setCreditCardId] = useState(tx.creditCardId || null);
   const [gastoTipo, setGastoTipo] = useState(tx.gastoTipo || 'nenhum');
   const [periodicidade, setPeriodicidade] = useState(tx.periodicidade || 'mensal');
+  const valorRef = useRef(null);
 
   useEffect(() => {
     if (route.params?.selectedCategory) {
@@ -121,18 +152,21 @@ export default function EditTransactionScreen({ navigation, route }) {
     }
   }, [route.params?.selectedCategory]);
 
+  useEffect(() => {
+    setTimeout(() => valorRef.current?.focus?.(), 120);
+  }, []);
+
   const handleValor = (text) => {
     const raw = text.replace(/\D/g, '');
     const num = (parseInt(raw || '0') / 100).toFixed(2);
     setValor(num === '0.00' ? '' : num);
   };
 
-  const handleData = (text) => {
-    const digits = text.replace(/\D/g, '').slice(0, 8);
-    let masked = digits;
-    if (digits.length > 4) masked = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-    else if (digits.length > 2) masked = `${digits.slice(0, 2)}/${digits.slice(2)}`;
-    setData(masked);
+  const onPickDate = (_, selected) => {
+    if (Platform.OS !== 'ios') setShowDatePicker(false);
+    if (!selected) return;
+    setDataObj(selected);
+    setData(formatBrDate(selected));
   };
 
   const displayValor = valor ? parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '';
@@ -203,6 +237,7 @@ export default function EditTransactionScreen({ navigation, route }) {
             <View style={{ position: 'relative' }}>
               <Text style={styles.currencyPrefix}>R$</Text>
               <TextInput
+                ref={valorRef}
                 value={displayValor}
                 onChangeText={handleValor}
                 placeholder="0,00"
@@ -226,15 +261,9 @@ export default function EditTransactionScreen({ navigation, route }) {
 
           <View style={styles.field}>
             <Text style={styles.label}>Data</Text>
-            <TextInput
-              value={data}
-              onChangeText={handleData}
-              placeholder="DD/MM/AAAA"
-              placeholderTextColor={T.grayNeutral}
-              keyboardType="numeric"
-              maxLength={10}
-              style={styles.input}
-            />
+            <TouchableOpacity activeOpacity={0.75} onPress={() => setShowDatePicker(true)} style={styles.datePill}>
+              <Text style={styles.dateText}>{data}</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.field}>
@@ -356,6 +385,10 @@ export default function EditTransactionScreen({ navigation, route }) {
           <PrimaryButton label="Salvar alterações" disabled={!valor || !descricao} onPress={handleSave} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {showDatePicker ? (
+        <DateTimePicker value={dataObj} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={onPickDate} />
+      ) : null}
     </View>
   );
 }

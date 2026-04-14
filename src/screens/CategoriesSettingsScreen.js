@@ -269,9 +269,6 @@ export default function CategoriesSettingsScreen({ navigation }) {
                   nameLocked && { opacity: 0.65 },
                 ]}
               />
-              {nameLocked ? (
-                <Text style={{ fontSize: 11, color: theme.grayMed, marginBottom: 8 }}>Nome fixo para categorias do sistema.</Text>
-              ) : null}
               <Text style={[styles.label, { color: theme.charcoal }]}>Ícone</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
                 {PRESET_ICONS.map((ic) => (
