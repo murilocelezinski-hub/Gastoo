@@ -236,18 +236,26 @@ export function FinanceProvider({ children }) {
 
   useEffect(() => {
     (async () => {
+      let raw = null;
       try {
-        let raw = await AsyncStorage.getItem(STORAGE_KEY);
+        raw = await AsyncStorage.getItem(STORAGE_KEY);
         if (!raw) raw = await AsyncStorage.getItem('@gastoo_finance_v1');
-        if (raw) {
+      } catch (e) {
+        console.warn('[FinanceContext] Erro ao ler AsyncStorage:', e);
+      }
+
+      if (raw) {
+        try {
           const p = JSON.parse(raw);
           const m = migrateLoaded(p);
           setAccounts(m.accounts);
           setTransactions(m.transactions);
           setCreditCards(m.creditCards);
+        } catch (e) {
+          console.warn('[FinanceContext] Dado corrompido no AsyncStorage, limpando:', e);
+          await AsyncStorage.removeItem(STORAGE_KEY);
+          await AsyncStorage.removeItem('@gastoo_finance_v1');
         }
-      } catch (e) {
-        console.warn(e);
       }
       setReady(true);
     })();
