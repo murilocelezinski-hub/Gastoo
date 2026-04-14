@@ -69,7 +69,19 @@ export default function HistoryScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header title="Histórico" />
+      <Header
+        title="Histórico"
+        right={
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Recurring')}
+            hitSlop={12}
+            style={{ padding: 6 }}
+            activeOpacity={0.7}
+          >
+            <Text style={{ color: T.brandFg, fontSize: 18 }}>⏱</Text>
+          </TouchableOpacity>
+        }
+      />
 
       {/* ── navegador de mês ── */}
       <View style={styles.monthNav}>

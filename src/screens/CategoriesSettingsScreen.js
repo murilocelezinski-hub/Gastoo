@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, PrimaryButton, ConfirmModal } from '../components/Shared';
-import { useAppPreferences } from '../context/AppPreferencesContext';
+import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { useFinance } from '../context/FinanceContext';
 
 const PRESET_COLORS = [
@@ -108,7 +108,8 @@ const PROTECTED = new Set(['Transferência', 'Outros']);
 
 export default function CategoriesSettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { colors: T, categories, addCategory, updateCategory, removeCategory } = useAppPreferences();
+  const { categories, addCategory, updateCategory, removeCategory } = useAppPreferences();
+  const theme = useThemeColors();
   const { transactions, showToast, renameTransactionsCategory } = useFinance();
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState('add');
@@ -203,7 +204,7 @@ export default function CategoriesSettingsScreen({ navigation }) {
   const nameLocked = modalMode === 'edit' && editingOriginalName && PROTECTED.has(editingOriginalName);
 
   return (
-    <View style={[styles.container, { backgroundColor: T.offWhite }]}>
+    <View style={[styles.container, { backgroundColor: theme.offWhite }]}>
       <Header title="Categorias" onBack={() => navigation.goBack()} />
 
       <FlatList
@@ -211,8 +212,8 @@ export default function CategoriesSettingsScreen({ navigation }) {
         keyExtractor={(item) => item.name}
         contentContainerStyle={{ padding: 20, paddingBottom: 100 + insets.bottom }}
         ListHeaderComponent={
-          <TouchableOpacity style={[styles.addBtn, { borderColor: T.orange }]} onPress={openAdd} activeOpacity={0.8}>
-            <Text style={[styles.addBtnText, { color: T.orange }]}>+ Nova categoria</Text>
+          <TouchableOpacity style={[styles.addBtn, { borderColor: theme.orange }]} onPress={openAdd} activeOpacity={0.8}>
+            <Text style={[styles.addBtnText, { color: theme.orange }]}>+ Nova categoria</Text>
           </TouchableOpacity>
         }
         renderItem={({ item }) => {
@@ -220,7 +221,7 @@ export default function CategoriesSettingsScreen({ navigation }) {
           const n = countByCat[item.name] || 0;
           return (
             <TouchableOpacity
-              style={[styles.row, { backgroundColor: T.white, borderColor: T.grayVLight }]}
+              style={[styles.row, { backgroundColor: theme.white, borderColor: theme.grayVLight }]}
               onPress={() => openEdit(item)}
               activeOpacity={0.75}
             >
@@ -228,8 +229,8 @@ export default function CategoriesSettingsScreen({ navigation }) {
                 <Text style={{ fontSize: 22 }}>{item.icon}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.rowName, { color: T.graphite }]}>{item.name}</Text>
-                <Text style={[styles.rowMeta, { color: T.grayMed }]}>
+                <Text style={[styles.rowName, { color: theme.graphite }]}>{item.name}</Text>
+                <Text style={[styles.rowMeta, { color: theme.grayMed }]}>
                   {locked ? 'Obrigatória · toque para editar cor/ícone' : `${n} lançamento(s)`}
                 </Text>
               </View>
@@ -250,48 +251,48 @@ export default function CategoriesSettingsScreen({ navigation }) {
             contentContainerStyle={{ paddingVertical: 24 }}
             style={{ maxHeight: '88%' }}
           >
-            <View style={[styles.modalCard, { backgroundColor: T.white }]}>
-              <Text style={[styles.modalTitle, { color: T.graphite }]}>
+            <View style={[styles.modalCard, { backgroundColor: theme.white }]}>
+              <Text style={[styles.modalTitle, { color: theme.graphite }]}>
                 {modalMode === 'add' ? 'Nova categoria' : 'Editar categoria'}
               </Text>
-              {err ? <Text style={{ color: T.burnt, fontSize: 12, marginBottom: 8 }}>{err}</Text> : null}
-              <Text style={[styles.label, { color: T.charcoal }]}>Nome</Text>
+              {err ? <Text style={{ color: theme.burnt, fontSize: 12, marginBottom: 8 }}>{err}</Text> : null}
+              <Text style={[styles.label, { color: theme.charcoal }]}>Nome</Text>
               <TextInput
                 value={name}
                 onChangeText={setName}
                 placeholder="Ex: Pets"
-                placeholderTextColor={T.grayNeutral}
+                placeholderTextColor={theme.grayNeutral}
                 editable={!nameLocked}
                 style={[
                   styles.input,
-                  { borderColor: T.graySilver, color: T.graphite },
+                  { borderColor: theme.graySilver, color: theme.graphite },
                   nameLocked && { opacity: 0.65 },
                 ]}
               />
               {nameLocked ? (
-                <Text style={{ fontSize: 11, color: T.grayMed, marginBottom: 8 }}>Nome fixo para categorias do sistema.</Text>
+                <Text style={{ fontSize: 11, color: theme.grayMed, marginBottom: 8 }}>Nome fixo para categorias do sistema.</Text>
               ) : null}
-              <Text style={[styles.label, { color: T.charcoal }]}>Ícone</Text>
+              <Text style={[styles.label, { color: theme.charcoal }]}>Ícone</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
                 {PRESET_ICONS.map((ic) => (
-                  <TouchableOpacity key={ic} onPress={() => setIcon(ic)} style={[styles.iconPill, icon === ic && { borderColor: T.orange }]}>
+                  <TouchableOpacity key={ic} onPress={() => setIcon(ic)} style={[styles.iconPill, icon === ic && { borderColor: theme.orange }]}>
                     <Text style={{ fontSize: 22 }}>{ic}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-              <Text style={[styles.label, { color: T.charcoal }]}>Cor</Text>
+              <Text style={[styles.label, { color: theme.charcoal }]}>Cor</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
                 {PRESET_COLORS.map((c) => (
                   <TouchableOpacity
                     key={c}
                     onPress={() => setColor(c)}
-                    style={[styles.colorDot, { backgroundColor: c }, color === c && { borderColor: T.orange, borderWidth: 3 }]}
+                    style={[styles.colorDot, { backgroundColor: c }, color === c && { borderColor: theme.orange, borderWidth: 3 }]}
                   />
                 ))}
               </ScrollView>
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-                <TouchableOpacity style={[styles.modalBtn, { borderColor: T.graySilver }]} onPress={() => setModalVisible(false)}>
-                  <Text style={{ fontFamily: 'Poppins_600SemiBold', color: T.graphite }}>Cancelar</Text>
+                <TouchableOpacity style={[styles.modalBtn, { borderColor: theme.graySilver }]} onPress={() => setModalVisible(false)}>
+                  <Text style={{ fontFamily: 'Poppins_600SemiBold', color: theme.graphite }}>Cancelar</Text>
                 </TouchableOpacity>
                 <View style={{ flex: 1 }}>
                   <PrimaryButton label={modalMode === 'add' ? 'Adicionar' : 'Salvar'} onPress={submitModal} disabled={!name.trim()} />

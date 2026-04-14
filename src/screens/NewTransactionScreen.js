@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -13,6 +14,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../context/AppPreferencesContext';
 import { Header, PrimaryButton } from '../components/Shared';
 import { useFinance, activeAccounts, activeCreditCards } from '../context/FinanceContext';
+
+function formatTodayBr() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
 
 function createNewTransactionStyles(T) {
   return StyleSheet.create({
@@ -94,13 +101,19 @@ export default function NewTransactionScreen({ navigation }) {
   const [tipo, setTipo] = useState('saída');
   const [valor, setValor] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [data, setData] = useState('01/04/2026');
+  const [data, setData] = useState(formatTodayBr);
   const [accountId, setAccountId] = useState(act[0]?.id);
   const [creditCardId, setCreditCardId] = useState(null);
   const [gastoTipo, setGastoTipo] = useState('nenhum'); // nenhum | fixo | parcelado
   const [periodicidade, setPeriodicidade] = useState('mensal');
   const [origem, setOrigem] = useState(act[0]?.id);
   const [destino, setDestino] = useState(act[1]?.id || act[0]?.id);
+
+  useFocusEffect(
+    useCallback(() => {
+      setData(formatTodayBr());
+    }, [])
+  );
 
   useEffect(() => {
     if (!act.length) return;
