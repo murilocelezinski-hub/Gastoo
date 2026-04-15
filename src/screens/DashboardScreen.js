@@ -18,6 +18,9 @@ import {
   balanceForAccount,
   totalBalance,
   activeAccounts,
+  activeCreditCards,
+  invoiceKeyFromDateAndCloseDay,
+  invoiceLabelPtBr,
 } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { buildBalanceEvolutionSeries } from '../utils/chart';
@@ -329,13 +332,22 @@ export default function DashboardScreen({ navigation }) {
   const styles = useMemo(() => createStyles(T), [T]);
   const insets = useSafeAreaInsets();
   const { width: winW } = useWindowDimensions();
-  const { accounts, transactions } = useFinance();
+  const { accounts, creditCards, transactions } = useFinance();
   const act = activeAccounts(accounts);
   const activeIds = useMemo(() => new Set(act.map((a) => a.id)), [act]);
+  const cardsAct = useMemo(() => activeCreditCards(creditCards), [creditCards]);
   const [hidden, setHidden] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const [selectedCard, setSelectedCard] = useState(null);
   const [balanceMode, setBalanceMode] = useState('current_month');
   const mask = '••••••';
+
+  const currentInvoiceKey = useMemo(() => {
+    if (!selectedCard) return null;
+    const card = creditCards.find((c) => String(c.id) === String(selectedCard));
+    if (!card) return null;
+    return invoiceKeyFromDateAndCloseDay(new Date(), card.diaFechamento);
+  }, [creditCards, selectedCard]);
 
   const balanceSeries = useMemo(
     () => buildBalanceEvolutionSeries(accounts, transactions, selectedAccount, balanceMode, new Date()),
@@ -364,32 +376,63 @@ export default function DashboardScreen({ navigation }) {
     return 9;
   }, [labelIndexes.length]);
 
-  const filtered = selectedAccount
-    ? transactions.filter((t) => t.accountId === selectedAccount)
-    : transactions.filter((t) => activeIds.has(t.accountId));
+  const filtered = selectedCard
+    ? transactions.filter(
+        (t) => String(t.creditCardId) === String(selectedCard) && (!currentInvoiceKey || t.invoiceKey === currentInvoiceKey)
+      )
+    : selectedAccount
+      ? transactions.filter((t) => t.accountId === selectedAccount)
+      : transactions.filter((t) => activeIds.has(t.accountId));
 
   const orderedRecent = useMemo(
     () => sortTransactionsByDate(filtered, transactionListOrder).slice(0, 5),
     [filtered, transactionListOrder]
   );
 
-  const baseTotals = selectedAccount
-    ? transactions.filter((t) => t.accountId === selectedAccount)
-    : transactions.filter((t) => activeIds.has(t.accountId));
-  const totalIn = baseTotals
-    .filter((t) => t.tipo === 'entrada' && !t.isTransfer)
-    .reduce((a, t) => a + t.valor, 0);
-  const totalOut = baseTotals
-    .filter((t) => t.tipo === 'saída' && !t.isTransfer)
-    .reduce((a, t) => a + t.valor, 0);
+  const baseTotals = selectedCard
+    ? filtered
+    : selectedAccount
+      ? transactions.filter((t) => t.accountId === selectedAccount)
+      : transactions.filter((t) => activeIds.has(t.accountId));
 
-  const saldo = selectedAccount
-    ? balanceForAccount(accounts, transactions, selectedAccount)
-    : totalBalance(accounts, transactions);
+  const totalIn = baseTotals.filter((t) => t.tipo === 'entrada' && !t.isTransfer).reduce((a, t) => a + t.valor, 0);
+  const totalOut = baseTotals.filter((t) => t.tipo === 'saída' && !t.isTransfer).reduce((a, t) => a + t.valor, 0);
 
-  const saldoLabel = selectedAccount
-    ? accounts.find((a) => a.id === selectedAccount)?.name ?? 'Conta'
-    : 'Saldo geral';
+  const invoiceTotal = useMemo(() => {
+    if (!selectedCard) return 0;
+    return baseTotals
+      .filter((t) => !t.isTransfer)
+      .reduce((sum, t) => sum + (t.tipo === 'saída' ? t.valor : -t.valor), 0);
+  }, [baseTotals, selectedCard]);
+
+  const invoiceTotalsByCard = useMemo(() => {
+    const today = new Date();
+    const out = new Map();
+    for (const c of cardsAct) {
+      const ik = invoiceKeyFromDateAndCloseDay(today, c.diaFechamento);
+      let total = 0;
+      for (const t of transactions) {
+        if (String(t.creditCardId) !== String(c.id)) continue;
+        if (t.invoiceKey && ik && t.invoiceKey !== ik) continue;
+        if (t.isTransfer) continue;
+        total += t.tipo === 'saída' ? t.valor : -t.valor;
+      }
+      out.set(String(c.id), total);
+    }
+    return out;
+  }, [cardsAct, transactions]);
+
+  const saldo = selectedCard
+    ? -invoiceTotal
+    : selectedAccount
+      ? balanceForAccount(accounts, transactions, selectedAccount)
+      : totalBalance(accounts, transactions);
+
+  const saldoLabel = selectedCard
+    ? `Fatura ${invoiceLabelPtBr(currentInvoiceKey)}`
+    : selectedAccount
+      ? accounts.find((a) => a.id === selectedAccount)?.name ?? 'Conta'
+      : 'Saldo geral';
 
   return (
     <View style={styles.container}>
@@ -417,8 +460,11 @@ export default function DashboardScreen({ navigation }) {
             {act.length > 0 ? (
               <>
                 <TouchableOpacity
-                  style={[styles.accountCard, !selectedAccount && styles.accountCardActive]}
-                  onPress={() => setSelectedAccount(null)}
+                  style={[styles.accountCard, !selectedAccount && !selectedCard && styles.accountCardActive]}
+                  onPress={() => {
+                    setSelectedAccount(null);
+                    setSelectedCard(null);
+                  }}
                   activeOpacity={0.7}
                 >
                   <Text style={styles.accountCardIcon}>🌐</Text>
@@ -429,19 +475,44 @@ export default function DashboardScreen({ navigation }) {
                 </TouchableOpacity>
 
                 {act.map((ac) => {
-                  const isActive = selectedAccount === ac.id;
+                  const isActive = !selectedCard && selectedAccount === ac.id;
                   const bal = balanceForAccount(accounts, transactions, ac.id);
                   return (
                     <TouchableOpacity
                       key={ac.id}
                       style={[styles.accountCard, isActive && styles.accountCardActive]}
-                      onPress={() => setSelectedAccount(ac.id)}
+                      onPress={() => {
+                        setSelectedCard(null);
+                        setSelectedAccount(ac.id);
+                      }}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.accountCardIcon}>{ac.icon}</Text>
                       <Text style={[styles.accountCardName, isActive && styles.accountCardNameActive]}>{ac.name}</Text>
                       <Text style={[styles.accountCardBalance, isActive && styles.accountCardBalanceActive]}>
                         {hidden ? mask : fmt(bal)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+
+                {cardsAct.map((c) => {
+                  const isActive = selectedCard && String(selectedCard) === String(c.id);
+                  const total = invoiceTotalsByCard.get(String(c.id)) || 0;
+                  return (
+                    <TouchableOpacity
+                      key={c.id}
+                      style={[styles.accountCard, isActive && styles.accountCardActive]}
+                      onPress={() => {
+                        setSelectedAccount(null);
+                        setSelectedCard(c.id);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.accountCardIcon}>{c.icon}</Text>
+                      <Text style={[styles.accountCardName, isActive && styles.accountCardNameActive]}>{c.name}</Text>
+                      <Text style={[styles.accountCardBalance, isActive && styles.accountCardBalanceActive]}>
+                        {hidden ? mask : fmt(total)}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -461,11 +532,11 @@ export default function DashboardScreen({ navigation }) {
           <Text style={styles.saldoValue}>{hidden ? mask : fmt(saldo)}</Text>
           <View style={{ flexDirection: 'row', gap: 20 }}>
             <View>
-              <Text style={styles.miniLabel}>Entradas</Text>
+              <Text style={styles.miniLabel}>{selectedCard ? 'Créditos' : 'Entradas'}</Text>
               <Text style={[styles.miniValue, { color: T.gold }]}>{hidden ? mask : `+${fmt(totalIn)}`}</Text>
             </View>
             <View>
-              <Text style={styles.miniLabel}>Saídas</Text>
+              <Text style={styles.miniLabel}>{selectedCard ? 'Compras' : 'Saídas'}</Text>
               <Text style={[styles.miniValue, { color: '#FFB899' }]}>{hidden ? mask : `-${fmt(totalOut)}`}</Text>
             </View>
           </View>
@@ -519,7 +590,7 @@ export default function DashboardScreen({ navigation }) {
         </View>
 
         <View style={styles.recentHeader}>
-          <Text style={styles.recentTitle}>Transações recentes</Text>
+          <Text style={styles.recentTitle}>{selectedCard ? 'Transações da fatura atual' : 'Transações recentes'}</Text>
           <TouchableOpacity onPress={() => navigation.navigate('History')}>
             <Text style={styles.seeAllText}>Ver todas →</Text>
           </TouchableOpacity>
