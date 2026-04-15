@@ -40,6 +40,18 @@ function formatTooltipDate(d) {
   return `${day}/${m}/${d.getFullYear()}`;
 }
 
+function parseBrDate(s) {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const dd = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  const yy = parseInt(m[3], 10);
+  const d = new Date(yy, mm - 1, dd);
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
+}
+
 function BalanceLineChart({
   points,
   width,
@@ -349,6 +361,14 @@ export default function DashboardScreen({ navigation }) {
     return invoiceKeyFromDateAndCloseDay(new Date(), card.diaFechamento);
   }, [creditCards, selectedCard]);
 
+  const txInvoiceKeyForCard = useCallback((tx, card) => {
+    if (!tx || !card) return null;
+    if (tx.invoiceKey) return tx.invoiceKey;
+    const d = parseBrDate(tx.data);
+    if (!d) return null;
+    return invoiceKeyFromDateAndCloseDay(d, card.diaFechamento);
+  }, []);
+
   const balanceSeries = useMemo(
     () => buildBalanceEvolutionSeries(accounts, transactions, selectedAccount, balanceMode, new Date()),
     [accounts, transactions, selectedAccount, balanceMode]
@@ -377,9 +397,16 @@ export default function DashboardScreen({ navigation }) {
   }, [labelIndexes.length]);
 
   const filtered = selectedCard
-    ? transactions.filter(
-        (t) => String(t.creditCardId) === String(selectedCard) && (!currentInvoiceKey || t.invoiceKey === currentInvoiceKey)
-      )
+    ? (() => {
+        const card = creditCards.find((c) => String(c.id) === String(selectedCard));
+        const ik = currentInvoiceKey;
+        if (!card || !ik) return [];
+        return transactions.filter((t) => {
+          if (String(t.creditCardId) !== String(selectedCard)) return false;
+          const txIk = txInvoiceKeyForCard(t, card);
+          return txIk === ik;
+        });
+      })()
     : selectedAccount
       ? transactions.filter((t) => t.accountId === selectedAccount)
       : transactions.filter((t) => activeIds.has(t.accountId));
@@ -413,14 +440,16 @@ export default function DashboardScreen({ navigation }) {
       let total = 0;
       for (const t of transactions) {
         if (String(t.creditCardId) !== String(c.id)) continue;
-        if (t.invoiceKey && ik && t.invoiceKey !== ik) continue;
+        if (!ik) continue;
+        const txIk = txInvoiceKeyForCard(t, c);
+        if (txIk !== ik) continue;
         if (t.isTransfer) continue;
         total += t.tipo === 'saída' ? t.valor : -t.valor;
       }
       out.set(String(c.id), total);
     }
     return out;
-  }, [cardsAct, transactions]);
+  }, [cardsAct, transactions, txInvoiceKeyForCard]);
 
   const saldo = selectedCard
     ? -invoiceTotal
