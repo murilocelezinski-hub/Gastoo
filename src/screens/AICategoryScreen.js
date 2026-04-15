@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { fmt } from '../theme';
 import { categorizeTransaction } from '../services/ai';
@@ -29,6 +29,22 @@ function createAICategoryStyles(T) {
     },
     catName: { fontFamily: 'Poppins_600SemiBold', fontSize: 22, color: T.brandFg, marginBottom: 6 },
     txInfo: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.grayMed, marginBottom: 4 },
+    fallbackBanner: {
+      backgroundColor: 'rgba(203,122,0,0.15)',
+      borderWidth: 1,
+      borderColor: T.burnt,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      marginBottom: 16,
+      width: '100%',
+    },
+    fallbackText: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 12,
+      color: T.burnt,
+      textAlign: 'center',
+    },
     btnRow: { flexDirection: 'row', gap: 12, marginTop: 32, width: '100%' },
     correctBtn: {
       flex: 1,
@@ -63,6 +79,7 @@ export default function AICategoryScreen({ navigation, route }) {
   const { addTransaction, showToast } = useFinance();
   const [loading, setLoading] = useState(true);
   const [suggestion, setSuggestion] = useState(null);
+  const [fromAI, setFromAI] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -71,6 +88,7 @@ export default function AICategoryScreen({ navigation, route }) {
       try {
         const result = await categorizeTransaction(txData.descricao, txData.valor, categories, controller.signal);
         setSuggestion(result.category);
+        setFromAI(result.fromAI);
         setLoading(false);
       } catch (err) {
         if (err.name !== 'AbortError') {
@@ -105,7 +123,17 @@ export default function AICategoryScreen({ navigation, route }) {
         </View>
       ) : suggestion ? (
         <View style={styles.resultBox}>
-          <Text style={styles.resultLabel}>Sugestão da IA</Text>
+          <Text style={styles.resultLabel}>
+            {fromAI ? 'Sugestão da IA' : 'Sugestão por palavras-chave'}
+          </Text>
+
+          {!fromAI && (
+            <View style={styles.fallbackBanner}>
+              <Text style={styles.fallbackText}>
+                ⚠️ A IA não respondeu. Categoria sugerida pelo sistema local.
+              </Text>
+            </View>
+          )}
 
           <View style={[styles.catIcon, { backgroundColor: suggestion.color }]}>
             <Text style={{ fontSize: 36 }}>{suggestion.icon}</Text>

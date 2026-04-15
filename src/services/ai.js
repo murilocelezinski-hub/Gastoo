@@ -1,7 +1,7 @@
 import { DEFAULT_CATEGORIES } from '../theme';
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
 
 // ─── Fallback por keywords ──────────────────────────────
 const KEYWORDS = {
@@ -88,6 +88,9 @@ export async function categorizeTransaction(descricao, valor, categoryList = DEF
 Agora categorize:
 Descrição: "${descricao}", Valor: R$ ${valor.toFixed(2)} →`;
 
+  console.log('[AI] Chave carregada:', GEMINI_API_KEY ? `${GEMINI_API_KEY.slice(0, 8)}...` : 'UNDEFINED');
+  console.log('[AI] URL:', GEMINI_URL);
+
   try {
     const response = await fetch(GEMINI_URL, {
       method: 'POST',
@@ -99,16 +102,22 @@ Descrição: "${descricao}", Valor: R$ ${valor.toFixed(2)} →`;
       signal,
     });
 
-    if (!response.ok) throw new Error(`Gemini error: ${response.status}`);
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}));
+      console.log('[AI] Erro HTTP:', response.status, JSON.stringify(errorBody));
+      throw new Error(`Gemini error: ${response.status}`);
+    }
 
     const data = await response.json();
+    console.log('[AI] Resposta bruta:', JSON.stringify(data));
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'Outros';
+    console.log('[AI] Categoria retornada:', text);
     const outros = categoryList.find((c) => c.name === 'Outros') || categoryList[categoryList.length - 1];
     const match = categoryList.find((c) => text.toLowerCase().includes(c.name.toLowerCase()));
     return { category: match || outros, fromAI: true };
   } catch (err) {
     if (err.name === 'AbortError') throw err;
-    console.log('AI fallback:', err.message);
+    console.log('[AI] Fallback ativado. Motivo:', err.message);
     return { category: fallbackCategorize(descricao, categoryList), fromAI: false };
   }
 }
