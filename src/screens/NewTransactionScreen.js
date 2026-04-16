@@ -14,11 +14,23 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../context/AppPreferencesContext';
 import { Header, PrimaryButton } from '../components/Shared';
-import { useFinance, activeAccounts, activeCreditCards } from '../context/FinanceContext';
+import { useFinance, activeAccounts, activeCreditCards, invoiceKeyFromDateAndCloseDay, invoiceLabelPtBr } from '../context/FinanceContext';
 
 function formatBrDate(d) {
   const p = (n) => String(n).padStart(2, '0');
   return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
+function invoiceKeyShift(key, deltaMonths) {
+  const m = String(key || '').match(/^(\d{4})-(\d{2})$/);
+  if (!m) return key;
+  const yy = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  const d = new Date(yy, mm - 1, 1);
+  d.setMonth(d.getMonth() + deltaMonths);
+  const y2 = d.getFullYear();
+  const m2 = String(d.getMonth() + 1).padStart(2, '0');
+  return `${y2}-${m2}`;
 }
 
 function createNewTransactionStyles(T) {
@@ -121,8 +133,11 @@ export default function NewTransactionScreen({ navigation }) {
   const [origem, setOrigem] = useState(act[0]?.id);
   const [destino, setDestino] = useState(act[1]?.id || act[0]?.id);
   const [paySource, setPaySource] = useState('conta'); // conta | cartao
+  const [invoiceKey, setInvoiceKey] = useState(null);
+  const [invoiceManual, setInvoiceManual] = useState(false);
   const valorRef = useRef(null);
   const descRef = useRef(null);
+  const prevCardIdRef = useRef(null);
 
   const mode = kind === 'transfer' ? 'transfer' : 'normal';
   const tipo = kind === 'receita' ? 'entrada' : 'saída';
@@ -152,12 +167,37 @@ export default function NewTransactionScreen({ navigation }) {
     if (paySource === 'conta') {
       if (creditCardId) setCreditCardId(null);
       if (!accountId && act[0]?.id) setAccountId(act[0].id);
+      setInvoiceKey(null);
+      setInvoiceManual(false);
+      prevCardIdRef.current = null;
     } else {
       // cartao
       if (accountId) setAccountId(null);
       if (!creditCardId && cardsAct[0]?.id) setCreditCardId(cardsAct[0].id);
     }
   }, [paySource]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const invoiceKeyAuto = useMemo(() => {
+    if (paySource !== 'cartao' || !creditCardId) return null;
+    const card = creditCards.find((c) => String(c.id) === String(creditCardId));
+    if (!card) return null;
+    return invoiceKeyFromDateAndCloseDay(dataObj, card.diaFechamento);
+  }, [creditCardId, creditCards, dataObj, paySource]);
+
+  useEffect(() => {
+    if (paySource !== 'cartao') return;
+    if (!invoiceKeyAuto) return;
+    const prev = prevCardIdRef.current;
+    const cardChanged = prev != null && creditCardId != null && String(prev) !== String(creditCardId);
+    if (cardChanged) {
+      // A seleção manual de fatura não deve “vazar” entre cartões.
+      setInvoiceManual(false);
+      setInvoiceKey(invoiceKeyAuto);
+    } else if (!invoiceManual) {
+      setInvoiceKey(invoiceKeyAuto);
+    }
+    prevCardIdRef.current = creditCardId;
+  }, [invoiceKeyAuto, invoiceManual, paySource]);
 
   const handleValor = (text) => {
     const raw = text.replace(/\D/g, '');
@@ -328,6 +368,35 @@ export default function NewTransactionScreen({ navigation }) {
                 )}
               </View>
 
+              {paySource === 'cartao' && creditCardId ? (
+                <View style={styles.field}>
+                  <Text style={styles.label}>Fatura</Text>
+                  {invoiceKeyAuto ? (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountRow}>
+                      {[
+                        { key: invoiceKeyShift(invoiceKeyAuto, -1), label: invoiceLabelPtBr(invoiceKeyShift(invoiceKeyAuto, -1)) },
+                        { key: invoiceKeyAuto, label: `${invoiceLabelPtBr(invoiceKeyAuto)} (auto)` },
+                        { key: invoiceKeyShift(invoiceKeyAuto, 1), label: invoiceLabelPtBr(invoiceKeyShift(invoiceKeyAuto, 1)) },
+                      ].map((opt) => (
+                        <TouchableOpacity
+                          key={opt.key}
+                          onPress={() => {
+                            setInvoiceKey(opt.key);
+                            setInvoiceManual(opt.key !== invoiceKeyAuto);
+                          }}
+                          style={[styles.accountPill, invoiceKey === opt.key && styles.accountPillActive]}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={[styles.accountText, invoiceKey === opt.key && styles.accountTextActive]}>{opt.label}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  ) : (
+                    <Text style={styles.hint}>Selecione um cartão para sugerir a fatura.</Text>
+                  )}
+                </View>
+              ) : null}
+
               <View style={styles.field}>
                 <View style={styles.toggle}>
                   {[
@@ -381,6 +450,7 @@ export default function NewTransactionScreen({ navigation }) {
                       data,
                       accountId: finalAccountId,
                       ...(paySource === 'cartao' && creditCardId ? { creditCardId } : {}),
+                      ...(paySource === 'cartao' && creditCardId && invoiceKey ? { invoiceKey, invoiceKeyManual: invoiceManual } : {}),
                       ...(gastoTipo !== 'nenhum' ? { gastoTipo, periodicidade } : {}),
                     },
                     excludeCategories: ['Transferência'],

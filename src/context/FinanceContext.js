@@ -7,6 +7,82 @@ export const DEFAULT_ACCOUNT_ID = 'acc-seed-default';
 export const ACC_SEED_POUP = 'acc-seed-poup';
 const CARD_SEED_DEMO = 'card-seed-demo';
 
+function parseBrDate(s) {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const dd = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  const yy = parseInt(m[3], 10);
+  const d = new Date(yy, mm - 1, dd);
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
+}
+
+function addMonths(d, months) {
+  const dt = new Date(d.getFullYear(), d.getMonth(), 1);
+  dt.setMonth(dt.getMonth() + months);
+  return dt;
+}
+
+export function invoiceKeyFromDateAndCloseDay(dateObj, closeDay) {
+  if (!dateObj || !(dateObj instanceof Date) || Number.isNaN(dateObj.getTime())) return null;
+  const cd = Math.min(31, Math.max(1, parseInt(closeDay, 10) || 10));
+  const base = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
+  const invoiceMonth = dateObj.getDate() > cd ? addMonths(base, 1) : base;
+  const y = invoiceMonth.getFullYear();
+  const m = String(invoiceMonth.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`; // YYYY-MM
+}
+
+export function invoiceLabelPtBr(invoiceKey) {
+  if (!invoiceKey) return '—';
+  const m = String(invoiceKey).match(/^(\d{4})-(\d{2})$/);
+  if (!m) return String(invoiceKey);
+  const yy = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  const monthNames = [
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro',
+  ];
+  return `${monthNames[Math.max(1, Math.min(12, mm)) - 1]} ${yy}`;
+}
+
+function ensureInvoiceFieldsForTx(tx, creditCards) {
+  const hasCard = tx && tx.creditCardId;
+  if (!hasCard) {
+    // se não é cartão, não persiste fatura
+    if (tx?.invoiceKey || tx?.invoiceKeyManual) {
+      const { invoiceKey, invoiceKeyManual, ...rest } = tx;
+      return rest;
+    }
+    return tx;
+  }
+  const card = creditCards.find((c) => String(c.id) === String(tx.creditCardId));
+  const dateObj = parseBrDate(tx.data);
+  const computed = invoiceKeyFromDateAndCloseDay(dateObj || new Date(), card?.diaFechamento ?? 10);
+
+  if (tx.invoiceKey) {
+    // Se o dado veio legado (invoiceKey existe, mas invoiceKeyManual não),
+    // inferimos: se bate com o cálculo, então é "auto"; se diverge, foi "fixado".
+    if (tx.invoiceKeyManual === undefined || tx.invoiceKeyManual === null) {
+      return { ...tx, invoiceKeyManual: tx.invoiceKey === computed ? false : true };
+    }
+    return { ...tx, invoiceKeyManual: Boolean(tx.invoiceKeyManual) };
+  }
+  return { ...tx, invoiceKey: computed, invoiceKeyManual: false };
+}
+
 function seedAccounts() {
   return [
     { id: DEFAULT_ACCOUNT_ID, name: 'Conta Corrente', icon: '🏦', saldoInicial: 4100, archived: false },
@@ -187,6 +263,7 @@ function migrateLoaded(parsed) {
     diaFechamento: Math.min(31, Math.max(1, parseInt(c.diaFechamento, 10) || 10)),
     diaVencimento: Math.min(31, Math.max(1, parseInt(c.diaVencimento, 10) || 15)),
   }));
+  txs = txs.map((t) => ensureInvoiceFieldsForTx(t, creditCards));
   return { accounts, transactions: txs, creditCards };
 }
 
@@ -395,10 +472,14 @@ export function FinanceProvider({ children }) {
     [accounts, transactions]
   );
 
-  const addTransaction = useCallback((tx) => {
-    const id = tx.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    setTransactions((prev) => [{ ...tx, id }, ...prev]);
-  }, []);
+  const addTransaction = useCallback(
+    (tx) => {
+      const id = tx.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const next = ensureInvoiceFieldsForTx({ ...tx, id }, creditCards);
+      setTransactions((prev) => [next, ...prev]);
+    },
+    [creditCards]
+  );
 
   const addTransfer = useCallback(({ valor, descricao, data, accountOrigem, accountDestino }) => {
     if (accountOrigem === accountDestino) return;
@@ -423,9 +504,37 @@ export function FinanceProvider({ children }) {
 
   const updateTransaction = useCallback((updated) => {
     setTransactions((prev) =>
-      prev.map((t) => (String(t.id) === String(updated.id) ? { ...t, ...updated } : t))
+      prev.map((t) => {
+        if (String(t.id) !== String(updated.id)) return t;
+        const next = { ...t, ...updated };
+        const cardChanged = String(t.creditCardId || '') !== String(next.creditCardId || '');
+        // Se mudar o cartão, recalcula sempre (manual não deve persistir entre cartões).
+        if (next.creditCardId) {
+          if (cardChanged) {
+            const card = creditCards.find((c) => String(c.id) === String(next.creditCardId));
+            const dateObj = parseBrDate(next.data);
+            const computed = invoiceKeyFromDateAndCloseDay(dateObj || new Date(), card?.diaFechamento ?? 10);
+            next.invoiceKey = computed;
+            next.invoiceKeyManual = false;
+          } else {
+            // Se usuário não "fixou" fatura manualmente, recalcula ao mudar data
+            const manual = Boolean(next.invoiceKeyManual);
+            if (!manual && (!next.invoiceKey || t.data !== next.data)) {
+              const card = creditCards.find((c) => String(c.id) === String(next.creditCardId));
+              const dateObj = parseBrDate(next.data);
+              const computed = invoiceKeyFromDateAndCloseDay(dateObj || new Date(), card?.diaFechamento ?? 10);
+              next.invoiceKey = computed;
+              next.invoiceKeyManual = false;
+            }
+          }
+        } else {
+          delete next.invoiceKey;
+          delete next.invoiceKeyManual;
+        }
+        return ensureInvoiceFieldsForTx(next, creditCards);
+      })
     );
-  }, []);
+  }, [creditCards]);
 
   const deleteTransaction = useCallback((tx) => {
     setTransactions((prev) => {

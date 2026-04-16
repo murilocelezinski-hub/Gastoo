@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fmt } from '../theme';
 import { Header, CatIcon, ConfirmModal } from '../components/Shared';
-import { useFinance, accountName, creditCardName } from '../context/FinanceContext';
+import { useFinance, accountName, creditCardName, invoiceLabelPtBr } from '../context/FinanceContext';
 import { useThemeColors } from '../context/AppPreferencesContext';
 
 function createDetailStyles(T) {
@@ -89,6 +89,7 @@ export default function DetailScreen({ navigation, route }) {
     ['Tipo', tx.tipo === 'entrada' ? 'Entrada' : 'Saída'],
     ['Conta', contaLabel],
     ...(tx.creditCardId ? [['Cartão', creditCardName(creditCards, tx.creditCardId)]] : []),
+    ...(tx.creditCardId && tx.invoiceKey ? [['Fatura', invoiceLabelPtBr(tx.invoiceKey)]] : []),
     ...(tx.gastoTipo && tx.gastoTipo !== 'nenhum' ? [['Gasto', tx.gastoTipo === 'fixo' ? 'Fixo' : 'Parcelado']] : []),
     ...(tx.gastoTipo && tx.gastoTipo !== 'nenhum' && tx.periodicidade
       ? [
