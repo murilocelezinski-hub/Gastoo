@@ -137,6 +137,7 @@ export default function NewTransactionScreen({ navigation }) {
   const [invoiceManual, setInvoiceManual] = useState(false);
   const valorRef = useRef(null);
   const descRef = useRef(null);
+  const prevCardIdRef = useRef(null);
 
   const mode = kind === 'transfer' ? 'transfer' : 'normal';
   const tipo = kind === 'receita' ? 'entrada' : 'saída';
@@ -168,6 +169,7 @@ export default function NewTransactionScreen({ navigation }) {
       if (!accountId && act[0]?.id) setAccountId(act[0].id);
       setInvoiceKey(null);
       setInvoiceManual(false);
+      prevCardIdRef.current = null;
     } else {
       // cartao
       if (accountId) setAccountId(null);
@@ -185,7 +187,16 @@ export default function NewTransactionScreen({ navigation }) {
   useEffect(() => {
     if (paySource !== 'cartao') return;
     if (!invoiceKeyAuto) return;
-    if (!invoiceManual) setInvoiceKey(invoiceKeyAuto);
+    const prev = prevCardIdRef.current;
+    const cardChanged = prev != null && creditCardId != null && String(prev) !== String(creditCardId);
+    if (cardChanged) {
+      // A seleção manual de fatura não deve “vazar” entre cartões.
+      setInvoiceManual(false);
+      setInvoiceKey(invoiceKeyAuto);
+    } else if (!invoiceManual) {
+      setInvoiceKey(invoiceKeyAuto);
+    }
+    prevCardIdRef.current = creditCardId;
   }, [invoiceKeyAuto, invoiceManual, paySource]);
 
   const handleValor = (text) => {

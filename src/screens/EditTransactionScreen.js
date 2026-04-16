@@ -159,6 +159,7 @@ export default function EditTransactionScreen({ navigation, route }) {
   const [gastoTipo, setGastoTipo] = useState(tx.gastoTipo || 'nenhum');
   const [periodicidade, setPeriodicidade] = useState(tx.periodicidade || 'mensal');
   const valorRef = useRef(null);
+  const prevCardIdRef = useRef(tx.creditCardId || null);
 
   useEffect(() => {
     if (route.params?.selectedCategory) {
@@ -194,9 +195,19 @@ export default function EditTransactionScreen({ navigation, route }) {
     if (!creditCardId) {
       setInvoiceKey(null);
       setInvoiceManual(false);
+      prevCardIdRef.current = null;
       return;
     }
-    if (invoiceKeyAuto && !invoiceManual) setInvoiceKey(invoiceKeyAuto);
+    const prev = prevCardIdRef.current;
+    const cardChanged = prev != null && String(prev) !== String(creditCardId);
+    if (cardChanged) {
+      // A seleção manual de fatura não deve “vazar” entre cartões.
+      setInvoiceManual(false);
+      setInvoiceKey(invoiceKeyAuto || null);
+    } else if (invoiceKeyAuto && !invoiceManual) {
+      setInvoiceKey(invoiceKeyAuto);
+    }
+    prevCardIdRef.current = creditCardId;
   }, [creditCardId, invoiceKeyAuto, invoiceManual]);
 
   const displayValor = valor ? parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '';

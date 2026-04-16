@@ -507,15 +507,25 @@ export function FinanceProvider({ children }) {
       prev.map((t) => {
         if (String(t.id) !== String(updated.id)) return t;
         const next = { ...t, ...updated };
-        // Se usuário não "fixou" fatura manualmente, recalcula ao mudar data/cartão
+        const cardChanged = String(t.creditCardId || '') !== String(next.creditCardId || '');
+        // Se mudar o cartão, recalcula sempre (manual não deve persistir entre cartões).
         if (next.creditCardId) {
-          const manual = Boolean(next.invoiceKeyManual);
-          if (!manual && (!next.invoiceKey || t.data !== next.data || String(t.creditCardId) !== String(next.creditCardId))) {
+          if (cardChanged) {
             const card = creditCards.find((c) => String(c.id) === String(next.creditCardId));
             const dateObj = parseBrDate(next.data);
             const computed = invoiceKeyFromDateAndCloseDay(dateObj || new Date(), card?.diaFechamento ?? 10);
             next.invoiceKey = computed;
             next.invoiceKeyManual = false;
+          } else {
+            // Se usuário não "fixou" fatura manualmente, recalcula ao mudar data
+            const manual = Boolean(next.invoiceKeyManual);
+            if (!manual && (!next.invoiceKey || t.data !== next.data)) {
+              const card = creditCards.find((c) => String(c.id) === String(next.creditCardId));
+              const dateObj = parseBrDate(next.data);
+              const computed = invoiceKeyFromDateAndCloseDay(dateObj || new Date(), card?.diaFechamento ?? 10);
+              next.invoiceKey = computed;
+              next.invoiceKeyManual = false;
+            }
           }
         } else {
           delete next.invoiceKey;
