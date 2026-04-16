@@ -13,7 +13,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../context/AppPreferencesContext';
 import { Header, PrimaryButton, CatIcon } from '../components/Shared';
-import { useFinance, activeAccounts, activeCreditCards } from '../context/FinanceContext';
+import { useFinance, activeAccounts, activeCreditCards, invoiceKeyFromDateAndCloseDay, invoiceLabelPtBr } from '../context/FinanceContext';
 
 function parseBrDate(s) {
   if (!s) return null;
@@ -30,6 +30,18 @@ function parseBrDate(s) {
 function formatBrDate(d) {
   const p = (n) => String(n).padStart(2, '0');
   return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
+function invoiceKeyShift(key, deltaMonths) {
+  const m = String(key || '').match(/^(\d{4})-(\d{2})$/);
+  if (!m) return key;
+  const yy = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  const d = new Date(yy, mm - 1, 1);
+  d.setMonth(d.getMonth() + deltaMonths);
+  const y2 = d.getFullYear();
+  const m2 = String(d.getMonth() + 1).padStart(2, '0');
+  return `${y2}-${m2}`;
 }
 
 function createEditTransactionStyles(T) {
@@ -142,6 +154,8 @@ export default function EditTransactionScreen({ navigation, route }) {
   const [categoria, setCategoria] = useState(tx.categoria);
   const [accountId, setAccountId] = useState(tx.accountId || accounts[0]?.id);
   const [creditCardId, setCreditCardId] = useState(tx.creditCardId || null);
+  const [invoiceKey, setInvoiceKey] = useState(tx.invoiceKey || null);
+  const [invoiceManual, setInvoiceManual] = useState(Boolean(tx.invoiceKeyManual));
   const [gastoTipo, setGastoTipo] = useState(tx.gastoTipo || 'nenhum');
   const [periodicidade, setPeriodicidade] = useState(tx.periodicidade || 'mensal');
   const valorRef = useRef(null);
@@ -169,6 +183,22 @@ export default function EditTransactionScreen({ navigation, route }) {
     setData(formatBrDate(selected));
   };
 
+  const invoiceKeyAuto = useMemo(() => {
+    if (!creditCardId) return null;
+    const card = creditCards.find((c) => String(c.id) === String(creditCardId));
+    if (!card) return null;
+    return invoiceKeyFromDateAndCloseDay(dataObj, card.diaFechamento);
+  }, [creditCardId, creditCards, dataObj]);
+
+  useEffect(() => {
+    if (!creditCardId) {
+      setInvoiceKey(null);
+      setInvoiceManual(false);
+      return;
+    }
+    if (invoiceKeyAuto && !invoiceManual) setInvoiceKey(invoiceKeyAuto);
+  }, [creditCardId, invoiceKeyAuto, invoiceManual]);
+
   const displayValor = valor ? parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '';
 
   const PERIODS = [
@@ -193,6 +223,7 @@ export default function EditTransactionScreen({ navigation, route }) {
       categoria,
       accountId,
       creditCardId: creditCardId || null,
+      ...(creditCardId ? { invoiceKey: invoiceKey || invoiceKeyAuto, invoiceKeyManual: invoiceManual } : {}),
       ...(gastoTipo === 'nenhum' ? { gastoTipo: 'nenhum', periodicidade: undefined } : { gastoTipo, periodicidade }),
     };
     updateTransaction(updated);
@@ -322,6 +353,35 @@ export default function EditTransactionScreen({ navigation, route }) {
               <Text style={styles.blockText}>Você ainda não cadastrou cartões.</Text>
             )}
           </View>
+
+          {creditCardId ? (
+            <View style={styles.field}>
+              <Text style={styles.label}>Fatura</Text>
+              {invoiceKeyAuto ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountRow}>
+                  {[
+                    { key: invoiceKeyShift(invoiceKeyAuto, -1), label: invoiceLabelPtBr(invoiceKeyShift(invoiceKeyAuto, -1)) },
+                    { key: invoiceKeyAuto, label: `${invoiceLabelPtBr(invoiceKeyAuto)} (auto)` },
+                    { key: invoiceKeyShift(invoiceKeyAuto, 1), label: invoiceLabelPtBr(invoiceKeyShift(invoiceKeyAuto, 1)) },
+                  ].map((opt) => (
+                    <TouchableOpacity
+                      key={opt.key}
+                      onPress={() => {
+                        setInvoiceKey(opt.key);
+                        setInvoiceManual(opt.key !== invoiceKeyAuto);
+                      }}
+                      style={[styles.accountPill, invoiceKey === opt.key && styles.accountPillActive]}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.accountText, invoiceKey === opt.key && styles.accountTextActive]}>{opt.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              ) : (
+                <Text style={styles.blockText}>Não foi possível sugerir a fatura.</Text>
+              )}
+            </View>
+          ) : null}
 
           <View style={styles.field}>
             <Text style={styles.label}>Tipo de gasto</Text>
