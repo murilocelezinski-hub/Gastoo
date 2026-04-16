@@ -73,7 +73,12 @@ function ensureInvoiceFieldsForTx(tx, creditCards) {
   const computed = invoiceKeyFromDateAndCloseDay(dateObj || new Date(), card?.diaFechamento ?? 10);
 
   if (tx.invoiceKey) {
-    return { ...tx, invoiceKeyManual: tx.invoiceKeyManual ?? true };
+    // Se o dado veio legado (invoiceKey existe, mas invoiceKeyManual não),
+    // inferimos: se bate com o cálculo, então é "auto"; se diverge, foi "fixado".
+    if (tx.invoiceKeyManual === undefined || tx.invoiceKeyManual === null) {
+      return { ...tx, invoiceKeyManual: tx.invoiceKey === computed ? false : true };
+    }
+    return { ...tx, invoiceKeyManual: Boolean(tx.invoiceKeyManual) };
   }
   return { ...tx, invoiceKey: computed, invoiceKeyManual: false };
 }
