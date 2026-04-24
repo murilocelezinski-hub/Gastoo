@@ -12,7 +12,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polyline, Line, Circle } from 'react-native-svg';
 import { fmt } from '../theme';
-import { CatIcon } from '../components/Shared';
 import {
   useFinance,
   balanceForAccount,
@@ -21,10 +20,10 @@ import {
   activeCreditCards,
   invoiceKeyFromDateAndCloseDay,
   invoiceLabelPtBr,
+  isTransactionEffectiveOnOrBefore,
 } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { buildBalanceEvolutionSeries } from '../utils/chart';
-import { sortTransactionsByDate } from '../utils/txSort';
 
 const BALANCE_MODES = [
   { key: 'current_month', short: 'Mês' },
@@ -211,8 +210,16 @@ function createStyles(T) {
       justifyContent: 'center',
       overflow: 'hidden',
     },
-    accountsSection: { marginBottom: 16 },
-    accountsRow: { paddingHorizontal: 20, gap: 10 },
+    accountsSection: { marginBottom: 12 },
+    sectionLabel: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 12,
+      color: T.brandFgMuted,
+      marginBottom: 8,
+      marginHorizontal: 20,
+      letterSpacing: 0.3,
+    },
+    accountsRow: { paddingHorizontal: 20, gap: 10, paddingBottom: 4 },
     accountCard: {
       width: 120,
       borderRadius: 16,
@@ -297,27 +304,6 @@ function createStyles(T) {
     },
     chartTooltipDate: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.brandFgMuted, flex: 1 },
     chartTooltipValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.orange, flexShrink: 0 },
-    recentHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginHorizontal: 20,
-      marginBottom: 12,
-    },
-    recentTitle: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.brandFgMuted },
-    seeAllText: { fontFamily: 'Poppins_600SemiBold', fontSize: 12, color: T.orange },
-    txRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      paddingVertical: 10,
-      marginHorizontal: 20,
-      borderBottomWidth: 1,
-      borderBottomColor: T.homeHairline,
-    },
-    txDesc: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.brandFg },
-    txDate: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.brandFgMuted },
-    txValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 14 },
     fab: {
       position: 'absolute',
       bottom: 24,
@@ -340,7 +326,7 @@ function createStyles(T) {
 
 export default function DashboardScreen({ navigation }) {
   const T = useThemeColors();
-  const { profile, transactionListOrder } = useAppPreferences();
+  const { profile } = useAppPreferences();
   const styles = useMemo(() => createStyles(T), [T]);
   const insets = useSafeAreaInsets();
   const { width: winW } = useWindowDimensions();
@@ -396,7 +382,7 @@ export default function DashboardScreen({ navigation }) {
     return 9;
   }, [labelIndexes.length]);
 
-  const filtered = selectedCard
+  const baseTotals = selectedCard
     ? (() => {
         const card = creditCards.find((c) => String(c.id) === String(selectedCard));
         const ik = currentInvoiceKey;
@@ -404,23 +390,17 @@ export default function DashboardScreen({ navigation }) {
         return transactions.filter((t) => {
           if (String(t.creditCardId) !== String(selectedCard)) return false;
           const txIk = txInvoiceKeyForCard(t, card);
-          return txIk === ik;
+          if (txIk !== ik) return false;
+          return isTransactionEffectiveOnOrBefore(t);
         });
       })()
     : selectedAccount
-      ? transactions.filter((t) => t.accountId === selectedAccount)
-      : transactions.filter((t) => activeIds.has(t.accountId));
-
-  const orderedRecent = useMemo(
-    () => sortTransactionsByDate(filtered, transactionListOrder).slice(0, 5),
-    [filtered, transactionListOrder]
-  );
-
-  const baseTotals = selectedCard
-    ? filtered
-    : selectedAccount
-      ? transactions.filter((t) => t.accountId === selectedAccount)
-      : transactions.filter((t) => activeIds.has(t.accountId));
+      ? transactions.filter(
+          (t) => t.accountId === selectedAccount && isTransactionEffectiveOnOrBefore(t)
+        )
+      : transactions.filter(
+          (t) => activeIds.has(t.accountId) && isTransactionEffectiveOnOrBefore(t)
+        );
 
   const totalIn = baseTotals.filter((t) => t.tipo === 'entrada' && !t.isTransfer).reduce((a, t) => a + t.valor, 0);
   const totalOut = baseTotals.filter((t) => t.tipo === 'saída' && !t.isTransfer).reduce((a, t) => a + t.valor, 0);
@@ -443,6 +423,7 @@ export default function DashboardScreen({ navigation }) {
         if (!ik) continue;
         const txIk = txInvoiceKeyForCard(t, c);
         if (txIk !== ik) continue;
+        if (!isTransactionEffectiveOnOrBefore(t)) continue;
         if (t.isTransfer) continue;
         total += t.tipo === 'saída' ? t.valor : -t.valor;
       }
@@ -484,71 +465,90 @@ export default function DashboardScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
       >
-        <View style={styles.accountsSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountsRow}>
-            {act.length > 0 ? (
-              <>
-                <TouchableOpacity
-                  style={[styles.accountCard, !selectedAccount && !selectedCard && styles.accountCardActive]}
-                  onPress={() => {
-                    setSelectedAccount(null);
-                    setSelectedCard(null);
-                  }}
-                  activeOpacity={0.7}
+        {act.length > 0 ? (
+          <View style={styles.accountsSection}>
+            <Text style={styles.sectionLabel}>Contas</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountsRow}>
+              <TouchableOpacity
+                style={[styles.accountCard, !selectedAccount && !selectedCard && styles.accountCardActive]}
+                onPress={() => {
+                  setSelectedAccount(null);
+                  setSelectedCard(null);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.accountCardIcon}>🌐</Text>
+                <Text style={[styles.accountCardName, !selectedAccount && !selectedCard && styles.accountCardNameActive]}>
+                  Geral
+                </Text>
+                <Text
+                  style={[
+                    styles.accountCardBalance,
+                    !selectedAccount && !selectedCard && styles.accountCardBalanceActive,
+                  ]}
                 >
-                  <Text style={styles.accountCardIcon}>🌐</Text>
-                  <Text style={[styles.accountCardName, !selectedAccount && styles.accountCardNameActive]}>Geral</Text>
-                  <Text style={[styles.accountCardBalance, !selectedAccount && styles.accountCardBalanceActive]}>
-                    {hidden ? mask : fmt(totalBalance(accounts, transactions))}
-                  </Text>
-                </TouchableOpacity>
+                  {hidden ? mask : fmt(totalBalance(accounts, transactions))}
+                </Text>
+              </TouchableOpacity>
 
-                {act.map((ac) => {
-                  const isActive = !selectedCard && selectedAccount === ac.id;
-                  const bal = balanceForAccount(accounts, transactions, ac.id);
-                  return (
-                    <TouchableOpacity
-                      key={ac.id}
-                      style={[styles.accountCard, isActive && styles.accountCardActive]}
-                      onPress={() => {
-                        setSelectedCard(null);
-                        setSelectedAccount(ac.id);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.accountCardIcon}>{ac.icon}</Text>
-                      <Text style={[styles.accountCardName, isActive && styles.accountCardNameActive]}>{ac.name}</Text>
-                      <Text style={[styles.accountCardBalance, isActive && styles.accountCardBalanceActive]}>
-                        {hidden ? mask : fmt(bal)}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
+              {act.map((ac) => {
+                const isActive = !selectedCard && selectedAccount === ac.id;
+                const bal = balanceForAccount(accounts, transactions, ac.id);
+                return (
+                  <TouchableOpacity
+                    key={ac.id}
+                    style={[styles.accountCard, isActive && styles.accountCardActive]}
+                    onPress={() => {
+                      setSelectedCard(null);
+                      setSelectedAccount(ac.id);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.accountCardIcon}>{ac.icon}</Text>
+                    <Text style={[styles.accountCardName, isActive && styles.accountCardNameActive]}>{ac.name}</Text>
+                    <Text style={[styles.accountCardBalance, isActive && styles.accountCardBalanceActive]}>
+                      {hidden ? mask : fmt(bal)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        ) : null}
 
-                {cardsAct.map((c) => {
-                  const isActive = selectedCard && String(selectedCard) === String(c.id);
-                  const total = invoiceTotalsByCard.get(String(c.id)) || 0;
-                  return (
-                    <TouchableOpacity
-                      key={c.id}
-                      style={[styles.accountCard, isActive && styles.accountCardActive]}
-                      onPress={() => {
-                        setSelectedAccount(null);
-                        setSelectedCard(c.id);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.accountCardIcon}>{c.icon}</Text>
-                      <Text style={[styles.accountCardName, isActive && styles.accountCardNameActive]}>{c.name}</Text>
-                      <Text style={[styles.accountCardBalance, isActive && styles.accountCardBalanceActive]}>
-                        {hidden ? mask : fmt(total)}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </>
-            ) : null}
-          </ScrollView>
+        <View style={styles.accountsSection}>
+          <Text style={styles.sectionLabel}>Cartões</Text>
+          {cardsAct.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountsRow}>
+              {cardsAct.map((c) => {
+                const isActive = selectedCard && String(selectedCard) === String(c.id);
+                const total = invoiceTotalsByCard.get(String(c.id)) || 0;
+                return (
+                  <TouchableOpacity
+                    key={c.id}
+                    style={[styles.accountCard, isActive && styles.accountCardActive]}
+                    onPress={() => {
+                      setSelectedAccount(null);
+                      setSelectedCard(c.id);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.accountCardIcon}>{c.icon}</Text>
+                    <Text style={[styles.accountCardName, isActive && styles.accountCardNameActive]}>{c.name}</Text>
+                    <Text style={[styles.accountCardBalance, isActive && styles.accountCardBalanceActive]}>
+                      {hidden ? mask : fmt(total)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          ) : (
+            <Text
+              style={{ fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.brandFgMuted, marginHorizontal: 20, marginBottom: 4 }}
+            >
+              Nenhum cartão cadastrado. Em Perfil → Cartões de crédito você pode adicionar.
+            </Text>
+          )}
         </View>
 
         <View style={[styles.saldoCard, saldo < 0 && { borderWidth: 2, borderColor: T.burnt }]}>
@@ -617,34 +617,6 @@ export default function DashboardScreen({ navigation }) {
             </View>
           ) : null}
         </View>
-
-        <View style={styles.recentHeader}>
-          <Text style={styles.recentTitle}>{selectedCard ? 'Transações da fatura atual' : 'Transações recentes'}</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('History')}>
-            <Text style={styles.seeAllText}>Ver todas →</Text>
-          </TouchableOpacity>
-        </View>
-
-        {orderedRecent.map((tx) => (
-          <TouchableOpacity
-            key={tx.id}
-            style={styles.txRow}
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate('Detail', { tx })}
-          >
-            <CatIcon category={tx.categoria} size={38} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.txDesc} numberOfLines={1}>
-                {tx.descricao}
-              </Text>
-              <Text style={styles.txDate}>{tx.data}</Text>
-            </View>
-            <Text style={[styles.txValue, { color: tx.tipo === 'entrada' ? T.gold : T.burnt }]}>
-              {tx.tipo === 'entrada' ? '+' : '-'}
-              {fmt(tx.valor)}
-            </Text>
-          </TouchableOpacity>
-        ))}
       </ScrollView>
 
       <TouchableOpacity style={styles.fab} activeOpacity={0.8} onPress={() => navigation.navigate('NewTransaction')}>
