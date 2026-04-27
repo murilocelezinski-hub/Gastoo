@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fmt } from '../theme';
 import { Header, CatIcon, ConfirmModal } from '../components/Shared';
@@ -66,6 +66,39 @@ function createDetailStyles(T) {
       marginTop: 12,
       textAlign: 'center',
     },
+    parcelModalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.45)',
+      justifyContent: 'center',
+      padding: 24,
+    },
+    parcelModalCard: {
+      width: '100%',
+      maxWidth: 400,
+      alignSelf: 'center',
+      backgroundColor: T.white,
+      borderRadius: 16,
+      padding: 20,
+      borderWidth: 1,
+      borderColor: T.graySilver,
+    },
+    parcelModalHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+      marginBottom: 10,
+    },
+    parcelModalTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 16, color: T.graphite, flex: 1 },
+    parcelModalCancel: { paddingVertical: 4, paddingHorizontal: 2 },
+    parcelModalCancelText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.orange },
+    parcelActionBtn: {
+      width: '100%',
+      paddingVertical: 14,
+      borderRadius: 12,
+      alignItems: 'center',
+      marginBottom: 10,
+    },
   });
 }
 
@@ -76,11 +109,36 @@ export default function DetailScreen({ navigation, route }) {
   const { tx } = route.params;
   const { accounts, creditCards, deleteTransaction, showToast } = useFinance();
   const [showModal, setShowModal] = useState(false);
+  const [showParcelDelete, setShowParcelDelete] = useState(false);
+
+  const isParcelGroup = Boolean(tx?.parcelaGrupoId && tx?.gastoTipo === 'parcelado');
 
   const handleDelete = () => {
     setShowModal(false);
     deleteTransaction(tx);
     showToast(tx.transferGroupId ? 'Transferência excluída.' : 'Transação excluída.');
+    navigation.goBack();
+  };
+
+  const openDelete = () => {
+    if (isParcelGroup) {
+      setShowParcelDelete(true);
+    } else {
+      setShowModal(true);
+    }
+  };
+
+  const deleteThisParcelOnly = () => {
+    setShowParcelDelete(false);
+    deleteTransaction(tx);
+    showToast('Parcela excluída.');
+    navigation.goBack();
+  };
+
+  const deleteThisAndFuture = () => {
+    setShowParcelDelete(false);
+    deleteTransaction(tx, { withFutureParcels: true });
+    showToast('Parcelas excluídas.');
     navigation.goBack();
   };
 
@@ -107,6 +165,9 @@ export default function DetailScreen({ navigation, route }) {
             }[tx.periodicidade] || tx.periodicidade),
           ],
         ]
+      : []),
+    ...(tx.gastoTipo === 'parcelado' && tx.parcelaIndice != null && tx.parcelaTotal != null
+      ? [[`Parcela`, `${tx.parcelaIndice} de ${tx.parcelaTotal}`]]
       : []),
     ['Data', tx.data],
     ['Observações', tx.obs || '—'],
@@ -149,7 +210,7 @@ export default function DetailScreen({ navigation, route }) {
             >
               <Text style={styles.editBtnText}>{tx.isTransfer ? 'Transferência' : 'Editar'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.deleteBtn} activeOpacity={0.7} onPress={() => setShowModal(true)}>
+            <TouchableOpacity style={styles.deleteBtn} activeOpacity={0.7} onPress={openDelete}>
               <Text style={styles.deleteBtnText}>Excluir</Text>
             </TouchableOpacity>
           </View>
@@ -166,6 +227,59 @@ export default function DetailScreen({ navigation, route }) {
         onCancel={() => setShowModal(false)}
         onConfirm={handleDelete}
       />
+
+      <Modal
+        visible={showParcelDelete}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowParcelDelete(false)}
+      >
+        <View style={styles.parcelModalOverlay}>
+          <View style={styles.parcelModalCard}>
+            <View style={styles.parcelModalHeader}>
+              <Text style={styles.parcelModalTitle}>Encerrar parcelas</Text>
+              <TouchableOpacity
+                onPress={() => setShowParcelDelete(false)}
+                style={styles.parcelModalCancel}
+                activeOpacity={0.7}
+                hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+              >
+                <Text style={styles.parcelModalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+            <Text
+              style={[
+                styles.infoLabel,
+                { lineHeight: 20, textAlign: 'left', color: T.grayMed, width: '100%', marginBottom: 16 },
+              ]}
+            >
+              {tx?.parcelaIndice}ª parcela de {tx?.parcelaTotal}. O que deseja remover?
+            </Text>
+            <TouchableOpacity
+              onPress={deleteThisParcelOnly}
+              style={[styles.parcelActionBtn, { backgroundColor: T.burnt, marginBottom: 10 }]}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.deleteBtnText}>Apenas esta parcela</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={deleteThisAndFuture}
+              style={[
+                styles.parcelActionBtn,
+                {
+                  borderWidth: 1.5,
+                  borderColor: T.burnt,
+                  backgroundColor: T.white,
+                  marginBottom: 0,
+                },
+              ]}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.editBtnText, { color: T.burnt, fontSize: 14 }]}>Esta e as parcelas futuras</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

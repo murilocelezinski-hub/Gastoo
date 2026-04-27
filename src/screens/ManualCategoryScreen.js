@@ -57,7 +57,7 @@ export default function ManualCategoryScreen({ navigation, route }) {
   const styles = useMemo(() => createStyles(T), [T]);
   const insets = useSafeAreaInsets();
   const { txData, excludeCategories = [] } = route.params;
-  const { addTransaction, showToast } = useFinance();
+  const { addTransaction, addInstallmentTransactions, showToast } = useFinance();
   const { categories } = useAppPreferences();
   const [selected, setSelected] = useState(null);
 
@@ -80,8 +80,13 @@ export default function ManualCategoryScreen({ navigation, route }) {
       obs: '',
       criado_por_ia: false,
     };
-    addTransaction(newTx);
-    showToast('Transação salva! ✓');
+    if (newTx.gastoTipo === 'parcelado') {
+      addInstallmentTransactions(newTx);
+      showToast('Parcelas salvas! ✓');
+    } else {
+      addTransaction(newTx);
+      showToast('Transação salva! ✓');
+    }
     navigation.navigate('Main');
   };
 

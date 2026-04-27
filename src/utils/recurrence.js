@@ -85,6 +85,8 @@ export function projectedRecurringOut(transactions, now = new Date()) {
     if (t.tipo !== 'saída') continue;
     if (!t.gastoTipo || t.gastoTipo === 'nenhum') continue;
     if (!t.periodicidade) continue;
+    // Parcelas expandidas em múltiplas transações reais: não projetar de novo
+    if (t.gastoTipo === 'parcelado' && t.parcelaGrupoId) continue;
 
     // Encontra a primeira ocorrência >= hoje.
     let occ = nextOccurrenceDate(t, today);
@@ -107,5 +109,23 @@ export function projectedRecurringOut(transactions, now = new Date()) {
   }
 
   return total;
+}
+
+/**
+ * Próxima parcela a vencer (data >= hoje) dentro do mesmo grupo; se todas no passado, a última.
+ */
+export function nextParcelInGroup(siblings, referenceDate = new Date()) {
+  if (!siblings?.length) return null;
+  const ref = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
+  const withD = siblings
+    .map((t) => ({ t, d: parseTxDate(t.data) }))
+    .filter((x) => !Number.isNaN(x.d.getTime()));
+  if (!withD.length) return null;
+  const day = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const upcoming = withD.filter((x) => day(x.d) >= ref);
+  if (upcoming.length) {
+    return upcoming.sort((a, b) => a.d - b.d)[0].t;
+  }
+  return withD.sort((a, b) => b.d - a.d)[0].t;
 }
 

@@ -49,8 +49,10 @@ export function buildBalanceEvolutionSeries(accounts, transactions, selectedAcco
   if (mode === 'current_month') {
     const y = ref.getFullYear();
     const m = ref.getMonth();
-    const lastDay = ref.getDate();
-    for (let d = 1; d <= lastDay; d++) {
+    // Até o fim do mês: o gráfico funciona como projeção; lançamentos com data futura
+    // entram a partir do dia de competência, não no saldo "até hoje" (balanceForAccount).
+    const endDay = new Date(y, m + 1, 0).getDate();
+    for (let d = 1; d <= endDay; d++) {
       const day = new Date(y, m, d);
       points.push({
         label: `${pad2(d)}/${pad2(m + 1)}`,
@@ -76,8 +78,9 @@ export function buildBalanceEvolutionSeries(accounts, transactions, selectedAcco
       const monthStart = new Date(ref.getFullYear(), ref.getMonth() - i, 1);
       const isCurrent =
         monthStart.getMonth() === ref.getMonth() && monthStart.getFullYear() === ref.getFullYear();
+      // Mês atual: ponto no último dia do mês = projeção; meses fechados = fim do mês.
       const cut = isCurrent
-        ? ref
+        ? new Date(ref.getFullYear(), ref.getMonth() + 1, 0)
         : new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
       points.push({
         label: `${MONTH_SHORT[monthStart.getMonth()]}/${String(monthStart.getFullYear()).slice(-2)}`,
