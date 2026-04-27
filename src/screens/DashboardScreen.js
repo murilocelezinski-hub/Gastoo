@@ -10,7 +10,7 @@ import {
   PanResponder,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Polyline, Line, Circle } from 'react-native-svg';
+import Svg, { Polyline, Polygon, Line, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { fmt } from '../theme';
 import {
   useFinance,
@@ -88,10 +88,13 @@ function BalanceLineChart({
 }) {
   const [activeIndex, setActiveIndex] = useState(null);
 
+  // Default to last point; scrub overrides it
+  const displayIndex = activeIndex !== null ? activeIndex : points.length - 1;
+
   const geom = useMemo(() => {
     const padL = 2;
     const padR = 4;
-    const padT = 6;
+    const padT = 12;
     const padB = 4;
     const innerW = Math.max(width - padL - padR, 1);
     const innerH = Math.max(height - padT - padB, 1);
@@ -101,10 +104,7 @@ function BalanceLineChart({
     const vals = points.map((p) => p.balance);
     let minV = Math.min(...vals);
     let maxV = Math.max(...vals);
-    if (maxV === minV) {
-      minV -= 1;
-      maxV += 1;
-    }
+    if (maxV === minV) { minV -= 1; maxV += 1; }
     const span = maxV - minV;
     const n = Math.max(points.length - 1, 1);
     const coords = points.map((p, i) => {
@@ -144,67 +144,66 @@ function BalanceLineChart({
 
   if (!points.length) {
     return (
-      <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: 12, color: mutedColor, textAlign: 'center' }}>
+      <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: 12, color: mutedColor, textAlign: 'center', paddingVertical: 20 }}>
         Sem dados neste período
       </Text>
     );
   }
 
   const { padL, padR, padT, innerW, innerH, coords, yZero, showZero } = geom;
-  const pointsStr = coords.map((c) => `${c.x},${c.y}`).join(' ');
-  const scrub = activeIndex !== null && coords[activeIndex];
-  const pt = scrub ? points[activeIndex] : null;
+  const linePointsStr = coords.map((c) => `${c.x},${c.y}`).join(' ');
+
+  // Area fill: line coords + bottom-right + bottom-left corners
+  const areaPointsStr = [
+    ...coords.map((c) => `${c.x},${c.y}`),
+    `${coords[coords.length - 1].x},${padT + innerH}`,
+    `${coords[0].x},${padT + innerH}`,
+  ].join(' ');
+
+  const activeCoord = coords[displayIndex];
+  const activePt = points[displayIndex];
 
   return (
     <View style={{ width }}>
       <View {...panResponder.panHandlers} style={{ width, height }}>
         <Svg width={width} height={height}>
+          <Defs>
+            <LinearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0%" stopColor={lineColor} stopOpacity="0.25" />
+              <Stop offset="100%" stopColor={lineColor} stopOpacity="0.02" />
+            </LinearGradient>
+          </Defs>
+
+          {/* Área preenchida */}
+          <Polygon points={areaPointsStr} fill="url(#areaGrad)" />
+
+          {/* Linha zero */}
           {showZero ? (
-            <Line
-              x1={padL}
-              y1={yZero}
-              x2={width - padR}
-              y2={yZero}
-              stroke={zeroColor}
-              strokeWidth={1}
-              strokeDasharray="3,5"
-            />
+            <Line x1={padL} y1={yZero} x2={width - padR} y2={yZero}
+              stroke={zeroColor} strokeWidth={1} strokeDasharray="3,5" />
           ) : null}
-          <Polyline
-            points={pointsStr}
-            fill="none"
-            stroke={lineColor}
-            strokeWidth={2.5}
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
-          {scrub ? (
-            <>
-              <Line
-                x1={coords[activeIndex].x}
-                y1={padT}
-                x2={coords[activeIndex].x}
-                y2={padT + innerH}
-                stroke={lineColor}
-                strokeWidth={1}
-                opacity={0.45}
-              />
-              <Circle cx={coords[activeIndex].x} cy={coords[activeIndex].y} r={6} fill={lineColor} opacity={0.35} />
-              <Circle cx={coords[activeIndex].x} cy={coords[activeIndex].y} r={4} fill={lineColor} />
-            </>
-          ) : null}
+
+          {/* Linha principal */}
+          <Polyline points={linePointsStr} fill="none" stroke={lineColor}
+            strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+
+          {/* Marcador do ponto ativo (padrão = último ponto) */}
+          <Line x1={activeCoord.x} y1={padT} x2={activeCoord.x} y2={padT + innerH}
+            stroke={lineColor} strokeWidth={1} opacity={activeIndex !== null ? 0.5 : 0.25} />
+          <Circle cx={activeCoord.x} cy={activeCoord.y} r={7} fill={lineColor} opacity={0.2} />
+          <Circle cx={activeCoord.x} cy={activeCoord.y} r={4} fill={lineColor} />
         </Svg>
       </View>
-      {scrub && pt ? (
-        <View style={tooltipStyle} accessibilityLiveRegion="polite">
-          <Text style={tooltipDateStyle} numberOfLines={1}>
-            {formatTooltipDate(pt.date)}
-          </Text>
-          <Text style={tooltipValueStyle}>
-            {hidden ? mask : fmtMoney(pt.balance)}
-          </Text>
-        </View>
-      ) : null}
+
+      {/* Tooltip sempre visível — padrão = último ponto */}
+      <View style={tooltipStyle} accessibilityLiveRegion="polite">
+        <Text style={tooltipDateStyle} numberOfLines={1}>
+          {formatTooltipDate(activePt.date)}
+        </Text>
+        <Text style={tooltipValueStyle}>
+          {hidden ? mask : fmtMoney(activePt.balance)}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -332,20 +331,20 @@ function createStyles(T, isDesktop, isMobile) {
     chartLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6, paddingHorizontal: 2, gap: 2 },
     chartLabelMini: { fontFamily: 'Poppins_400Regular', fontSize: 9, color: T.brandFgMuted, flex: 1, textAlign: 'center' },
     chartScrubReadout: {
-      marginTop: 10,
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-      borderRadius: 10,
-      backgroundColor: 'rgba(0,0,0,0.14)',
+      marginTop: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderRadius: 12,
+      backgroundColor: T.homeGlass,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       gap: 10,
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: T.homeHairline,
     },
     chartTooltipDate: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.brandFgMuted, flex: 1 },
-    chartTooltipValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.orange, flexShrink: 0 },
+    chartTooltipValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 16, color: T.orange, flexShrink: 0 },
     recentHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -427,8 +426,10 @@ export default function DashboardScreen({ navigation }) {
     if (!selectedCard) return null;
     const card = creditCards.find((c) => String(c.id) === String(selectedCard));
     if (!card) return null;
-    return invoiceKeyFromDateAndCloseDay(new Date(), card.diaFechamento);
-  }, [creditCards, selectedCard]);
+    // Usa o mês/ano selecionado no filtro, não a data de hoje
+    const refDate = new Date(inOutYear, inOutMonth - 1, 15);
+    return invoiceKeyFromDateAndCloseDay(refDate, card.diaFechamento);
+  }, [creditCards, selectedCard, inOutMonth, inOutYear]);
 
   const txInvoiceKeyForCard = useCallback((tx, card) => {
     if (!tx || !card) return null;
@@ -732,7 +733,7 @@ export default function DashboardScreen({ navigation }) {
                 </TouchableOpacity>
               </View>
               <Text style={styles.saldoValue}>{hidden ? mask : fmt(saldo)}</Text>
-              <View style={{ flexDirection: 'row', gap: 20, marginBottom: selectedCard ? 0 : 12 }}>
+              <View style={{ flexDirection: 'row', gap: 20, marginBottom: 12 }}>
                 <View>
                   <Text style={styles.miniLabel}>{selectedCard ? 'Créditos' : 'Entradas'}</Text>
                   <Text style={[styles.miniValue, { color: T.gold }]}>{hidden ? mask : `+${fmt(totalIn)}`}</Text>
@@ -742,17 +743,15 @@ export default function DashboardScreen({ navigation }) {
                   <Text style={[styles.miniValue, { color: '#FFB899' }]}>{hidden ? mask : `-${fmt(totalOut)}`}</Text>
                 </View>
               </View>
-              {!selectedCard && (
-                <View style={styles.monthMiniNav}>
-                  <TouchableOpacity onPress={() => goInOut(prevInOut)} hitSlop={12} style={styles.monthMiniArrowBtn}>
-                    <Text style={styles.monthMiniArrow}>‹</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.monthMiniLabel}>{monthLabel(inOutMonth, inOutYear)}</Text>
-                  <TouchableOpacity onPress={() => goInOut(nextInOut)} hitSlop={12} style={styles.monthMiniArrowBtn}>
-                    <Text style={styles.monthMiniArrow}>›</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
+              <View style={styles.monthMiniNav}>
+                <TouchableOpacity onPress={() => goInOut(prevInOut)} hitSlop={12} style={styles.monthMiniArrowBtn}>
+                  <Text style={styles.monthMiniArrow}>‹</Text>
+                </TouchableOpacity>
+                <Text style={styles.monthMiniLabel}>{monthLabel(inOutMonth, inOutYear)}</Text>
+                <TouchableOpacity onPress={() => goInOut(nextInOut)} hitSlop={12} style={styles.monthMiniArrowBtn}>
+                  <Text style={styles.monthMiniArrow}>›</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
 
