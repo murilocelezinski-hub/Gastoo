@@ -1,6 +1,8 @@
 import { useWindowDimensions } from 'react-native';
 import { useMemo } from 'react';
 
+// Test deploy - Vercel deployment test
+
 /**
  * Detecção de layout baseada em largura da tela
  * mobile: < 500px
