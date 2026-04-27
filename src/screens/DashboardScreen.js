@@ -119,8 +119,8 @@ function BalanceLineChart({
   const displayIndex = activeIndex !== null ? activeIndex : resolvedDefault;
 
   const geom = useMemo(() => {
-    const padL = 52; // espaço para labels do eixo Y
-    const padR = 6;
+    const padL = 6;
+    const padR = 52; // espaço para labels do eixo Y (direita)
     const padT = 14;
     const padB = 4;
     const innerW = Math.max(width - padL - padR, 1);
@@ -210,8 +210,8 @@ function BalanceLineChart({
                   stroke={zeroColor} strokeWidth={0.5} strokeDasharray="3,5" opacity={0.4}
                 />
                 <SvgText
-                  x={padL - 6} y={yPos + 3.5}
-                  textAnchor="end" fontSize={9} fill={mutedColor}
+                  x={padL + innerW + 6} y={yPos + 3.5}
+                  textAnchor="start" fontSize={9} fill={mutedColor}
                 >
                   {fmtYLabel(tick)}
                 </SvgText>

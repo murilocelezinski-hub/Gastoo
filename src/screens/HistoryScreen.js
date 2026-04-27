@@ -60,11 +60,11 @@ export default function HistoryScreen({ navigation }) {
     [transactions, selMonth, selYear]
   );
 
-  // 2. filtro por tipo
-  const byTipo = useMemo(() =>
-    tipoFilter === 'todos' ? byMonth : byMonth.filter((t) => t.tipo === tipoFilter),
-    [byMonth, tipoFilter]
-  );
+  // 2. filtro por tipo (transferências nunca aparecem em Receitas/Despesas)
+  const byTipo = useMemo(() => {
+    if (tipoFilter === 'todos') return byMonth;
+    return byMonth.filter((t) => !t.isTransfer && t.tipo === tipoFilter);
+  }, [byMonth, tipoFilter]);
 
   // 3. filtro por categoria
   const filtered = useMemo(() =>
@@ -77,9 +77,9 @@ export default function HistoryScreen({ navigation }) {
     [filtered, transactionListOrder]
   );
 
-  // resumo do mês (sobre byMonth, sem filtros de tipo/cat)
-  const totalEntradas = useMemo(() => byMonth.reduce((s, t) => t.tipo === 'entrada' ? s + t.valor : s, 0), [byMonth]);
-  const totalSaidas   = useMemo(() => byMonth.reduce((s, t) => t.tipo === 'saída'   ? s + t.valor : s, 0), [byMonth]);
+  // resumo do mês — exclui transferências
+  const totalEntradas = useMemo(() => byMonth.reduce((s, t) => !t.isTransfer && t.tipo === 'entrada' ? s + t.valor : s, 0), [byMonth]);
+  const totalSaidas   = useMemo(() => byMonth.reduce((s, t) => !t.isTransfer && t.tipo === 'saída'   ? s + t.valor : s, 0), [byMonth]);
   const saldo = totalEntradas - totalSaidas;
 
   const cats = ['Todos', ...CATEGORIES.map((c) => c.name)];
