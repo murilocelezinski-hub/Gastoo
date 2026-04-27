@@ -34,6 +34,25 @@ const BALANCE_MODES = [
   { key: 'last_12m', short: '12 m' },
 ];
 
+const MONTHS_PT = [
+  'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro',
+];
+const THIS_YEAR = new Date().getFullYear();
+
+function offsetMonth(month, year, delta) {
+  let m = month + delta;
+  let y = year;
+  if (m > 12) { m = 1; y += 1; }
+  if (m < 1)  { m = 12; y -= 1; }
+  return { month: m, year: y };
+}
+
+function monthLabel(month, year) {
+  const name = MONTHS_PT[month - 1];
+  return year !== THIS_YEAR ? `${name} ${year}` : name;
+}
+
 function formatTooltipDate(d) {
   if (!d || !(d instanceof Date) || Number.isNaN(d.getTime())) return '—';
   const day = String(d.getDate()).padStart(2, '0');
@@ -366,6 +385,18 @@ function createStyles(T, isDesktop, isMobile) {
       elevation: 8,
     },
     fabText: { fontSize: isDesktop ? 32 : 28, color: '#fff', fontFamily: 'Poppins_600SemiBold', marginTop: -2 },
+    monthMiniNav: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: 'rgba(0,0,0,0.15)',
+      borderRadius: 12,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+    },
+    monthMiniArrowBtn: { padding: 4 },
+    monthMiniArrow: { fontSize: 20, color: 'rgba(255,255,255,0.9)', fontFamily: 'Poppins_600SemiBold', lineHeight: 22 },
+    monthMiniLabel: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: '#fff', flex: 1, textAlign: 'center' },
   });
 }
 
@@ -384,7 +415,13 @@ export default function DashboardScreen({ navigation }) {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [selectedCard, setSelectedCard] = useState(null);
   const [balanceMode, setBalanceMode] = useState('current_month');
+  const [inOutMonth, setInOutMonth] = useState(() => new Date().getMonth() + 1);
+  const [inOutYear, setInOutYear] = useState(() => new Date().getFullYear());
   const mask = '••••••';
+
+  const prevInOut = offsetMonth(inOutMonth, inOutYear, -1);
+  const nextInOut = offsetMonth(inOutMonth, inOutYear, +1);
+  const goInOut = ({ month, year }) => { setInOutMonth(month); setInOutYear(year); };
 
   const currentInvoiceKey = useMemo(() => {
     if (!selectedCard) return null;
@@ -451,8 +488,17 @@ export default function DashboardScreen({ navigation }) {
           (t) => activeIds.has(t.accountId) && isTransactionEffectiveOnOrBefore(t)
         );
 
-  const totalIn = baseTotals.filter((t) => t.tipo === 'entrada' && !t.isTransfer).reduce((a, t) => a + t.valor, 0);
-  const totalOut = baseTotals.filter((t) => t.tipo === 'saída' && !t.isTransfer).reduce((a, t) => a + t.valor, 0);
+  const monthFilteredTotals = useMemo(() => {
+    if (selectedCard) return baseTotals;
+    return baseTotals.filter((t) => {
+      const p = t.data?.split('/');
+      if (!p || p.length !== 3) return false;
+      return parseInt(p[1], 10) === inOutMonth && parseInt(p[2], 10) === inOutYear;
+    });
+  }, [baseTotals, selectedCard, inOutMonth, inOutYear]);
+
+  const totalIn = monthFilteredTotals.filter((t) => t.tipo === 'entrada' && !t.isTransfer).reduce((a, t) => a + t.valor, 0);
+  const totalOut = monthFilteredTotals.filter((t) => t.tipo === 'saída' && !t.isTransfer).reduce((a, t) => a + t.valor, 0);
 
   const invoiceTotal = useMemo(() => {
     if (!selectedCard) return 0;
@@ -686,7 +732,7 @@ export default function DashboardScreen({ navigation }) {
                 </TouchableOpacity>
               </View>
               <Text style={styles.saldoValue}>{hidden ? mask : fmt(saldo)}</Text>
-              <View style={{ flexDirection: 'row', gap: 20 }}>
+              <View style={{ flexDirection: 'row', gap: 20, marginBottom: selectedCard ? 0 : 12 }}>
                 <View>
                   <Text style={styles.miniLabel}>{selectedCard ? 'Créditos' : 'Entradas'}</Text>
                   <Text style={[styles.miniValue, { color: T.gold }]}>{hidden ? mask : `+${fmt(totalIn)}`}</Text>
@@ -696,6 +742,17 @@ export default function DashboardScreen({ navigation }) {
                   <Text style={[styles.miniValue, { color: '#FFB899' }]}>{hidden ? mask : `-${fmt(totalOut)}`}</Text>
                 </View>
               </View>
+              {!selectedCard && (
+                <View style={styles.monthMiniNav}>
+                  <TouchableOpacity onPress={() => goInOut(prevInOut)} hitSlop={12} style={styles.monthMiniArrowBtn}>
+                    <Text style={styles.monthMiniArrow}>‹</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.monthMiniLabel}>{monthLabel(inOutMonth, inOutYear)}</Text>
+                  <TouchableOpacity onPress={() => goInOut(nextInOut)} hitSlop={12} style={styles.monthMiniArrowBtn}>
+                    <Text style={styles.monthMiniArrow}>›</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           </View>
 
