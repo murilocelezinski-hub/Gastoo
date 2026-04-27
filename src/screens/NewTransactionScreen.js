@@ -34,13 +34,9 @@ function invoiceKeyShift(key, deltaMonths) {
   return `${y2}-${m2}`;
 }
 
-<<<<<<< HEAD
-function createNewTransactionStyles(T, isDesktop) {
-=======
 const PARCELA_NUMS = Array.from({ length: 365 }, (_, i) => i + 1);
 
-function createNewTransactionStyles(T) {
->>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
+function createNewTransactionStyles(T, isDesktop) {
   return StyleSheet.create({
     form: { flexGrow: 1, padding: isDesktop ? 40 : 20, gap: isDesktop ? 24 : 20, maxWidth: isDesktop ? 800 : 'auto' },
     modeRow: { flexDirection: 'row', gap: isDesktop ? 16 : 10 },
