@@ -1,7 +1,7 @@
 import { useWindowDimensions } from 'react-native';
 import { useMemo } from 'react';
 
-// Test deploy v2 - Vercel continuous deployment test
+// Test deploy v3 - Testing automated deployments
 
 /**
  * Detecção de layout baseada em largura da tela
