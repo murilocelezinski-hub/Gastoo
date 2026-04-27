@@ -255,35 +255,46 @@ function createStyles(T, isDesktop, isMobile) {
       color: T.brandFgMuted,
     },
     accountCardBalanceActive: { color: T.orange },
+    mainTwoCol: {
+      flexDirection: isDesktop ? 'row' : 'column',
+      alignItems: isDesktop ? 'stretch' : 'stretch',
+      gap: isDesktop ? 24 : 0,
+      paddingHorizontal: isDesktop ? 40 : 0,
+      marginBottom: isDesktop ? 28 : 0,
+    },
+    leftCol: {
+      flex: isDesktop ? 4 : undefined,
+    },
+    rightCol: {
+      flex: isDesktop ? 6 : undefined,
+    },
     saldoCard: {
       backgroundColor: T.orange,
       borderRadius: 20,
-      padding: isDesktop ? 32 : 24,
-      marginHorizontal: isDesktop ? 40 : 20,
-      marginBottom: isDesktop ? 28 : 20,
+      padding: isDesktop ? 28 : 24,
+      marginHorizontal: isDesktop ? 0 : 20,
+      marginBottom: isDesktop ? 0 : 20,
       shadowColor: T.orange,
       shadowOpacity: 0.3,
       shadowRadius: 16,
       shadowOffset: { width: 0, height: 8 },
       elevation: 6,
-      maxWidth: isDesktop ? 500 : 'auto',
-      alignSelf: isDesktop ? 'flex-start' : 'stretch',
+      flex: isDesktop ? 1 : undefined,
     },
     saldoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     eyeBtn: { padding: 4 },
     eyeIcon: { fontSize: 16 },
     saldoLabel: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 14 : 12, color: 'rgba(255,255,255,0.7)' },
-    saldoValue: { fontFamily: 'Poppins_100Thin', fontSize: isDesktop ? 48 : 32, color: '#fff', marginVertical: 4 },
+    saldoValue: { fontFamily: 'Poppins_100Thin', fontSize: isDesktop ? 44 : 32, color: '#fff', marginVertical: 4 },
     miniLabel: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 11 : 10, color: 'rgba(255,255,255,0.6)' },
     miniValue: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 18 : 15 },
     chartBox: {
       backgroundColor: T.homeGlass,
       borderRadius: 16,
       padding: isDesktop ? 24 : 16,
-      marginHorizontal: isDesktop ? 40 : 20,
-      marginBottom: isDesktop ? 28 : 20,
-      maxWidth: isDesktop ? 800 : 'auto',
-      alignSelf: isDesktop ? 'flex-start' : 'stretch',
+      marginHorizontal: isDesktop ? 0 : 20,
+      marginBottom: isDesktop ? 0 : 20,
+      flex: isDesktop ? 1 : undefined,
     },
     chartHead: { marginBottom: 10 },
     chartTitle: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 15 : 13, color: T.brandFgMuted, marginBottom: 8 },
@@ -395,7 +406,10 @@ export default function DashboardScreen({ navigation }) {
     [accounts, transactions, selectedAccount, balanceMode]
   );
 
-  const chartW = isDesktop ? Math.min(760, winW - 160) : Math.max(260, winW - 72);
+  // Desktop: right col is 60% of (winW - 80px padding - 24px gap), minus chart padding (48px)
+  const chartW = isDesktop
+    ? Math.max(300, Math.floor((winW - 104) * 0.6) - 48)
+    : Math.max(260, winW - 72);
   const chartH = isDesktop ? 220 : 148;
 
   const labelIndexes = useMemo(() => {
@@ -661,71 +675,79 @@ export default function DashboardScreen({ navigation }) {
           )}
         </View>
 
-        <View style={[styles.saldoCard, saldo < 0 && { borderWidth: 2, borderColor: T.burnt }]}>
-          <View style={styles.saldoHeader}>
-            <Text style={styles.saldoLabel}>{saldoLabel}</Text>
-            <TouchableOpacity onPress={() => setHidden(!hidden)} hitSlop={12} style={styles.eyeBtn}>
-              <Text style={styles.eyeIcon}>{hidden ? '👁' : '🙈'}</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.saldoValue}>{hidden ? mask : fmt(saldo)}</Text>
-          <View style={{ flexDirection: 'row', gap: 20 }}>
-            <View>
-              <Text style={styles.miniLabel}>{selectedCard ? 'Créditos' : 'Entradas'}</Text>
-              <Text style={[styles.miniValue, { color: T.gold }]}>{hidden ? mask : `+${fmt(totalIn)}`}</Text>
-            </View>
-            <View>
-              <Text style={styles.miniLabel}>{selectedCard ? 'Compras' : 'Saídas'}</Text>
-              <Text style={[styles.miniValue, { color: '#FFB899' }]}>{hidden ? mask : `-${fmt(totalOut)}`}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.chartBox}>
-          <View style={styles.chartHead}>
-            <Text style={styles.chartTitle}>Evolução do saldo</Text>
-            <View style={styles.filterRow}>
-              {BALANCE_MODES.map(({ key, short }) => (
-                <TouchableOpacity
-                  key={key}
-                  onPress={() => setBalanceMode(key)}
-                  style={[styles.filterChip, balanceMode === key && styles.filterChipOn]}
-                  activeOpacity={0.75}
-                >
-                  <Text style={[styles.filterChipText, balanceMode === key && styles.filterChipTextOn]}>{short}</Text>
+        <View style={styles.mainTwoCol}>
+          {/* Left column: Saldo card */}
+          <View style={styles.leftCol}>
+            <View style={[styles.saldoCard, saldo < 0 && { borderWidth: 2, borderColor: T.burnt }]}>
+              <View style={styles.saldoHeader}>
+                <Text style={styles.saldoLabel}>{saldoLabel}</Text>
+                <TouchableOpacity onPress={() => setHidden(!hidden)} hitSlop={12} style={styles.eyeBtn}>
+                  <Text style={styles.eyeIcon}>{hidden ? '👁' : '🙈'}</Text>
                 </TouchableOpacity>
-              ))}
+              </View>
+              <Text style={styles.saldoValue}>{hidden ? mask : fmt(saldo)}</Text>
+              <View style={{ flexDirection: 'row', gap: 20 }}>
+                <View>
+                  <Text style={styles.miniLabel}>{selectedCard ? 'Créditos' : 'Entradas'}</Text>
+                  <Text style={[styles.miniValue, { color: T.gold }]}>{hidden ? mask : `+${fmt(totalIn)}`}</Text>
+                </View>
+                <View>
+                  <Text style={styles.miniLabel}>{selectedCard ? 'Compras' : 'Saídas'}</Text>
+                  <Text style={[styles.miniValue, { color: '#FFB899' }]}>{hidden ? mask : `-${fmt(totalOut)}`}</Text>
+                </View>
+              </View>
             </View>
           </View>
-          <BalanceLineChart
-            points={balanceSeries}
-            width={chartW}
-            height={chartH}
-            lineColor={T.orange}
-            zeroColor={T.brandFgMuted}
-            mutedColor={T.brandFgMuted}
-            fmtMoney={fmt}
-            hidden={hidden}
-            mask={mask}
-            tooltipStyle={styles.chartScrubReadout}
-            tooltipDateStyle={styles.chartTooltipDate}
-            tooltipValueStyle={styles.chartTooltipValue}
-          />
-          {balanceSeries.length > 0 ? (
-            <View style={styles.chartLabels}>
-              {labelIndexes.map((i) => (
-                <Text
-                  key={i}
-                  style={[styles.chartLabelMini, { fontSize: xAxisFontSize }]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.85}
-                >
-                  {balanceSeries[i]?.label}
-                </Text>
-              ))}
+
+          {/* Right column: Chart */}
+          <View style={styles.rightCol}>
+            <View style={styles.chartBox}>
+              <View style={styles.chartHead}>
+                <Text style={styles.chartTitle}>Evolução do saldo</Text>
+                <View style={styles.filterRow}>
+                  {BALANCE_MODES.map(({ key, short }) => (
+                    <TouchableOpacity
+                      key={key}
+                      onPress={() => setBalanceMode(key)}
+                      style={[styles.filterChip, balanceMode === key && styles.filterChipOn]}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={[styles.filterChipText, balanceMode === key && styles.filterChipTextOn]}>{short}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+              <BalanceLineChart
+                points={balanceSeries}
+                width={chartW}
+                height={chartH}
+                lineColor={T.orange}
+                zeroColor={T.brandFgMuted}
+                mutedColor={T.brandFgMuted}
+                fmtMoney={fmt}
+                hidden={hidden}
+                mask={mask}
+                tooltipStyle={styles.chartScrubReadout}
+                tooltipDateStyle={styles.chartTooltipDate}
+                tooltipValueStyle={styles.chartTooltipValue}
+              />
+              {balanceSeries.length > 0 ? (
+                <View style={styles.chartLabels}>
+                  {labelIndexes.map((i) => (
+                    <Text
+                      key={i}
+                      style={[styles.chartLabelMini, { fontSize: xAxisFontSize }]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.85}
+                    >
+                      {balanceSeries[i]?.label}
+                    </Text>
+                  ))}
+                </View>
+              ) : null}
             </View>
-          ) : null}
+          </View>
         </View>
       </ScrollView>
 
