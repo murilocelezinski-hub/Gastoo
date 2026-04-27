@@ -27,6 +27,13 @@ function offsetMonth(month, year, delta) {
   return { month: m, year: y };
 }
 
+const CURRENT_YEAR = new Date().getFullYear();
+
+function monthLabel(month, year) {
+  const name = MONTHS_PT[month - 1];
+  return year !== CURRENT_YEAR ? `${name} ${year}` : name;
+}
+
 export default function HistoryScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { transactions } = useFinance();
@@ -100,15 +107,15 @@ export default function HistoryScreen({ navigation }) {
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => goTo(prev)} style={styles.navSide} activeOpacity={0.6}>
-          <Text style={styles.navSideText}>{MONTHS_PT[prev.month - 1]}</Text>
+          <Text style={styles.navSideText}>{monthLabel(prev.month, prev.year)}</Text>
         </TouchableOpacity>
 
         <View style={styles.navCurrent}>
-          <Text style={styles.navCurrentText}>{MONTHS_PT[selMonth - 1]}</Text>
+          <Text style={styles.navCurrentText}>{monthLabel(selMonth, selYear)}</Text>
         </View>
 
         <TouchableOpacity onPress={() => goTo(next)} style={styles.navSide} activeOpacity={0.6}>
-          <Text style={styles.navSideText}>{MONTHS_PT[next.month - 1]}</Text>
+          <Text style={styles.navSideText}>{monthLabel(next.month, next.year)}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => goTo(next)} style={styles.navArrow} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
