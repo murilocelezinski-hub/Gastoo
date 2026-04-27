@@ -1,7 +1,7 @@
 import { useWindowDimensions } from 'react-native';
 import { useMemo } from 'react';
 
-// Test deploy v4 - Final verification test
+// Test deploy v5 - Last test commit
 
 /**
  * Detecção de layout baseada em largura da tela
