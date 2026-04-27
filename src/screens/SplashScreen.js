@@ -49,6 +49,7 @@ export default function SplashScreen({ navigation }) {
         source={logo}
         style={[styles.logo, { opacity, transform: [{ scale }] }]}
         resizeMode="contain"
+        accessibilityLabel="Logo Gastoo"
       />
       <Animated.Text style={[styles.subtitle, { opacity, color: T.brandFgMuted }]}>Seu companheiro de finanças</Animated.Text>
     </View>

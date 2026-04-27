@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, FlatList, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { T, fmt, CATEGORIES } from '../theme';
+import { fmt, CATEGORIES } from '../theme';
 import { Header, CatIcon } from '../components/Shared';
 import { useFinance } from '../context/FinanceContext';
-import { useAppPreferences } from '../context/AppPreferencesContext';
+import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { sortTransactionsByDate } from '../utils/txSort';
 import { useResponsiveLayout } from '../utils/responsiveLayout';
 
@@ -36,6 +36,8 @@ function monthLabel(month, year) {
 
 export default function HistoryScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+  const T = useThemeColors();
+  const styles = useMemo(() => createHistoryStyles(T), [T]);
   const { transactions } = useFinance();
   const { transactionListOrder } = useAppPreferences();
   const { isDesktop } = useResponsiveLayout();
@@ -202,103 +204,100 @@ export default function HistoryScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: T.offWhite },
+function createHistoryStyles(T) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: T.offWhite },
 
-  // navegador de mês
-  monthNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: T.chocolate,
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-  },
-  navArrow: { paddingHorizontal: 6 },
-  navArrowText: { fontSize: 18, color: T.grayNeutral, fontFamily: 'Poppins_400Regular' },
-  navSide: { flex: 1, alignItems: 'center' },
-  navSideText: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.grayLight },
-  navCurrent: {
-    flex: 1.4,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: T.grayLight,
-    borderRadius: 24,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-  },
-  navCurrentText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.white },
+    monthNav: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: T.chocolate,
+      paddingHorizontal: 12,
+      paddingVertical: 14,
+    },
+    navArrow: { paddingHorizontal: 6 },
+    navArrowText: { fontSize: 18, color: T.grayNeutral, fontFamily: 'Poppins_400Regular' },
+    navSide: { flex: 1, alignItems: 'center' },
+    navSideText: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.grayLight },
+    navCurrent: {
+      flex: 1.4,
+      alignItems: 'center',
+      borderWidth: 1.5,
+      borderColor: T.grayLight,
+      borderRadius: 24,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+    },
+    navCurrentText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.white },
 
-  // resumo
-  summary: {
-    flexDirection: 'row',
-    backgroundColor: T.white,
-    marginHorizontal: 20,
-    marginTop: 14,
-    marginBottom: 2,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: T.grayVLight,
-    paddingVertical: 12,
-  },
-  summaryItem: { flex: 1, alignItems: 'center', gap: 2 },
-  summaryDivider: { width: 1, backgroundColor: T.grayVLight, marginVertical: 4 },
-  summaryLabel: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.grayMed },
-  summaryValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 13 },
+    summary: {
+      flexDirection: 'row',
+      backgroundColor: T.white,
+      marginHorizontal: 20,
+      marginTop: 14,
+      marginBottom: 2,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: T.grayVLight,
+      paddingVertical: 12,
+    },
+    summaryItem: { flex: 1, alignItems: 'center', gap: 2 },
+    summaryDivider: { width: 1, backgroundColor: T.grayVLight, marginVertical: 4 },
+    summaryLabel: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.grayMed },
+    summaryValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 13 },
 
-  // tipo toggle
-  tipoToggle: {
-    flexDirection: 'row',
-    marginHorizontal: 20,
-    marginTop: 12,
-    marginBottom: 4,
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: T.graySilver,
-  },
-  tipoBtn: { flex: 1, paddingVertical: 9, alignItems: 'center', backgroundColor: T.white },
-  tipoBtnActive: { backgroundColor: T.orange },
-  tipoText: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.graphite },
-  tipoTextActive: { color: T.white },
+    tipoToggle: {
+      flexDirection: 'row',
+      marginHorizontal: 20,
+      marginTop: 12,
+      marginBottom: 4,
+      borderRadius: 12,
+      overflow: 'hidden',
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+    },
+    tipoBtn: { flex: 1, paddingVertical: 9, alignItems: 'center', backgroundColor: T.white },
+    tipoBtnActive: { backgroundColor: T.orange },
+    tipoText: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.graphite },
+    tipoTextActive: { color: T.white },
 
-  // pills de categoria
-  filterScroll: { flexGrow: 0, flexShrink: 0 },
-  filterRow: { paddingHorizontal: 20, paddingVertical: 10, gap: 8 },
-  pill: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: T.graySilver,
-  },
-  pillActive: { backgroundColor: T.orange, borderColor: T.orange },
-  pillText: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.graphite },
-  pillTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.white },
+    filterScroll: { flexGrow: 0, flexShrink: 0 },
+    filterRow: { paddingHorizontal: 20, paddingVertical: 10, gap: 8 },
+    pill: {
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: 20,
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+    },
+    pillActive: { backgroundColor: T.orange, borderColor: T.orange },
+    pillText: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.graphite },
+    pillTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.white },
 
-  // lista
-  txRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: T.grayVLight,
-  },
-  txRowDesktop: {
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-  },
-  txDesc: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.graphite },
-  txDescDesktop: { fontSize: 15 },
-  txMeta: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.grayMed },
-  txMetaDesktop: { fontSize: 12 },
-  txValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 14 },
-  txValueDesktop: { fontSize: 15 },
-  emptyText: {
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 14,
-    color: T.grayMed,
-    textAlign: 'center',
-    marginTop: 40,
-  },
-});
+    txRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: T.grayVLight,
+    },
+    txRowDesktop: {
+      paddingVertical: 16,
+      paddingHorizontal: 12,
+    },
+    txDesc: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.graphite },
+    txDescDesktop: { fontSize: 15 },
+    txMeta: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.grayMed },
+    txMetaDesktop: { fontSize: 12 },
+    txValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 14 },
+    txValueDesktop: { fontSize: 15 },
+    emptyText: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 14,
+      color: T.grayMed,
+      textAlign: 'center',
+      marginTop: 40,
+    },
+  });
+}

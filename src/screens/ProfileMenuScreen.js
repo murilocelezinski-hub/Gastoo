@@ -50,7 +50,12 @@ export default function ProfileMenuScreen({ navigation }) {
           <Text style={[styles.sectionTitle, { color: theme.charcoal }]}>Aparência</Text>
           <View style={styles.row}>
             <Text style={[styles.rowLabel, { color: theme.graphite, flex: 1 }]}>Visual do aplicativo</Text>
-            <Switch value={isDark} onValueChange={(v) => setThemeMode(v ? 'dark' : 'light')} trackColor={{ false: theme.graySilver, true: theme.orange }} />
+            <Switch
+              value={isDark}
+              onValueChange={(v) => setThemeMode(v ? 'dark' : 'light')}
+              trackColor={{ false: theme.graySilver, true: theme.orange }}
+              accessibilityLabel={isDark ? 'Tema escuro ativo' : 'Tema claro ativo'}
+            />
           </View>
           <View style={[styles.sep, { backgroundColor: theme.grayVLight }]} />
           <View style={styles.row}>
@@ -139,7 +144,7 @@ const styles = StyleSheet.create({
   },
   segmentBtn: {
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: 12,
     borderWidth: 1.5,
     borderColor: 'transparent',
   },

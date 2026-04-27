@@ -59,12 +59,13 @@ export function CatIcon({ category, size = 40 }) {
 // ─── TOAST ───────────────────────────────────────────────
 export function Toast({ message, show }) {
   const T = useThemeColors();
+  const insets = useSafeAreaInsets();
   if (!show) return null;
   return (
     <View
       style={{
         position: 'absolute',
-        top: 60,
+        top: Math.max(60, 16 + insets.top),
         alignSelf: 'center',
         backgroundColor: T.gold,
         paddingHorizontal: 24,
@@ -89,7 +90,7 @@ export function ConfirmModal({ show, title, message, onConfirm, onCancel }) {
   return (
     <RNModal visible={show} transparent animationType="fade">
       <View style={styles.modalOverlay}>
-        <View style={[styles.modalCard, { backgroundColor: T.white }]}>
+        <View style={[styles.modalCard, { backgroundColor: T.white }]} accessibilityViewIsModal={true}>
           <Text style={[styles.modalTitle, { color: T.graphite }]}>{title}</Text>
           <Text style={[styles.modalMessage, { color: T.grayMed }]}>{message}</Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -177,5 +178,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  headerTitle: { fontFamily: 'Poppins_300Light', fontSize: 20, flex: 1 },
+  headerTitle: { fontFamily: 'Poppins_400Regular', fontSize: 20, flex: 1 },
 });

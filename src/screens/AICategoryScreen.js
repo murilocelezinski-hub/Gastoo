@@ -63,11 +63,20 @@ export default function AICategoryScreen({ navigation, route }) {
   const { addTransaction, addInstallmentTransactions, showToast } = useFinance();
   const [loading, setLoading] = useState(true);
   const [suggestion, setSuggestion] = useState(null);
+  const [hasError, setHasError] = useState(false);
+
+  const goManual = () =>
+    navigation.navigate('ManualCategory', {
+      txData,
+      excludeCategories: excludeCategories || ['Transferência'],
+      returnTo: null,
+    });
 
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
       setLoading(true);
+      setHasError(false);
       try {
         const result = await categorizeTransaction(txData.descricao, txData.valor, categories, controller.signal);
         setSuggestion(result.category);
@@ -75,6 +84,7 @@ export default function AICategoryScreen({ navigation, route }) {
       } catch (err) {
         if (err.name !== 'AbortError') {
           setLoading(false);
+          setHasError(true);
         }
       }
     })();
@@ -108,6 +118,18 @@ export default function AICategoryScreen({ navigation, route }) {
           <Text style={styles.loadingTitle}>Analisando com IA...</Text>
           <Text style={styles.loadingSubtitle}>Categorizando "{txData.descricao}"</Text>
         </View>
+      ) : hasError ? (
+        <View style={styles.resultBox}>
+          <Text style={[styles.catName, { fontSize: 16 }]}>Não foi possível categorizar</Text>
+          <Text style={[styles.txInfo, { marginTop: 8, textAlign: 'center' }]}>
+            Verifique sua conexão e tente novamente, ou escolha a categoria manualmente.
+          </Text>
+          <View style={styles.btnRow}>
+            <TouchableOpacity style={styles.correctBtn} activeOpacity={0.7} onPress={goManual}>
+              <Text style={styles.correctBtnText}>Escolher categoria</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       ) : suggestion ? (
         <View style={styles.resultBox}>
           <Text style={styles.resultLabel}>Sugestão da IA</Text>
@@ -125,17 +147,12 @@ export default function AICategoryScreen({ navigation, route }) {
             <TouchableOpacity
               style={styles.correctBtn}
               activeOpacity={0.7}
-              onPress={() =>
-                navigation.navigate('ManualCategory', {
-                  txData,
-                  excludeCategories: excludeCategories || ['Transferência'],
-                  returnTo: null,
-                })
-              }
+              onPress={goManual}
+              accessibilityLabel="Corrigir categoria sugerida"
             >
               <Text style={styles.correctBtnText}>Corrigir</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.confirmBtn} activeOpacity={0.8} onPress={handleConfirm}>
+            <TouchableOpacity style={styles.confirmBtn} activeOpacity={0.8} onPress={handleConfirm} accessibilityLabel="Confirmar categoria sugerida">
               <Text style={styles.confirmBtnText}>Confirmar</Text>
             </TouchableOpacity>
           </View>

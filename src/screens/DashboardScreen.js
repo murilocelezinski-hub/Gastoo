@@ -860,7 +860,13 @@ export default function DashboardScreen({ navigation }) {
         </View>
       </ScrollView>
 
-      <TouchableOpacity style={styles.fab} activeOpacity={0.8} onPress={() => navigation.navigate('NewTransaction')}>
+      <TouchableOpacity
+        style={styles.fab}
+        activeOpacity={0.8}
+        onPress={() => navigation.navigate('NewTransaction')}
+        accessibilityLabel="Nova transação"
+        accessibilityRole="button"
+      >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
     </View>

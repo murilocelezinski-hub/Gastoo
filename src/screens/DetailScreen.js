@@ -207,6 +207,8 @@ export default function DetailScreen({ navigation, route }) {
               activeOpacity={0.7}
               disabled={!!tx.isTransfer}
               onPress={() => navigation.navigate('EditTransaction', { tx })}
+              accessibilityLabel={tx.isTransfer ? 'Edição indisponível para transferências' : 'Editar transação'}
+              accessibilityHint={tx.isTransfer ? 'Transferências não podem ser editadas individualmente' : undefined}
             >
               <Text style={styles.editBtnText}>{tx.isTransfer ? 'Transferência' : 'Editar'}</Text>
             </TouchableOpacity>

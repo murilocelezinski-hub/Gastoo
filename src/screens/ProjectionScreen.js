@@ -5,7 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
+  useWindowDimensions,
   Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -188,10 +188,11 @@ function createStyles(T) {
   });
 }
 
-export default function ProjectionScreen() {
+export default function ProjectionScreen({ navigation }) {
   const T = useThemeColors();
   const { themeMode, categories } = useAppPreferences();
   const styles = useMemo(() => createStyles(T), [T]);
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { transactions, accounts, creditCards } = useFinance();
 
@@ -266,7 +267,7 @@ export default function ProjectionScreen() {
   const expenseTotal = useMemo(() => expenseSlices.reduce((s, x) => s + x.value, 0), [expenseSlices]);
   const incomeTotal = useMemo(() => incomeSlices.reduce((s, x) => s + x.value, 0), [incomeSlices]);
 
-  const chartSize = Math.max(180, Math.min(240, Dimensions.get('window').width - 72));
+  const chartSize = Math.max(180, Math.min(240, windowWidth - 72));
 
   const Pill = ({ active, label, onPress }) => (
     <TouchableOpacity onPress={onPress} style={[styles.pill, active && styles.pillActive]} activeOpacity={0.75}>
@@ -352,7 +353,7 @@ export default function ProjectionScreen() {
               nestedScrollEnabled
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
-              style={{ maxHeight: Dimensions.get('window').height * 0.72 }}
+              style={{ maxHeight: windowHeight * 0.72 }}
             >
               <Text style={styles.modalSectionTitle}>Período</Text>
               <Text style={[styles.filterLabel, { marginBottom: 8 }]}>

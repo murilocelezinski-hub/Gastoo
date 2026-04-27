@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/Shared';
 import { useThemeColors } from '../context/AppPreferencesContext';
@@ -51,6 +51,8 @@ export default function LoginScreen({ navigation }) {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
+  const showToastLocal = (msg) => Alert.alert('Gastoo', msg);
+
   const validate = () => {
     const e = {};
     if (!email.includes('@')) e.email = 'E-mail inválido';
@@ -70,7 +72,7 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: T.offWhite }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView
         contentContainerStyle={[
           styles.container,
@@ -101,15 +103,23 @@ export default function LoginScreen({ navigation }) {
             <TextInput value={pass} onChangeText={setPass} placeholder="••••••••"
               placeholderTextColor={T.grayNeutral} secureTextEntry={!showPass}
               style={[styles.input, { paddingRight: 48 }, errors.pass && styles.inputError]} />
-            <TouchableOpacity onPress={() => setShowPass(!showPass)}
-              style={styles.eyeBtn} hitSlop={12}>
+            <TouchableOpacity
+              onPress={() => setShowPass(!showPass)}
+              style={styles.eyeBtn}
+              hitSlop={12}
+              accessibilityLabel={showPass ? 'Ocultar senha' : 'Mostrar senha'}
+            >
               <Text style={{ color: T.grayMed, fontSize: 16 }}>{showPass ? '◡' : '⊙'}</Text>
             </TouchableOpacity>
           </View>
           {errors.pass && <Text style={styles.errorText}>{errors.pass}</Text>}
         </View>
 
-        <TouchableOpacity style={styles.forgotBtn}>
+        <TouchableOpacity
+          style={styles.forgotBtn}
+          onPress={() => showToastLocal('Em breve: recuperação de senha.')}
+          accessibilityLabel="Recuperar senha"
+        >
           <Text style={styles.forgotText}>Esqueci minha senha</Text>
         </TouchableOpacity>
 
@@ -117,7 +127,13 @@ export default function LoginScreen({ navigation }) {
 
         <Text style={styles.signupText}>
           Não tem conta?{' '}
-          <Text style={styles.signupLink}>Cadastre-se</Text>
+          <Text
+            style={styles.signupLink}
+            onPress={() => showToastLocal('Cadastro em breve. Por enquanto, qualquer e-mail e senha funcionam.')}
+            accessibilityRole="button"
+          >
+            Cadastre-se
+          </Text>
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>

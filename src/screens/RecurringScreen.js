@@ -23,7 +23,7 @@ function createRecurringStyles(T) {
     title: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.graphite },
     meta: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.grayMed, marginTop: 2 },
     sub: { fontFamily: 'Poppins_400Regular', fontSize: 10, color: T.grayNeutral, marginTop: 2 },
-    value: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.burnt },
+    value: { fontFamily: 'Poppins_600SemiBold', fontSize: 13 },
     emptyBox: {
       backgroundColor: T.white,
       borderRadius: 16,
@@ -118,7 +118,9 @@ export default function RecurringScreen({ navigation }) {
                 </Text>
                 <Text style={styles.sub} numberOfLines={1}>{where}</Text>
               </View>
-              <Text style={styles.value}>-{fmt(Number(tx.valor) || 0)}</Text>
+              <Text style={[styles.value, { color: tx.tipo === 'entrada' ? T.gold : T.burnt }]}>
+                {tx.tipo === 'entrada' ? '+' : '-'}{fmt(Number(tx.valor) || 0)}
+              </Text>
             </TouchableOpacity>
           );
         })}
