@@ -6,6 +6,7 @@ import { Header, CatIcon } from '../components/Shared';
 import { useFinance } from '../context/FinanceContext';
 import { useAppPreferences } from '../context/AppPreferencesContext';
 import { sortTransactionsByDate } from '../utils/txSort';
+import { useResponsiveLayout } from '../utils/responsiveLayout';
 
 const MONTHS_PT = [
   'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -30,6 +31,7 @@ export default function HistoryScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { transactions } = useFinance();
   const { transactionListOrder } = useAppPreferences();
+  const { isDesktop } = useResponsiveLayout();
 
   const now = new Date();
   const [selMonth, setSelMonth] = useState(now.getMonth() + 1); // 1-12
@@ -170,20 +172,20 @@ export default function HistoryScreen({ navigation }) {
         style={{ flex: 1 }}
         data={ordered}
         keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 + insets.bottom }}
+        contentContainerStyle={{ paddingHorizontal: isDesktop ? 40 : 20, paddingBottom: 100 + insets.bottom }}
         ListEmptyComponent={<Text style={styles.emptyText}>Nenhuma transação encontrada</Text>}
         renderItem={({ item: tx }) => (
           <TouchableOpacity
-            style={styles.txRow}
+            style={[styles.txRow, isDesktop && styles.txRowDesktop]}
             activeOpacity={0.7}
             onPress={() => navigation.navigate('Detail', { tx })}
           >
-            <CatIcon category={tx.categoria} size={40} />
+            <CatIcon category={tx.categoria} size={isDesktop ? 48 : 40} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.txDesc} numberOfLines={1}>{tx.descricao}</Text>
-              <Text style={styles.txMeta}>{tx.categoria} · {tx.data}</Text>
+              <Text style={[styles.txDesc, isDesktop && styles.txDescDesktop]} numberOfLines={1}>{tx.descricao}</Text>
+              <Text style={[styles.txMeta, isDesktop && styles.txMetaDesktop]}>{tx.categoria} · {tx.data}</Text>
             </View>
-            <Text style={[styles.txValue, { color: tx.tipo === 'entrada' ? T.gold : T.burnt }]}>
+            <Text style={[styles.txValue, isDesktop && styles.txValueDesktop, { color: tx.tipo === 'entrada' ? T.gold : T.burnt }]}>
               {tx.tipo === 'entrada' ? '+' : '-'}{fmt(tx.valor)}
             </Text>
           </TouchableOpacity>
@@ -275,9 +277,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: T.grayVLight,
   },
+  txRowDesktop: {
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+  },
   txDesc: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.graphite },
+  txDescDesktop: { fontSize: 15 },
   txMeta: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.grayMed },
+  txMetaDesktop: { fontSize: 12 },
   txValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 14 },
+  txValueDesktop: { fontSize: 15 },
   emptyText: {
     fontFamily: 'Poppins_400Regular',
     fontSize: 14,

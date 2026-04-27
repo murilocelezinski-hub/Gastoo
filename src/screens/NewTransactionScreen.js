@@ -14,27 +14,46 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../context/AppPreferencesContext';
 import { Header, PrimaryButton } from '../components/Shared';
-import { useFinance, activeAccounts, activeCreditCards } from '../context/FinanceContext';
+import { useFinance, activeAccounts, activeCreditCards, invoiceKeyFromDateAndCloseDay, invoiceLabelPtBr } from '../context/FinanceContext';
+import { useResponsiveLayout } from '../utils/responsiveLayout';
 
 function formatBrDate(d) {
   const p = (n) => String(n).padStart(2, '0');
   return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
 }
 
+function invoiceKeyShift(key, deltaMonths) {
+  const m = String(key || '').match(/^(\d{4})-(\d{2})$/);
+  if (!m) return key;
+  const yy = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  const d = new Date(yy, mm - 1, 1);
+  d.setMonth(d.getMonth() + deltaMonths);
+  const y2 = d.getFullYear();
+  const m2 = String(d.getMonth() + 1).padStart(2, '0');
+  return `${y2}-${m2}`;
+}
+
+<<<<<<< HEAD
+function createNewTransactionStyles(T, isDesktop) {
+=======
+const PARCELA_NUMS = Array.from({ length: 365 }, (_, i) => i + 1);
+
 function createNewTransactionStyles(T) {
+>>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
   return StyleSheet.create({
-    form: { flexGrow: 1, padding: 20, gap: 20 },
-    modeRow: { flexDirection: 'row', gap: 10 },
+    form: { flexGrow: 1, padding: isDesktop ? 40 : 20, gap: isDesktop ? 24 : 20, maxWidth: isDesktop ? 800 : 'auto' },
+    modeRow: { flexDirection: 'row', gap: isDesktop ? 16 : 10 },
     modeBtn: {
       flex: 1,
-      paddingVertical: 12,
+      paddingVertical: isDesktop ? 14 : 12,
       borderRadius: 12,
       borderWidth: 1.5,
       borderColor: T.graySilver,
       alignItems: 'center',
     },
     modeBtnActive: { backgroundColor: T.orange, borderColor: T.orange },
-    modeText: { fontFamily: 'Poppins_600SemiBold', fontSize: 12, color: T.graphite },
+    modeText: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 14 : 12, color: T.graphite },
     modeTextActive: { color: '#fff' },
     toggle: {
       flexDirection: 'row',
@@ -43,67 +62,87 @@ function createNewTransactionStyles(T) {
       borderWidth: 1.5,
       borderColor: T.graySilver,
     },
-    toggleBtn: { flex: 1, paddingVertical: 12, alignItems: 'center' },
+    toggleBtn: { flex: 1, paddingVertical: isDesktop ? 14 : 12, alignItems: 'center' },
     toggleBtnActive: { backgroundColor: T.orange },
-    toggleText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.graphite },
+    toggleText: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 15 : 14, color: T.graphite },
     toggleTextActive: { color: '#fff' },
     field: {},
-    label: { fontFamily: 'Poppins_600SemiBold', fontSize: 12, color: T.charcoal, marginBottom: 6 },
+    label: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 13 : 12, color: T.charcoal, marginBottom: 8 },
     input: {
       backgroundColor: T.white,
       borderRadius: 12,
       borderWidth: 1.5,
       borderColor: T.graySilver,
       paddingHorizontal: 16,
-      paddingVertical: 14,
+      paddingVertical: isDesktop ? 16 : 14,
       fontFamily: 'Poppins_400Regular',
-      fontSize: 15,
+      fontSize: isDesktop ? 16 : 15,
       color: T.graphite,
     },
-    valueInput: { paddingLeft: 60, fontSize: 24, fontFamily: 'Poppins_600SemiBold' },
+    valueInput: { paddingLeft: 60, fontSize: isDesktop ? 32 : 24, fontFamily: 'Poppins_600SemiBold' },
     currencyPrefix: {
       position: 'absolute',
       left: 16,
-      top: 16,
+      top: isDesktop ? 18 : 16,
       zIndex: 1,
       fontFamily: 'Poppins_600SemiBold',
-      fontSize: 24,
+      fontSize: isDesktop ? 28 : 24,
       color: T.grayMed,
     },
-    accountRow: { gap: 8, paddingVertical: 2 },
+    accountRow: { gap: isDesktop ? 12 : 8, paddingVertical: 2, flexWrap: isDesktop ? 'wrap' : 'nowrap' },
     accountPill: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
       paddingHorizontal: 14,
-      paddingVertical: 10,
+      paddingVertical: isDesktop ? 12 : 10,
       borderRadius: 20,
       borderWidth: 1.5,
       borderColor: T.graySilver,
       backgroundColor: T.white,
     },
     accountPillActive: { borderColor: T.orange, backgroundColor: 'rgba(240,80,0,0.06)' },
-    accountIcon: { fontSize: 16 },
-    accountText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.graphite },
+    accountIcon: { fontSize: isDesktop ? 18 : 16 },
+    accountText: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 14 : 13, color: T.graphite },
     accountTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.orange },
-    hint: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.burnt },
+    hint: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 13 : 12, color: T.burnt },
     datePill: {
       backgroundColor: T.white,
       borderRadius: 12,
       borderWidth: 1.5,
       borderColor: T.graySilver,
       paddingHorizontal: 16,
-      paddingVertical: 14,
+      paddingVertical: isDesktop ? 16 : 14,
       justifyContent: 'center',
     },
-    dateText: { fontFamily: 'Poppins_400Regular', fontSize: 15, color: T.graphite },
+    dateText: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 16 : 15, color: T.graphite },
     datePlaceholder: { color: T.grayNeutral },
+    installmentRow: { flexDirection: 'row', gap: 10, marginTop: 2 },
+    installmentCol: { flex: 1 },
+    installmentLabel: { fontFamily: 'Poppins_600SemiBold', fontSize: 11, color: T.charcoal, marginBottom: 6 },
+    installmentScroll: {
+      maxHeight: 200,
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+      borderRadius: 12,
+      backgroundColor: T.white,
+    },
+    installPick: {
+      paddingVertical: 10,
+      paddingHorizontal: 4,
+      alignItems: 'center',
+      borderBottomWidth: 1,
+      borderBottomColor: T.grayVLight,
+    },
+    installPickText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.graphite },
+    installPickTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.orange },
   });
 }
 
 export default function NewTransactionScreen({ navigation }) {
   const T = useThemeColors();
-  const styles = useMemo(() => createNewTransactionStyles(T), [T]);
+  const { isDesktop } = useResponsiveLayout();
+  const styles = useMemo(() => createNewTransactionStyles(T, isDesktop), [T, isDesktop]);
   const insets = useSafeAreaInsets();
   const { accounts, creditCards, addTransfer, showToast } = useFinance();
   const act = useMemo(() => activeAccounts(accounts), [accounts]);
@@ -118,11 +157,15 @@ export default function NewTransactionScreen({ navigation }) {
   const [creditCardId, setCreditCardId] = useState(null);
   const [gastoTipo, setGastoTipo] = useState('nenhum'); // nenhum | fixo | parcelado
   const [periodicidade, setPeriodicidade] = useState('mensal');
+  const [numParcelas, setNumParcelas] = useState(12);
   const [origem, setOrigem] = useState(act[0]?.id);
   const [destino, setDestino] = useState(act[1]?.id || act[0]?.id);
   const [paySource, setPaySource] = useState('conta'); // conta | cartao
+  const [invoiceKey, setInvoiceKey] = useState(null);
+  const [invoiceManual, setInvoiceManual] = useState(false);
   const valorRef = useRef(null);
   const descRef = useRef(null);
+  const prevCardIdRef = useRef(null);
 
   const mode = kind === 'transfer' ? 'transfer' : 'normal';
   const tipo = kind === 'receita' ? 'entrada' : 'saída';
@@ -152,12 +195,37 @@ export default function NewTransactionScreen({ navigation }) {
     if (paySource === 'conta') {
       if (creditCardId) setCreditCardId(null);
       if (!accountId && act[0]?.id) setAccountId(act[0].id);
+      setInvoiceKey(null);
+      setInvoiceManual(false);
+      prevCardIdRef.current = null;
     } else {
       // cartao
       if (accountId) setAccountId(null);
       if (!creditCardId && cardsAct[0]?.id) setCreditCardId(cardsAct[0].id);
     }
   }, [paySource]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const invoiceKeyAuto = useMemo(() => {
+    if (paySource !== 'cartao' || !creditCardId) return null;
+    const card = creditCards.find((c) => String(c.id) === String(creditCardId));
+    if (!card) return null;
+    return invoiceKeyFromDateAndCloseDay(dataObj, card.diaFechamento);
+  }, [creditCardId, creditCards, dataObj, paySource]);
+
+  useEffect(() => {
+    if (paySource !== 'cartao') return;
+    if (!invoiceKeyAuto) return;
+    const prev = prevCardIdRef.current;
+    const cardChanged = prev != null && creditCardId != null && String(prev) !== String(creditCardId);
+    if (cardChanged) {
+      // A seleção manual de fatura não deve “vazar” entre cartões.
+      setInvoiceManual(false);
+      setInvoiceKey(invoiceKeyAuto);
+    } else if (!invoiceManual) {
+      setInvoiceKey(invoiceKeyAuto);
+    }
+    prevCardIdRef.current = creditCardId;
+  }, [invoiceKeyAuto, invoiceManual, paySource]);
 
   const handleValor = (text) => {
     const raw = text.replace(/\D/g, '');
@@ -328,6 +396,35 @@ export default function NewTransactionScreen({ navigation }) {
                 )}
               </View>
 
+              {paySource === 'cartao' && creditCardId ? (
+                <View style={styles.field}>
+                  <Text style={styles.label}>Fatura</Text>
+                  {invoiceKeyAuto ? (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountRow}>
+                      {[
+                        { key: invoiceKeyShift(invoiceKeyAuto, -1), label: invoiceLabelPtBr(invoiceKeyShift(invoiceKeyAuto, -1)) },
+                        { key: invoiceKeyAuto, label: invoiceLabelPtBr(invoiceKeyAuto) },
+                        { key: invoiceKeyShift(invoiceKeyAuto, 1), label: invoiceLabelPtBr(invoiceKeyShift(invoiceKeyAuto, 1)) },
+                      ].map((opt) => (
+                        <TouchableOpacity
+                          key={opt.key}
+                          onPress={() => {
+                            setInvoiceKey(opt.key);
+                            setInvoiceManual(opt.key !== invoiceKeyAuto);
+                          }}
+                          style={[styles.accountPill, invoiceKey === opt.key && styles.accountPillActive]}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={[styles.accountText, invoiceKey === opt.key && styles.accountTextActive]}>{opt.label}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  ) : (
+                    <Text style={styles.hint}>Selecione um cartão para sugerir a fatura.</Text>
+                  )}
+                </View>
+              ) : null}
+
               <View style={styles.field}>
                 <View style={styles.toggle}>
                   {[
@@ -336,7 +433,14 @@ export default function NewTransactionScreen({ navigation }) {
                   ].map((o) => (
                     <TouchableOpacity
                       key={o.key}
-                      onPress={() => setGastoTipo((cur) => (cur === o.key ? 'nenhum' : o.key))}
+                      onPress={() =>
+                      setGastoTipo((cur) => {
+                        const n = cur === o.key ? 'nenhum' : o.key;
+                        if (n === 'parcelado') setPeriodicidade((p) => p || 'mensal');
+                        if (n === 'fixo') setPeriodicidade((p) => p || 'mensal');
+                        return n;
+                      })
+                    }
                       style={[styles.toggleBtn, gastoTipo === o.key && styles.toggleBtnActive]}
                     >
                       <Text style={[styles.toggleText, gastoTipo === o.key && styles.toggleTextActive]}>{o.label}</Text>
@@ -345,7 +449,7 @@ export default function NewTransactionScreen({ navigation }) {
                 </View>
               </View>
 
-              {gastoTipo !== 'nenhum' ? (
+              {gastoTipo === 'fixo' ? (
                 <View style={styles.field}>
                   <Text style={styles.label}>Periodicidade</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountRow}>
@@ -360,6 +464,68 @@ export default function NewTransactionScreen({ navigation }) {
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
+                </View>
+              ) : null}
+
+              {gastoTipo === 'parcelado' ? (
+                <View style={styles.field}>
+                  <Text style={styles.label}>Parcelas e periodicidade</Text>
+                  <View style={styles.installmentRow}>
+                    <View style={styles.installmentCol}>
+                      <Text style={styles.installmentLabel}>Número (1 a 365)</Text>
+                      <ScrollView
+                        style={styles.installmentScroll}
+                        nestedScrollEnabled
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator
+                      >
+                        {PARCELA_NUMS.map((n) => (
+                          <TouchableOpacity
+                            key={n}
+                            onPress={() => setNumParcelas(n)}
+                            style={styles.installPick}
+                            activeOpacity={0.65}
+                          >
+                            <Text
+                              style={[
+                                styles.installPickText,
+                                numParcelas === n && styles.installPickTextActive,
+                              ]}
+                            >
+                              {n}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                    <View style={styles.installmentCol}>
+                      <Text style={styles.installmentLabel}>Período</Text>
+                      <ScrollView
+                        style={styles.installmentScroll}
+                        nestedScrollEnabled
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator
+                      >
+                        {PERIODS.map((p) => (
+                          <TouchableOpacity
+                            key={p.key}
+                            onPress={() => setPeriodicidade(p.key)}
+                            style={styles.installPick}
+                            activeOpacity={0.65}
+                          >
+                            <Text
+                              style={[
+                                styles.installPickText,
+                                periodicidade === p.key && styles.installPickTextActive,
+                              ]}
+                            >
+                              {p.label}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  </View>
                 </View>
               ) : null}
 
@@ -381,7 +547,9 @@ export default function NewTransactionScreen({ navigation }) {
                       data,
                       accountId: finalAccountId,
                       ...(paySource === 'cartao' && creditCardId ? { creditCardId } : {}),
-                      ...(gastoTipo !== 'nenhum' ? { gastoTipo, periodicidade } : {}),
+                      ...(paySource === 'cartao' && creditCardId && invoiceKey ? { invoiceKey, invoiceKeyManual: invoiceManual } : {}),
+                      ...(gastoTipo === 'fixo' ? { gastoTipo, periodicidade } : {}),
+                      ...(gastoTipo === 'parcelado' ? { gastoTipo, periodicidade, numParcelas } : {}),
                     },
                     excludeCategories: ['Transferência'],
                   });

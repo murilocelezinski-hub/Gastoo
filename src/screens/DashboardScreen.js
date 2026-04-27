@@ -12,16 +12,23 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polyline, Line, Circle } from 'react-native-svg';
 import { fmt } from '../theme';
-import { CatIcon } from '../components/Shared';
 import {
   useFinance,
   balanceForAccount,
   totalBalance,
   activeAccounts,
+  activeCreditCards,
+  invoiceKeyFromDateAndCloseDay,
+  invoiceLabelPtBr,
+  isTransactionEffectiveOnOrBefore,
 } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { buildBalanceEvolutionSeries } from '../utils/chart';
+<<<<<<< HEAD
 import { sortTransactionsByDate } from '../utils/txSort';
+import { useResponsiveLayout, useMainLayoutDimensions } from '../utils/responsiveLayout';
+=======
+>>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
 
 const BALANCE_MODES = [
   { key: 'current_month', short: 'Mês' },
@@ -35,6 +42,18 @@ function formatTooltipDate(d) {
   const day = String(d.getDate()).padStart(2, '0');
   const m = String(d.getMonth() + 1).padStart(2, '0');
   return `${day}/${m}/${d.getFullYear()}`;
+}
+
+function parseBrDate(s) {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const dd = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  const yy = parseInt(m[3], 10);
+  const d = new Date(yy, mm - 1, dd);
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
 }
 
 function BalanceLineChart({
@@ -176,7 +195,7 @@ function BalanceLineChart({
 
 const logo = require('../../assets/logo.png');
 
-function createStyles(T) {
+function createStyles(T, isDesktop, isMobile) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: T.chocolate },
     logo: { width: 120, height: 36 },
@@ -184,7 +203,7 @@ function createStyles(T) {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: 20,
+      paddingHorizontal: isDesktop ? 40 : 20,
       paddingBottom: 8,
     },
     avatar: {
@@ -196,12 +215,25 @@ function createStyles(T) {
       justifyContent: 'center',
       overflow: 'hidden',
     },
-    accountsSection: { marginBottom: 16 },
-    accountsRow: { paddingHorizontal: 20, gap: 10 },
+<<<<<<< HEAD
+    accountsSection: { marginBottom: isDesktop ? 24 : 16 },
+    accountsRow: { paddingHorizontal: isDesktop ? 40 : 20, gap: isDesktop ? 16 : 10 },
+=======
+    accountsSection: { marginBottom: 12 },
+    sectionLabel: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 12,
+      color: T.brandFgMuted,
+      marginBottom: 8,
+      marginHorizontal: 20,
+      letterSpacing: 0.3,
+    },
+    accountsRow: { paddingHorizontal: 20, gap: 10, paddingBottom: 4 },
+>>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
     accountCard: {
-      width: 120,
+      width: isDesktop ? 160 : 120,
       borderRadius: 16,
-      padding: 14,
+      padding: isDesktop ? 16 : 14,
       gap: 4,
       backgroundColor: T.homeGlass,
       borderWidth: 1.5,
@@ -211,48 +243,50 @@ function createStyles(T) {
       backgroundColor: 'rgba(240,80,0,0.18)',
       borderColor: T.orange,
     },
-    accountCardIcon: { fontSize: 20 },
+    accountCardIcon: { fontSize: isDesktop ? 24 : 20 },
     accountCardName: {
       fontFamily: 'Poppins_400Regular',
-      fontSize: 11,
+      fontSize: isDesktop ? 12 : 11,
       color: T.brandFgMuted,
       marginTop: 2,
     },
     accountCardNameActive: { color: T.brandFg },
     accountCardBalance: {
       fontFamily: 'Poppins_600SemiBold',
-      fontSize: 13,
+      fontSize: isDesktop ? 15 : 13,
       color: T.brandFgMuted,
     },
     accountCardBalanceActive: { color: T.orange },
     saldoCard: {
       backgroundColor: T.orange,
       borderRadius: 20,
-      padding: 24,
-      marginHorizontal: 20,
-      marginBottom: 20,
+      padding: isDesktop ? 32 : 24,
+      marginHorizontal: isDesktop ? 40 : 20,
+      marginBottom: isDesktop ? 28 : 20,
       shadowColor: T.orange,
       shadowOpacity: 0.3,
       shadowRadius: 16,
       shadowOffset: { width: 0, height: 8 },
       elevation: 6,
+      maxWidth: isDesktop ? 600 : 'auto',
     },
     saldoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     eyeBtn: { padding: 4 },
     eyeIcon: { fontSize: 16 },
-    saldoLabel: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: 'rgba(255,255,255,0.7)' },
-    saldoValue: { fontFamily: 'Poppins_100Thin', fontSize: 32, color: '#fff', marginVertical: 4 },
-    miniLabel: { fontFamily: 'Poppins_400Regular', fontSize: 10, color: 'rgba(255,255,255,0.6)' },
-    miniValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 15 },
+    saldoLabel: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 14 : 12, color: 'rgba(255,255,255,0.7)' },
+    saldoValue: { fontFamily: 'Poppins_100Thin', fontSize: isDesktop ? 48 : 32, color: '#fff', marginVertical: 4 },
+    miniLabel: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 11 : 10, color: 'rgba(255,255,255,0.6)' },
+    miniValue: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 18 : 15 },
     chartBox: {
       backgroundColor: T.homeGlass,
       borderRadius: 16,
-      padding: 16,
-      marginHorizontal: 20,
-      marginBottom: 20,
+      padding: isDesktop ? 24 : 16,
+      marginHorizontal: isDesktop ? 40 : 20,
+      marginBottom: isDesktop ? 28 : 20,
+      maxWidth: isDesktop ? 800 : 'auto',
     },
     chartHead: { marginBottom: 10 },
-    chartTitle: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.brandFgMuted, marginBottom: 8 },
+    chartTitle: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 15 : 13, color: T.brandFgMuted, marginBottom: 8 },
     filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
     filterChip: {
       paddingHorizontal: 8,
@@ -282,34 +316,38 @@ function createStyles(T) {
     },
     chartTooltipDate: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.brandFgMuted, flex: 1 },
     chartTooltipValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.orange, flexShrink: 0 },
+<<<<<<< HEAD
     recentHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginHorizontal: 20,
+      marginHorizontal: isDesktop ? 40 : 20,
       marginBottom: 12,
     },
-    recentTitle: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.brandFgMuted },
+    recentTitle: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 16 : 14, color: T.brandFgMuted },
     seeAllText: { fontFamily: 'Poppins_600SemiBold', fontSize: 12, color: T.orange },
     txRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
-      paddingVertical: 10,
-      marginHorizontal: 20,
+      paddingVertical: isDesktop ? 14 : 10,
+      marginHorizontal: isDesktop ? 40 : 20,
+      paddingHorizontal: isDesktop ? 12 : 0,
       borderBottomWidth: 1,
       borderBottomColor: T.homeHairline,
     },
-    txDesc: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.brandFg },
-    txDate: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.brandFgMuted },
-    txValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 14 },
+    txDesc: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 15 : 14, color: T.brandFg },
+    txDate: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 12 : 11, color: T.brandFgMuted },
+    txValue: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 15 : 14 },
+=======
+>>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
     fab: {
       position: 'absolute',
-      bottom: 24,
-      right: 20,
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      bottom: isDesktop ? 40 : 24,
+      right: isDesktop ? 40 : 20,
+      width: isDesktop ? 64 : 56,
+      height: isDesktop ? 64 : 56,
+      borderRadius: isDesktop ? 32 : 28,
       backgroundColor: T.orange,
       alignItems: 'center',
       justifyContent: 'center',
@@ -319,31 +357,54 @@ function createStyles(T) {
       shadowOffset: { width: 0, height: 4 },
       elevation: 8,
     },
-    fabText: { fontSize: 28, color: '#fff', fontFamily: 'Poppins_600SemiBold', marginTop: -2 },
+    fabText: { fontSize: isDesktop ? 32 : 28, color: '#fff', fontFamily: 'Poppins_600SemiBold', marginTop: -2 },
   });
 }
 
 export default function DashboardScreen({ navigation }) {
   const T = useThemeColors();
+<<<<<<< HEAD
   const { profile, transactionListOrder } = useAppPreferences();
+  const { isDesktop, isMobile } = useResponsiveLayout();
+  const styles = useMemo(() => createStyles(T, isDesktop, isMobile), [T, isDesktop, isMobile]);
+=======
+  const { profile } = useAppPreferences();
   const styles = useMemo(() => createStyles(T), [T]);
+>>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
   const insets = useSafeAreaInsets();
   const { width: winW } = useWindowDimensions();
-  const { accounts, transactions } = useFinance();
+  const { accounts, creditCards, transactions } = useFinance();
   const act = activeAccounts(accounts);
   const activeIds = useMemo(() => new Set(act.map((a) => a.id)), [act]);
+  const cardsAct = useMemo(() => activeCreditCards(creditCards), [creditCards]);
   const [hidden, setHidden] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const [selectedCard, setSelectedCard] = useState(null);
   const [balanceMode, setBalanceMode] = useState('current_month');
   const mask = '••••••';
+
+  const currentInvoiceKey = useMemo(() => {
+    if (!selectedCard) return null;
+    const card = creditCards.find((c) => String(c.id) === String(selectedCard));
+    if (!card) return null;
+    return invoiceKeyFromDateAndCloseDay(new Date(), card.diaFechamento);
+  }, [creditCards, selectedCard]);
+
+  const txInvoiceKeyForCard = useCallback((tx, card) => {
+    if (!tx || !card) return null;
+    if (tx.invoiceKey) return tx.invoiceKey;
+    const d = parseBrDate(tx.data);
+    if (!d) return null;
+    return invoiceKeyFromDateAndCloseDay(d, card.diaFechamento);
+  }, []);
 
   const balanceSeries = useMemo(
     () => buildBalanceEvolutionSeries(accounts, transactions, selectedAccount, balanceMode, new Date()),
     [accounts, transactions, selectedAccount, balanceMode]
   );
 
-  const chartW = Math.max(260, winW - 72);
-  const chartH = 148;
+  const chartW = isDesktop ? Math.min(760, winW - 160) : Math.max(260, winW - 72);
+  const chartH = isDesktop ? 220 : 148;
 
   const labelIndexes = useMemo(() => {
     const len = balanceSeries.length;
@@ -364,32 +425,67 @@ export default function DashboardScreen({ navigation }) {
     return 9;
   }, [labelIndexes.length]);
 
-  const filtered = selectedAccount
-    ? transactions.filter((t) => t.accountId === selectedAccount)
-    : transactions.filter((t) => activeIds.has(t.accountId));
+  const baseTotals = selectedCard
+    ? (() => {
+        const card = creditCards.find((c) => String(c.id) === String(selectedCard));
+        const ik = currentInvoiceKey;
+        if (!card || !ik) return [];
+        return transactions.filter((t) => {
+          if (String(t.creditCardId) !== String(selectedCard)) return false;
+          const txIk = txInvoiceKeyForCard(t, card);
+          if (txIk !== ik) return false;
+          return isTransactionEffectiveOnOrBefore(t);
+        });
+      })()
+    : selectedAccount
+      ? transactions.filter(
+          (t) => t.accountId === selectedAccount && isTransactionEffectiveOnOrBefore(t)
+        )
+      : transactions.filter(
+          (t) => activeIds.has(t.accountId) && isTransactionEffectiveOnOrBefore(t)
+        );
 
-  const orderedRecent = useMemo(
-    () => sortTransactionsByDate(filtered, transactionListOrder).slice(0, 5),
-    [filtered, transactionListOrder]
-  );
+  const totalIn = baseTotals.filter((t) => t.tipo === 'entrada' && !t.isTransfer).reduce((a, t) => a + t.valor, 0);
+  const totalOut = baseTotals.filter((t) => t.tipo === 'saída' && !t.isTransfer).reduce((a, t) => a + t.valor, 0);
 
-  const baseTotals = selectedAccount
-    ? transactions.filter((t) => t.accountId === selectedAccount)
-    : transactions.filter((t) => activeIds.has(t.accountId));
-  const totalIn = baseTotals
-    .filter((t) => t.tipo === 'entrada' && !t.isTransfer)
-    .reduce((a, t) => a + t.valor, 0);
-  const totalOut = baseTotals
-    .filter((t) => t.tipo === 'saída' && !t.isTransfer)
-    .reduce((a, t) => a + t.valor, 0);
+  const invoiceTotal = useMemo(() => {
+    if (!selectedCard) return 0;
+    return baseTotals
+      .filter((t) => !t.isTransfer)
+      .reduce((sum, t) => sum + (t.tipo === 'saída' ? t.valor : -t.valor), 0);
+  }, [baseTotals, selectedCard]);
 
-  const saldo = selectedAccount
-    ? balanceForAccount(accounts, transactions, selectedAccount)
-    : totalBalance(accounts, transactions);
+  const invoiceTotalsByCard = useMemo(() => {
+    const today = new Date();
+    const out = new Map();
+    for (const c of cardsAct) {
+      const ik = invoiceKeyFromDateAndCloseDay(today, c.diaFechamento);
+      let total = 0;
+      for (const t of transactions) {
+        if (String(t.creditCardId) !== String(c.id)) continue;
+        if (!ik) continue;
+        const txIk = txInvoiceKeyForCard(t, c);
+        if (txIk !== ik) continue;
+        if (!isTransactionEffectiveOnOrBefore(t)) continue;
+        if (t.isTransfer) continue;
+        total += t.tipo === 'saída' ? t.valor : -t.valor;
+      }
+      out.set(String(c.id), total);
+    }
+    return out;
+  }, [cardsAct, transactions, txInvoiceKeyForCard]);
 
-  const saldoLabel = selectedAccount
-    ? accounts.find((a) => a.id === selectedAccount)?.name ?? 'Conta'
-    : 'Saldo geral';
+  const saldo = selectedCard
+    ? -invoiceTotal
+    : selectedAccount
+      ? balanceForAccount(accounts, transactions, selectedAccount)
+      : totalBalance(accounts, transactions);
+
+  const saldoLabel = selectedCard
+    ? `Fatura ${invoiceLabelPtBr(currentInvoiceKey)}`
+    : selectedAccount
+      ? accounts.find((a) => a.id === selectedAccount)?.name ?? 'Conta'
+      : 'Saldo geral';
 
   return (
     <View style={styles.container}>
@@ -412,43 +508,90 @@ export default function DashboardScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
       >
-        <View style={styles.accountsSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountsRow}>
-            {act.length > 0 ? (
-              <>
-                <TouchableOpacity
-                  style={[styles.accountCard, !selectedAccount && styles.accountCardActive]}
-                  onPress={() => setSelectedAccount(null)}
-                  activeOpacity={0.7}
+        {act.length > 0 ? (
+          <View style={styles.accountsSection}>
+            <Text style={styles.sectionLabel}>Contas</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountsRow}>
+              <TouchableOpacity
+                style={[styles.accountCard, !selectedAccount && !selectedCard && styles.accountCardActive]}
+                onPress={() => {
+                  setSelectedAccount(null);
+                  setSelectedCard(null);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.accountCardIcon}>🌐</Text>
+                <Text style={[styles.accountCardName, !selectedAccount && !selectedCard && styles.accountCardNameActive]}>
+                  Geral
+                </Text>
+                <Text
+                  style={[
+                    styles.accountCardBalance,
+                    !selectedAccount && !selectedCard && styles.accountCardBalanceActive,
+                  ]}
                 >
-                  <Text style={styles.accountCardIcon}>🌐</Text>
-                  <Text style={[styles.accountCardName, !selectedAccount && styles.accountCardNameActive]}>Geral</Text>
-                  <Text style={[styles.accountCardBalance, !selectedAccount && styles.accountCardBalanceActive]}>
-                    {hidden ? mask : fmt(totalBalance(accounts, transactions))}
-                  </Text>
-                </TouchableOpacity>
+                  {hidden ? mask : fmt(totalBalance(accounts, transactions))}
+                </Text>
+              </TouchableOpacity>
 
-                {act.map((ac) => {
-                  const isActive = selectedAccount === ac.id;
-                  const bal = balanceForAccount(accounts, transactions, ac.id);
-                  return (
-                    <TouchableOpacity
-                      key={ac.id}
-                      style={[styles.accountCard, isActive && styles.accountCardActive]}
-                      onPress={() => setSelectedAccount(ac.id)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.accountCardIcon}>{ac.icon}</Text>
-                      <Text style={[styles.accountCardName, isActive && styles.accountCardNameActive]}>{ac.name}</Text>
-                      <Text style={[styles.accountCardBalance, isActive && styles.accountCardBalanceActive]}>
-                        {hidden ? mask : fmt(bal)}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </>
-            ) : null}
-          </ScrollView>
+              {act.map((ac) => {
+                const isActive = !selectedCard && selectedAccount === ac.id;
+                const bal = balanceForAccount(accounts, transactions, ac.id);
+                return (
+                  <TouchableOpacity
+                    key={ac.id}
+                    style={[styles.accountCard, isActive && styles.accountCardActive]}
+                    onPress={() => {
+                      setSelectedCard(null);
+                      setSelectedAccount(ac.id);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.accountCardIcon}>{ac.icon}</Text>
+                    <Text style={[styles.accountCardName, isActive && styles.accountCardNameActive]}>{ac.name}</Text>
+                    <Text style={[styles.accountCardBalance, isActive && styles.accountCardBalanceActive]}>
+                      {hidden ? mask : fmt(bal)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        ) : null}
+
+        <View style={styles.accountsSection}>
+          <Text style={styles.sectionLabel}>Cartões</Text>
+          {cardsAct.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountsRow}>
+              {cardsAct.map((c) => {
+                const isActive = selectedCard && String(selectedCard) === String(c.id);
+                const total = invoiceTotalsByCard.get(String(c.id)) || 0;
+                return (
+                  <TouchableOpacity
+                    key={c.id}
+                    style={[styles.accountCard, isActive && styles.accountCardActive]}
+                    onPress={() => {
+                      setSelectedAccount(null);
+                      setSelectedCard(c.id);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.accountCardIcon}>{c.icon}</Text>
+                    <Text style={[styles.accountCardName, isActive && styles.accountCardNameActive]}>{c.name}</Text>
+                    <Text style={[styles.accountCardBalance, isActive && styles.accountCardBalanceActive]}>
+                      {hidden ? mask : fmt(total)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          ) : (
+            <Text
+              style={{ fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.brandFgMuted, marginHorizontal: 20, marginBottom: 4 }}
+            >
+              Nenhum cartão cadastrado. Em Perfil → Cartões de crédito você pode adicionar.
+            </Text>
+          )}
         </View>
 
         <View style={[styles.saldoCard, saldo < 0 && { borderWidth: 2, borderColor: T.burnt }]}>
@@ -461,11 +604,11 @@ export default function DashboardScreen({ navigation }) {
           <Text style={styles.saldoValue}>{hidden ? mask : fmt(saldo)}</Text>
           <View style={{ flexDirection: 'row', gap: 20 }}>
             <View>
-              <Text style={styles.miniLabel}>Entradas</Text>
+              <Text style={styles.miniLabel}>{selectedCard ? 'Créditos' : 'Entradas'}</Text>
               <Text style={[styles.miniValue, { color: T.gold }]}>{hidden ? mask : `+${fmt(totalIn)}`}</Text>
             </View>
             <View>
-              <Text style={styles.miniLabel}>Saídas</Text>
+              <Text style={styles.miniLabel}>{selectedCard ? 'Compras' : 'Saídas'}</Text>
               <Text style={[styles.miniValue, { color: '#FFB899' }]}>{hidden ? mask : `-${fmt(totalOut)}`}</Text>
             </View>
           </View>
@@ -517,34 +660,6 @@ export default function DashboardScreen({ navigation }) {
             </View>
           ) : null}
         </View>
-
-        <View style={styles.recentHeader}>
-          <Text style={styles.recentTitle}>Transações recentes</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('History')}>
-            <Text style={styles.seeAllText}>Ver todas →</Text>
-          </TouchableOpacity>
-        </View>
-
-        {orderedRecent.map((tx) => (
-          <TouchableOpacity
-            key={tx.id}
-            style={styles.txRow}
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate('Detail', { tx })}
-          >
-            <CatIcon category={tx.categoria} size={38} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.txDesc} numberOfLines={1}>
-                {tx.descricao}
-              </Text>
-              <Text style={styles.txDate}>{tx.data}</Text>
-            </View>
-            <Text style={[styles.txValue, { color: tx.tipo === 'entrada' ? T.gold : T.burnt }]}>
-              {tx.tipo === 'entrada' ? '+' : '-'}
-              {fmt(tx.valor)}
-            </Text>
-          </TouchableOpacity>
-        ))}
       </ScrollView>
 
       <TouchableOpacity style={styles.fab} activeOpacity={0.8} onPress={() => navigation.navigate('NewTransaction')}>

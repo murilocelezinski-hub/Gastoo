@@ -1,11 +1,155 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { secureGet, secureSet, secureRemove } from '../services/secureStorage';
+import { addPeriod, fmtDate } from '../utils/recurrence';
 
 const STORAGE_KEY = '@gastoo_finance_v2';
 
 export const DEFAULT_ACCOUNT_ID = 'acc-seed-default';
 export const ACC_SEED_POUP = 'acc-seed-poup';
 const CARD_SEED_DEMO = 'card-seed-demo';
+
+function parseBrDate(s) {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const dd = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  const yy = parseInt(m[3], 10);
+  const d = new Date(yy, mm - 1, dd);
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
+}
+
+/**
+ * Lançamento já "vale" no calendário para saldo de caixa: data (DD/MM/AAAA) <= dia de referência.
+ * Datas inválidas são tratadas como já efetivas.
+ */
+export function isTransactionEffectiveOnOrBefore(tx, asOf = new Date()) {
+  if (!tx?.data) return true;
+  const tDate = parseBrDate(tx.data);
+  if (!tDate || Number.isNaN(tDate.getTime())) return true;
+  const tDay = new Date(tDate.getFullYear(), tDate.getMonth(), tDate.getDate());
+  const a = new Date(asOf.getFullYear(), asOf.getMonth(), asOf.getDate());
+  return tDay.getTime() <= a.getTime();
+}
+
+function addMonths(d, months) {
+  const dt = new Date(d.getFullYear(), d.getMonth(), 1);
+  dt.setMonth(dt.getMonth() + months);
+  return dt;
+}
+
+function addDays(d, days) {
+  const dt = new Date(d);
+  dt.setDate(dt.getDate() + days);
+  return dt;
+}
+
+function formatBrDate(d) {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
+function getInstallmentDates(startDate, periodo, numInstallments) {
+  const dates = [];
+  let current = new Date(startDate);
+
+  const periodDays = {
+    diaria: 1,
+    semanal: 7,
+    quinzenal: 14,
+    mensal: 30,
+    bimensal: 60,
+    trimestral: 90,
+    semestral: 180,
+    anual: 365,
+  };
+
+  const days = periodDays[periodo] || 30;
+
+  for (let i = 0; i < numInstallments; i++) {
+    dates.push(new Date(current));
+    current = addDays(current, days);
+  }
+
+  return dates;
+}
+
+export function invoiceKeyFromDateAndCloseDay(dateObj, closeDay) {
+  if (!dateObj || !(dateObj instanceof Date) || Number.isNaN(dateObj.getTime())) return null;
+  const cd = Math.min(31, Math.max(1, parseInt(closeDay, 10) || 10));
+  const base = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
+  const invoiceMonth = dateObj.getDate() > cd ? addMonths(base, 1) : base;
+  const y = invoiceMonth.getFullYear();
+  const m = String(invoiceMonth.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`; // YYYY-MM
+}
+
+export function invoiceLabelPtBr(invoiceKey) {
+  if (!invoiceKey) return '—';
+  const m = String(invoiceKey).match(/^(\d{4})-(\d{2})$/);
+  if (!m) return String(invoiceKey);
+  const yy = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  const monthNames = [
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro',
+  ];
+  return `${monthNames[Math.max(1, Math.min(12, mm)) - 1]} ${yy}`;
+}
+
+function splitInstallmentAmounts(total, n) {
+  const safe = Math.max(0, Number(total) || 0);
+  const ni = Math.max(1, Math.min(365, n));
+  const cents = Math.round(safe * 100);
+  if (cents === 0) {
+    return Array(ni).fill(0);
+  }
+  const base = Math.floor(cents / ni);
+  const parts = [];
+  let acc = 0;
+  for (let i = 0; i < ni - 1; i++) {
+    parts.push(base / 100);
+    acc += base;
+  }
+  parts.push((cents - acc) / 100);
+  return parts;
+}
+
+function ensureInvoiceFieldsForTx(tx, creditCards) {
+  const hasCard = tx && tx.creditCardId;
+  if (!hasCard) {
+    // se não é cartão, não persiste fatura
+    if (tx?.invoiceKey || tx?.invoiceKeyManual) {
+      const { invoiceKey, invoiceKeyManual, ...rest } = tx;
+      return rest;
+    }
+    return tx;
+  }
+  const card = creditCards.find((c) => String(c.id) === String(tx.creditCardId));
+  const dateObj = parseBrDate(tx.data);
+  const computed = invoiceKeyFromDateAndCloseDay(dateObj || new Date(), card?.diaFechamento ?? 10);
+
+  if (tx.invoiceKey) {
+    // Se o dado veio legado (invoiceKey existe, mas invoiceKeyManual não),
+    // inferimos: se bate com o cálculo, então é "auto"; se diverge, foi "fixado".
+    if (tx.invoiceKeyManual === undefined || tx.invoiceKeyManual === null) {
+      return { ...tx, invoiceKeyManual: tx.invoiceKey === computed ? false : true };
+    }
+    return { ...tx, invoiceKeyManual: Boolean(tx.invoiceKeyManual) };
+  }
+  return { ...tx, invoiceKey: computed, invoiceKeyManual: false };
+}
 
 function seedAccounts() {
   return [
@@ -187,26 +331,32 @@ function migrateLoaded(parsed) {
     diaFechamento: Math.min(31, Math.max(1, parseInt(c.diaFechamento, 10) || 10)),
     diaVencimento: Math.min(31, Math.max(1, parseInt(c.diaVencimento, 10) || 15)),
   }));
+  txs = txs.map((t) => ensureInvoiceFieldsForTx(t, creditCards));
   return { accounts, transactions: txs, creditCards };
 }
 
-export function balanceForAccount(accounts, transactions, accountId) {
+/**
+ * `asOf` padrão = hoje: não inclui lançamentos com data futura.
+ * Saldos futuros aparecem na projeção (série do gráfico) via `balanceTotalAt` / evolução.
+ */
+export function balanceForAccount(accounts, transactions, accountId, asOf = new Date()) {
   const acc = accounts.find((a) => a.id === accountId);
   if (!acc) return 0;
   let b = acc.saldoInicial || 0;
   for (const t of transactions) {
     if (t.accountId !== accountId) continue;
+    if (!isTransactionEffectiveOnOrBefore(t, asOf)) continue;
     if (t.tipo === 'entrada') b += t.valor;
     else if (t.tipo === 'saída') b -= t.valor;
   }
   return b;
 }
 
-/** Soma saldos apenas de contas não arquivadas */
-export function totalBalance(accounts, transactions) {
+/** Soma saldos apenas de contas não arquivadas (respeitando a mesma regra de data). */
+export function totalBalance(accounts, transactions, asOf = new Date()) {
   return accounts
     .filter((a) => !a.archived)
-    .reduce((sum, a) => sum + balanceForAccount(accounts, transactions, a.id), 0);
+    .reduce((sum, a) => sum + balanceForAccount(accounts, transactions, a.id, asOf), 0);
 }
 
 export function accountName(accounts, accountId) {
@@ -395,10 +545,103 @@ export function FinanceProvider({ children }) {
     [accounts, transactions]
   );
 
-  const addTransaction = useCallback((tx) => {
-    const id = tx.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    setTransactions((prev) => [{ ...tx, id }, ...prev]);
-  }, []);
+  const addTransaction = useCallback(
+    (tx) => {
+      const id = tx.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const next = ensureInvoiceFieldsForTx({ ...tx, id }, creditCards);
+
+      if (tx.gastoTipo === 'parcelado' && tx.periodicidade) {
+        const installmentGroupId = `inst-${Date.now()}`;
+        const startDate = parseBrDate(tx.data);
+        if (!startDate) {
+          setTransactions((prev) => [next, ...prev]);
+          return;
+        }
+
+        const numInstallments = 12;
+        const dates = getInstallmentDates(startDate, tx.periodicidade, numInstallments);
+        const installmentValue = parseFloat(tx.valor) / numInstallments;
+
+        const installments = dates.map((date, idx) => {
+          const instId = `${installmentGroupId}-${idx}`;
+          const instTx = {
+            ...next,
+            id: instId,
+            valor: parseFloat(installmentValue.toFixed(2)),
+            data: formatBrDate(date),
+            installmentGroupId,
+            installmentIndex: idx,
+            installmentTotal: numInstallments,
+            isInstallment: true,
+          };
+          return ensureInvoiceFieldsForTx(instTx, creditCards);
+        });
+
+        setTransactions((prev) => [...installments, ...prev]);
+        return;
+      }
+
+      setTransactions((prev) => [next, ...prev]);
+    },
+    [creditCards]
+  );
+
+  const addInstallmentTransactions = useCallback(
+    (raw) => {
+      if (!raw || raw.gastoTipo !== 'parcelado') {
+        return;
+      }
+      const n = Math.min(365, Math.max(1, parseInt(String(raw.numParcelas), 10) || 1));
+      const per = raw.periodicidade || 'mensal';
+      const amounts = splitInstallmentAmounts(raw.valor, n);
+      const gid = `pxl-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const baseD = parseBrDate(raw.data);
+      let current =
+        baseD && !Number.isNaN(baseD.getTime()) ? new Date(baseD.getFullYear(), baseD.getMonth(), baseD.getDate()) : new Date();
+      const rows = [];
+      for (let i = 0; i < n; i++) {
+        if (i > 0) {
+          const nextD = addPeriod(current, per);
+          current = new Date(nextD.getFullYear(), nextD.getMonth(), nextD.getDate());
+        }
+        const dataStr = fmtDate(current);
+        const card = raw.creditCardId
+          ? creditCards.find((c) => String(c.id) === String(raw.creditCardId)) || null
+          : null;
+        const {
+          numParcelas: _np,
+          id: _i0,
+          parcelaGrupoId: _g,
+          parcelaIndice: _ix,
+          parcelaTotal: _pt,
+          invoiceKey: _ik,
+          invoiceKeyManual: _im,
+          ...base
+        } = raw;
+        const row = {
+          ...base,
+          id: `${gid}-${i + 1}`,
+          data: dataStr,
+          valor: amounts[i],
+          gastoTipo: 'parcelado',
+          periodicidade: per,
+          parcelaGrupoId: gid,
+          parcelaIndice: i + 1,
+          parcelaTotal: n,
+        };
+        if (row.creditCardId) {
+          row.invoiceKey = invoiceKeyFromDateAndCloseDay(current, card?.diaFechamento ?? 10);
+          row.invoiceKeyManual = false;
+        } else {
+          delete row.invoiceKey;
+          delete row.invoiceKeyManual;
+        }
+        rows.push(ensureInvoiceFieldsForTx(row, creditCards));
+      }
+      setTransactions((prev) => [...rows.reverse(), ...prev]);
+    },
+    [creditCards]
+  );
 
   const addTransfer = useCallback(({ valor, descricao, data, accountOrigem, accountDestino }) => {
     if (accountOrigem === accountDestino) return;
@@ -423,14 +666,57 @@ export function FinanceProvider({ children }) {
 
   const updateTransaction = useCallback((updated) => {
     setTransactions((prev) =>
-      prev.map((t) => (String(t.id) === String(updated.id) ? { ...t, ...updated } : t))
+      prev.map((t) => {
+        if (String(t.id) !== String(updated.id)) return t;
+        const next = { ...t, ...updated };
+        const cardChanged = String(t.creditCardId || '') !== String(next.creditCardId || '');
+        // Se mudar o cartão, recalcula sempre (manual não deve persistir entre cartões).
+        if (next.creditCardId) {
+          if (cardChanged) {
+            const card = creditCards.find((c) => String(c.id) === String(next.creditCardId));
+            const dateObj = parseBrDate(next.data);
+            const computed = invoiceKeyFromDateAndCloseDay(dateObj || new Date(), card?.diaFechamento ?? 10);
+            next.invoiceKey = computed;
+            next.invoiceKeyManual = false;
+          } else {
+            // Se usuário não "fixou" fatura manualmente, recalcula ao mudar data
+            const manual = Boolean(next.invoiceKeyManual);
+            if (!manual && (!next.invoiceKey || t.data !== next.data)) {
+              const card = creditCards.find((c) => String(c.id) === String(next.creditCardId));
+              const dateObj = parseBrDate(next.data);
+              const computed = invoiceKeyFromDateAndCloseDay(dateObj || new Date(), card?.diaFechamento ?? 10);
+              next.invoiceKey = computed;
+              next.invoiceKeyManual = false;
+            }
+          }
+        } else {
+          delete next.invoiceKey;
+          delete next.invoiceKeyManual;
+        }
+        return ensureInvoiceFieldsForTx(next, creditCards);
+      })
     );
-  }, []);
+  }, [creditCards]);
 
-  const deleteTransaction = useCallback((tx) => {
+  const deleteTransaction = useCallback((tx, options = {}) => {
+    const { withFutureParcels = false } = options;
     setTransactions((prev) => {
-      if (tx.transferGroupId) {
+      if (tx?.transferGroupId) {
         return prev.filter((t) => t.transferGroupId !== tx.transferGroupId);
+      }
+<<<<<<< HEAD
+      if (tx.installmentGroupId) {
+        return prev.filter((t) => t.installmentGroupId !== tx.installmentGroupId);
+=======
+      if (withFutureParcels && tx?.parcelaGrupoId && tx.parcelaIndice != null) {
+        const g = String(tx.parcelaGrupoId);
+        const idx = Number(tx.parcelaIndice) || 0;
+        return prev.filter((t) => {
+          if (String(t.parcelaGrupoId || '') !== g) return true;
+          if (t.parcelaIndice == null) return true;
+          return Number(t.parcelaIndice) < idx;
+        });
+>>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
       }
       return prev.filter((t) => String(t.id) !== String(tx.id));
     });
@@ -462,6 +748,7 @@ export function FinanceProvider({ children }) {
       archiveCreditCard,
       unarchiveCreditCard,
       addTransaction,
+      addInstallmentTransactions,
       addTransfer,
       updateTransaction,
       deleteTransaction,
@@ -485,6 +772,7 @@ export function FinanceProvider({ children }) {
       archiveCreditCard,
       unarchiveCreditCard,
       addTransaction,
+      addInstallmentTransactions,
       addTransfer,
       updateTransaction,
       deleteTransaction,
