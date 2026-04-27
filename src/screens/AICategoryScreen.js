@@ -60,7 +60,7 @@ export default function AICategoryScreen({ navigation, route }) {
   const T = useThemeColors();
   const styles = useMemo(() => createAICategoryStyles(T), [T]);
   const { categories } = useAppPreferences();
-  const { addTransaction, showToast } = useFinance();
+  const { addTransaction, addInstallmentTransactions, showToast } = useFinance();
   const [loading, setLoading] = useState(true);
   const [suggestion, setSuggestion] = useState(null);
 
@@ -90,8 +90,13 @@ export default function AICategoryScreen({ navigation, route }) {
       obs: '',
       criado_por_ia: true,
     };
-    addTransaction(newTx);
-    showToast('Transação salva! ✓');
+    if (newTx.gastoTipo === 'parcelado') {
+      addInstallmentTransactions(newTx);
+      showToast('Parcelas salvas! ✓');
+    } else {
+      addTransaction(newTx);
+      showToast('Transação salva! ✓');
+    }
     navigation.navigate('Main');
   };
 

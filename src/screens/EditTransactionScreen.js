@@ -13,7 +13,10 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../context/AppPreferencesContext';
 import { Header, PrimaryButton, CatIcon } from '../components/Shared';
-import { useFinance, activeAccounts, activeCreditCards } from '../context/FinanceContext';
+import { useFinance, activeAccounts, activeCreditCards, invoiceKeyFromDateAndCloseDay, invoiceLabelPtBr } from '../context/FinanceContext';
+import { PERIOD_LABEL } from '../utils/recurrence';
+
+const PARCELA_NUMS = Array.from({ length: 365 }, (_, i) => i + 1);
 
 function parseBrDate(s) {
   if (!s) return null;
@@ -30,6 +33,18 @@ function parseBrDate(s) {
 function formatBrDate(d) {
   const p = (n) => String(n).padStart(2, '0');
   return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
+function invoiceKeyShift(key, deltaMonths) {
+  const m = String(key || '').match(/^(\d{4})-(\d{2})$/);
+  if (!m) return key;
+  const yy = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  const d = new Date(yy, mm - 1, 1);
+  d.setMonth(d.getMonth() + deltaMonths);
+  const y2 = d.getFullYear();
+  const m2 = String(d.getMonth() + 1).padStart(2, '0');
+  return `${y2}-${m2}`;
 }
 
 function createEditTransactionStyles(T) {
@@ -108,6 +123,26 @@ function createEditTransactionStyles(T) {
       justifyContent: 'center',
     },
     dateText: { fontFamily: 'Poppins_400Regular', fontSize: 15, color: T.graphite },
+    installmentRow: { flexDirection: 'row', gap: 10, marginTop: 2 },
+    installmentCol: { flex: 1 },
+    installmentLabel: { fontFamily: 'Poppins_600SemiBold', fontSize: 11, color: T.charcoal, marginBottom: 6 },
+    installmentScroll: {
+      maxHeight: 200,
+      borderWidth: 1.5,
+      borderColor: T.graySilver,
+      borderRadius: 12,
+      backgroundColor: T.white,
+    },
+    installPick: {
+      paddingVertical: 10,
+      paddingHorizontal: 4,
+      alignItems: 'center',
+      borderBottomWidth: 1,
+      borderBottomColor: T.grayVLight,
+    },
+    installPickText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.graphite },
+    installPickTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.orange },
+    lockedHint: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.graphite, lineHeight: 20 },
   });
 }
 
@@ -116,7 +151,7 @@ export default function EditTransactionScreen({ navigation, route }) {
   const styles = useMemo(() => createEditTransactionStyles(T), [T]);
   const insets = useSafeAreaInsets();
   const { tx } = route.params;
-  const { accounts, creditCards, updateTransaction, showToast } = useFinance();
+  const { accounts, creditCards, updateTransaction, addInstallmentTransactions, deleteTransaction, showToast } = useFinance();
   const act = useMemo(() => activeAccounts(accounts), [accounts]);
   const cardsAct = useMemo(() => activeCreditCards(creditCards), [creditCards]);
   const accountPickerList = useMemo(() => {
@@ -142,9 +177,16 @@ export default function EditTransactionScreen({ navigation, route }) {
   const [categoria, setCategoria] = useState(tx.categoria);
   const [accountId, setAccountId] = useState(tx.accountId || accounts[0]?.id);
   const [creditCardId, setCreditCardId] = useState(tx.creditCardId || null);
+  const [invoiceKey, setInvoiceKey] = useState(tx.invoiceKey || null);
+  const [invoiceManual, setInvoiceManual] = useState(Boolean(tx.invoiceKeyManual));
   const [gastoTipo, setGastoTipo] = useState(tx.gastoTipo || 'nenhum');
   const [periodicidade, setPeriodicidade] = useState(tx.periodicidade || 'mensal');
+  const [numParcelas, setNumParcelas] = useState(
+    () => (tx.parcelaTotal != null ? tx.parcelaTotal : 12)
+  );
   const valorRef = useRef(null);
+  const lockedParcelGroup = Boolean(tx.parcelaGrupoId);
+  const prevCardIdRef = useRef(tx.creditCardId || null);
 
   useEffect(() => {
     if (route.params?.selectedCategory) {
@@ -169,6 +211,32 @@ export default function EditTransactionScreen({ navigation, route }) {
     setData(formatBrDate(selected));
   };
 
+  const invoiceKeyAuto = useMemo(() => {
+    if (!creditCardId) return null;
+    const card = creditCards.find((c) => String(c.id) === String(creditCardId));
+    if (!card) return null;
+    return invoiceKeyFromDateAndCloseDay(dataObj, card.diaFechamento);
+  }, [creditCardId, creditCards, dataObj]);
+
+  useEffect(() => {
+    if (!creditCardId) {
+      setInvoiceKey(null);
+      setInvoiceManual(false);
+      prevCardIdRef.current = null;
+      return;
+    }
+    const prev = prevCardIdRef.current;
+    const cardChanged = prev != null && String(prev) !== String(creditCardId);
+    if (cardChanged) {
+      // A seleção manual de fatura não deve “vazar” entre cartões.
+      setInvoiceManual(false);
+      setInvoiceKey(invoiceKeyAuto || null);
+    } else if (invoiceKeyAuto && !invoiceManual) {
+      setInvoiceKey(invoiceKeyAuto);
+    }
+    prevCardIdRef.current = creditCardId;
+  }, [creditCardId, invoiceKeyAuto, invoiceManual]);
+
   const displayValor = valor ? parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '';
 
   const PERIODS = [
@@ -183,18 +251,73 @@ export default function EditTransactionScreen({ navigation, route }) {
   ];
 
   const handleSave = () => {
+    if (gastoTipo === 'parcelado' && !lockedParcelGroup) {
+      const base = {
+        ...tx,
+        tipo,
+        valor: parseFloat(valor),
+        descricao: descricao.trim(),
+        data,
+        obs,
+        categoria,
+        accountId,
+        creditCardId: creditCardId || null,
+        gastoTipo: 'parcelado',
+        periodicidade,
+        numParcelas,
+        criado_por_ia: tx.criado_por_ia,
+      };
+      if (creditCardId) {
+        base.invoiceKey = invoiceKey || invoiceKeyAuto;
+        base.invoiceKeyManual = invoiceManual;
+      }
+      addInstallmentTransactions(base);
+      deleteTransaction(tx);
+      showToast('Parcelas salvas! ✓');
+      navigation.navigate('Main');
+      return;
+    }
+
     const updated = {
       ...tx,
       tipo,
       valor: parseFloat(valor),
-      descricao,
+      descricao: descricao.trim(),
       data,
       obs,
       categoria,
       accountId,
       creditCardId: creditCardId || null,
-      ...(gastoTipo === 'nenhum' ? { gastoTipo: 'nenhum', periodicidade: undefined } : { gastoTipo, periodicidade }),
     };
+    if (creditCardId) {
+      updated.invoiceKey = invoiceKey || invoiceKeyAuto;
+      updated.invoiceKeyManual = invoiceManual;
+    } else {
+      delete updated.invoiceKey;
+      delete updated.invoiceKeyManual;
+    }
+    if (gastoTipo === 'nenhum') {
+      updated.gastoTipo = 'nenhum';
+      delete updated.periodicidade;
+      delete updated.numParcelas;
+      delete updated.parcelaGrupoId;
+      delete updated.parcelaIndice;
+      delete updated.parcelaTotal;
+    } else if (gastoTipo === 'fixo') {
+      updated.gastoTipo = 'fixo';
+      updated.periodicidade = periodicidade;
+      delete updated.numParcelas;
+      delete updated.parcelaGrupoId;
+      delete updated.parcelaIndice;
+      delete updated.parcelaTotal;
+    } else if (gastoTipo === 'parcelado' && lockedParcelGroup) {
+      updated.gastoTipo = 'parcelado';
+      updated.periodicidade = periodicidade;
+      updated.parcelaGrupoId = tx.parcelaGrupoId;
+      updated.parcelaIndice = tx.parcelaIndice;
+      updated.parcelaTotal = tx.parcelaTotal;
+      delete updated.numParcelas;
+    }
     updateTransaction(updated);
     showToast('Transação atualizada! ✓');
     navigation.navigate('Main');
@@ -323,26 +446,67 @@ export default function EditTransactionScreen({ navigation, route }) {
             )}
           </View>
 
+          {creditCardId ? (
+            <View style={styles.field}>
+              <Text style={styles.label}>Fatura</Text>
+              {invoiceKeyAuto ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountRow}>
+                  {[
+                    { key: invoiceKeyShift(invoiceKeyAuto, -1), label: invoiceLabelPtBr(invoiceKeyShift(invoiceKeyAuto, -1)) },
+                    { key: invoiceKeyAuto, label: invoiceLabelPtBr(invoiceKeyAuto) },
+                    { key: invoiceKeyShift(invoiceKeyAuto, 1), label: invoiceLabelPtBr(invoiceKeyShift(invoiceKeyAuto, 1)) },
+                  ].map((opt) => (
+                    <TouchableOpacity
+                      key={opt.key}
+                      onPress={() => {
+                        setInvoiceKey(opt.key);
+                        setInvoiceManual(opt.key !== invoiceKeyAuto);
+                      }}
+                      style={[styles.accountPill, invoiceKey === opt.key && styles.accountPillActive]}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.accountText, invoiceKey === opt.key && styles.accountTextActive]}>{opt.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              ) : (
+                <Text style={styles.blockText}>Não foi possível sugerir a fatura.</Text>
+              )}
+            </View>
+          ) : null}
+
           <View style={styles.field}>
             <Text style={styles.label}>Tipo de gasto</Text>
-            <View style={styles.toggle}>
-              {[
-                { key: 'nenhum', label: 'Normal' },
-                { key: 'fixo', label: 'Fixo' },
-                { key: 'parcelado', label: 'Parcelado' },
-              ].map((o) => (
-                <TouchableOpacity
-                  key={o.key}
-                  onPress={() => setGastoTipo(o.key)}
-                  style={[styles.toggleBtn, gastoTipo === o.key && styles.toggleBtnActive]}
-                >
-                  <Text style={[styles.toggleText, gastoTipo === o.key && styles.toggleTextActive]}>{o.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            {lockedParcelGroup && gastoTipo === 'parcelado' ? (
+              <Text style={styles.lockedHint}>
+                Parcela {tx.parcelaIndice} de {tx.parcelaTotal} · {PERIOD_LABEL[tx.periodicidade] || tx.periodicidade}. Para
+                interromper parcelas, use Excluir no detalhe desta transação.
+              </Text>
+            ) : (
+              <View style={styles.toggle}>
+                {[
+                  { key: 'nenhum', label: 'Normal' },
+                  { key: 'fixo', label: 'Fixo' },
+                  { key: 'parcelado', label: 'Parcelado' },
+                ].map((o) => (
+                  <TouchableOpacity
+                    key={o.key}
+                    onPress={() => {
+                      setGastoTipo(o.key);
+                      if (o.key === 'parcelado' || o.key === 'fixo') {
+                        setPeriodicidade((p) => p || 'mensal');
+                      }
+                    }}
+                    style={[styles.toggleBtn, gastoTipo === o.key && styles.toggleBtnActive]}
+                  >
+                    <Text style={[styles.toggleText, gastoTipo === o.key && styles.toggleTextActive]}>{o.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
 
-          {gastoTipo !== 'nenhum' ? (
+          {!lockedParcelGroup && gastoTipo === 'fixo' ? (
             <View style={styles.field}>
               <Text style={styles.label}>Periodicidade</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountRow}>
@@ -357,6 +521,68 @@ export default function EditTransactionScreen({ navigation, route }) {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+            </View>
+          ) : null}
+
+          {!lockedParcelGroup && gastoTipo === 'parcelado' ? (
+            <View style={styles.field}>
+              <Text style={styles.label}>Parcelas e periodicidade</Text>
+              <View style={styles.installmentRow}>
+                <View style={styles.installmentCol}>
+                  <Text style={styles.installmentLabel}>Número (1 a 365)</Text>
+                  <ScrollView
+                    style={styles.installmentScroll}
+                    nestedScrollEnabled
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator
+                  >
+                    {PARCELA_NUMS.map((n) => (
+                      <TouchableOpacity
+                        key={n}
+                        onPress={() => setNumParcelas(n)}
+                        style={styles.installPick}
+                        activeOpacity={0.65}
+                      >
+                        <Text
+                          style={[
+                            styles.installPickText,
+                            numParcelas === n && styles.installPickTextActive,
+                          ]}
+                        >
+                          {n}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+                <View style={styles.installmentCol}>
+                  <Text style={styles.installmentLabel}>Período</Text>
+                  <ScrollView
+                    style={styles.installmentScroll}
+                    nestedScrollEnabled
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator
+                  >
+                    {PERIODS.map((p) => (
+                      <TouchableOpacity
+                        key={p.key}
+                        onPress={() => setPeriodicidade(p.key)}
+                        style={styles.installPick}
+                        activeOpacity={0.65}
+                      >
+                        <Text
+                          style={[
+                            styles.installPickText,
+                            periodicidade === p.key && styles.installPickTextActive,
+                          ]}
+                        >
+                          {p.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              </View>
             </View>
           ) : null}
 

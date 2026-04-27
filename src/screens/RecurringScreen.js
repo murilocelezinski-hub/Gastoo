@@ -5,7 +5,7 @@ import { fmt } from '../theme';
 import { Header, CatIcon } from '../components/Shared';
 import { useFinance, accountName, creditCardName } from '../context/FinanceContext';
 import { useThemeColors } from '../context/AppPreferencesContext';
-import { fmtDate, nextOccurrenceDate, PERIOD_LABEL } from '../utils/recurrence';
+import { fmtDate, nextOccurrenceDate, nextParcelInGroup, PERIOD_LABEL } from '../utils/recurrence';
 
 function createRecurringStyles(T) {
   return StyleSheet.create({
@@ -44,21 +44,40 @@ export default function RecurringScreen({ navigation }) {
 
   const items = useMemo(() => {
     const now = new Date();
-    return transactions
-      .filter((t) => !t?.isTransfer && t?.tipo === 'saída' && t?.gastoTipo && t.gastoTipo !== 'nenhum' && t.periodicidade)
-      .map((t) => {
-        const next = nextOccurrenceDate(t, now);
-        return {
-          tx: t,
-          next,
-          nextLabel: next ? fmtDate(next) : '—',
-        };
-      })
-      .sort((a, b) => {
-        const at = a.next ? a.next.getTime() : Number.POSITIVE_INFINITY;
-        const bt = b.next ? b.next.getTime() : Number.POSITIVE_INFINITY;
-        return at - bt;
+    const pool = transactions.filter(
+      (t) => !t?.isTransfer && t?.tipo === 'saída' && t?.gastoTipo && t.gastoTipo !== 'nenhum' && t.periodicidade
+    );
+    const seenGroup = new Set();
+    const rows = [];
+    for (const t of pool) {
+      if (t.gastoTipo === 'parcelado' && t.parcelaGrupoId) {
+        if (seenGroup.has(t.parcelaGrupoId)) continue;
+        const sibs = pool.filter((x) => String(x.parcelaGrupoId) === String(t.parcelaGrupoId));
+        const rep = nextParcelInGroup(sibs, now) || t;
+        seenGroup.add(t.parcelaGrupoId);
+        const nextD = rep?.data ? rep.data : t.data;
+        rows.push({ tx: rep, next: null, nextLabel: nextD, isParcelGroup: true, groupSize: rep.parcelaTotal });
+        continue;
+      }
+      const next = nextOccurrenceDate(t, now);
+      rows.push({
+        tx: t,
+        next,
+        nextLabel: next ? fmtDate(next) : '—',
+        isParcelGroup: false,
       });
+    }
+    return rows.sort((a, b) => {
+      const parseRow = (r) => {
+        if (r.next) return r.next.getTime();
+        if (r.tx?.data) {
+          const p = String(r.tx.data).split('/').map(Number);
+          if (p.length === 3) return new Date(p[2], p[1] - 1, p[0]).getTime();
+        }
+        return Number.POSITIVE_INFINITY;
+      };
+      return parseRow(a) - parseRow(b);
+    });
   }, [transactions]);
 
   return (
@@ -75,10 +94,14 @@ export default function RecurringScreen({ navigation }) {
           </View>
         ) : null}
 
-        {items.map(({ tx, nextLabel }) => {
+        {items.map(({ tx, nextLabel, isParcelGroup, groupSize }) => {
           const where = `${accountName(accounts, tx.accountId)}${tx.creditCardId ? ` · ${creditCardName(creditCards, tx.creditCardId)}` : ''}`;
           const period = PERIOD_LABEL[tx.periodicidade] || tx.periodicidade;
           const kind = tx.gastoTipo === 'fixo' ? 'Fixo' : 'Parcelado';
+          const parcelInfo =
+            isParcelGroup && tx?.parcelaIndice != null && (groupSize || tx.parcelaTotal)
+              ? ` · ${tx.parcelaIndice}/${groupSize || tx.parcelaTotal}`
+              : '';
           return (
             <TouchableOpacity
               key={String(tx.id)}
@@ -90,7 +113,8 @@ export default function RecurringScreen({ navigation }) {
               <View style={{ flex: 1 }}>
                 <Text style={styles.title} numberOfLines={1}>{tx.descricao}</Text>
                 <Text style={styles.meta} numberOfLines={1}>
-                  {kind} · {period} · Próxima: {nextLabel}
+                  {kind} · {period}
+                  {parcelInfo} · Próxima: {nextLabel}
                 </Text>
                 <Text style={styles.sub} numberOfLines={1}>{where}</Text>
               </View>
