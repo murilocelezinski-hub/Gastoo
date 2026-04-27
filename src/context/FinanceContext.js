@@ -716,7 +716,11 @@ export function FinanceProvider({ children }) {
           if (t.parcelaIndice == null) return true;
           return Number(t.parcelaIndice) < idx;
         });
+<<<<<<< HEAD
 >>>>>>> 820466f (feat: Implementa gerenciamento de parcelas em transações financeiras)
+=======
+>>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
+>>>>>>> 4871156b4f7701724651c4e0f3192cffe52c4e8f
       }
       return prev.filter((t) => String(t.id) !== String(tx.id));
     });

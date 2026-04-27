@@ -28,7 +28,11 @@ import { buildBalanceEvolutionSeries } from '../utils/chart';
 import { sortTransactionsByDate } from '../utils/txSort';
 import { useResponsiveLayout, useMainLayoutDimensions } from '../utils/responsiveLayout';
 =======
+<<<<<<< HEAD
 >>>>>>> 820466f (feat: Implementa gerenciamento de parcelas em transações financeiras)
+=======
+>>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
+>>>>>>> 4871156b4f7701724651c4e0f3192cffe52c4e8f
 
 const BALANCE_MODES = [
   { key: 'current_month', short: 'Mês' },
@@ -229,7 +233,11 @@ function createStyles(T, isDesktop, isMobile) {
       letterSpacing: 0.3,
     },
     accountsRow: { paddingHorizontal: 20, gap: 10, paddingBottom: 4 },
+<<<<<<< HEAD
 >>>>>>> 820466f (feat: Implementa gerenciamento de parcelas em transações financeiras)
+=======
+>>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
+>>>>>>> 4871156b4f7701724651c4e0f3192cffe52c4e8f
     accountCard: {
       width: isDesktop ? 160 : 120,
       borderRadius: 16,
@@ -340,7 +348,11 @@ function createStyles(T, isDesktop, isMobile) {
     txDate: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 12 : 11, color: T.brandFgMuted },
     txValue: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 15 : 14 },
 =======
+<<<<<<< HEAD
 >>>>>>> 820466f (feat: Implementa gerenciamento de parcelas em transações financeiras)
+=======
+>>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
+>>>>>>> 4871156b4f7701724651c4e0f3192cffe52c4e8f
     fab: {
       position: 'absolute',
       bottom: isDesktop ? 40 : 24,
@@ -370,7 +382,11 @@ export default function DashboardScreen({ navigation }) {
 =======
   const { profile } = useAppPreferences();
   const styles = useMemo(() => createStyles(T), [T]);
+<<<<<<< HEAD
 >>>>>>> 820466f (feat: Implementa gerenciamento de parcelas em transações financeiras)
+=======
+>>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
+>>>>>>> 4871156b4f7701724651c4e0f3192cffe52c4e8f
   const insets = useSafeAreaInsets();
   const { width: winW } = useWindowDimensions();
   const { accounts, creditCards, transactions } = useFinance();
