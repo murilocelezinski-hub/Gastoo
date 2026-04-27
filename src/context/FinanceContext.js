@@ -705,6 +705,13 @@ export function FinanceProvider({ children }) {
         return prev.filter((t) => t.transferGroupId !== tx.transferGroupId);
       }
       if (withFutureParcels && tx?.parcelaGrupoId && tx.parcelaIndice != null) {
+        const cutFrom = Number(tx.parcelaIndice) || 0;
+        return prev.filter((t) => {
+          if (String(t.parcelaGrupoId || '') !== String(tx.parcelaGrupoId)) return true;
+          const ix = Number(t.parcelaIndice) || 0;
+          return ix > 0 && ix < cutFrom;
+        });
+      }
       return prev.filter((t) => String(t.id) !== String(tx.id));
     });
   }, []);
