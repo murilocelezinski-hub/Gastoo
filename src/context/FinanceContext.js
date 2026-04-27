@@ -25,6 +25,42 @@ function addMonths(d, months) {
   return dt;
 }
 
+function addDays(d, days) {
+  const dt = new Date(d);
+  dt.setDate(dt.getDate() + days);
+  return dt;
+}
+
+function formatBrDate(d) {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
+function getInstallmentDates(startDate, periodo, numInstallments) {
+  const dates = [];
+  let current = new Date(startDate);
+
+  const periodDays = {
+    diaria: 1,
+    semanal: 7,
+    quinzenal: 14,
+    mensal: 30,
+    bimensal: 60,
+    trimestral: 90,
+    semestral: 180,
+    anual: 365,
+  };
+
+  const days = periodDays[periodo] || 30;
+
+  for (let i = 0; i < numInstallments; i++) {
+    dates.push(new Date(current));
+    current = addDays(current, days);
+  }
+
+  return dates;
+}
+
 export function invoiceKeyFromDateAndCloseDay(dateObj, closeDay) {
   if (!dateObj || !(dateObj instanceof Date) || Number.isNaN(dateObj.getTime())) return null;
   const cd = Math.min(31, Math.max(1, parseInt(closeDay, 10) || 10));
@@ -476,6 +512,38 @@ export function FinanceProvider({ children }) {
     (tx) => {
       const id = tx.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
       const next = ensureInvoiceFieldsForTx({ ...tx, id }, creditCards);
+
+      if (tx.gastoTipo === 'parcelado' && tx.periodicidade) {
+        const installmentGroupId = `inst-${Date.now()}`;
+        const startDate = parseBrDate(tx.data);
+        if (!startDate) {
+          setTransactions((prev) => [next, ...prev]);
+          return;
+        }
+
+        const numInstallments = 12;
+        const dates = getInstallmentDates(startDate, tx.periodicidade, numInstallments);
+        const installmentValue = parseFloat(tx.valor) / numInstallments;
+
+        const installments = dates.map((date, idx) => {
+          const instId = `${installmentGroupId}-${idx}`;
+          const instTx = {
+            ...next,
+            id: instId,
+            valor: parseFloat(installmentValue.toFixed(2)),
+            data: formatBrDate(date),
+            installmentGroupId,
+            installmentIndex: idx,
+            installmentTotal: numInstallments,
+            isInstallment: true,
+          };
+          return ensureInvoiceFieldsForTx(instTx, creditCards);
+        });
+
+        setTransactions((prev) => [...installments, ...prev]);
+        return;
+      }
+
       setTransactions((prev) => [next, ...prev]);
     },
     [creditCards]
@@ -540,6 +608,9 @@ export function FinanceProvider({ children }) {
     setTransactions((prev) => {
       if (tx.transferGroupId) {
         return prev.filter((t) => t.transferGroupId !== tx.transferGroupId);
+      }
+      if (tx.installmentGroupId) {
+        return prev.filter((t) => t.installmentGroupId !== tx.installmentGroupId);
       }
       return prev.filter((t) => String(t.id) !== String(tx.id));
     });
