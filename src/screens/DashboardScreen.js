@@ -10,7 +10,7 @@ import {
   PanResponder,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Polyline, Polygon, Line, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Svg, { Polyline, Polygon, Line, Circle, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
 import { fmt } from '../theme';
 import {
   useFinance,
@@ -72,6 +72,31 @@ function parseBrDate(s) {
   return d;
 }
 
+function fmtYLabel(v) {
+  const abs = Math.abs(v);
+  if (abs >= 1_000_000) return `${(v / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+  if (abs >= 1_000) return `${Math.round(v / 1_000)}k`;
+  return `${Math.round(v)}`;
+}
+
+function niceYTicks(minV, maxV) {
+  const range = maxV - minV;
+  if (range === 0) return [minV];
+  const roughStep = range / 3;
+  const mag = Math.pow(10, Math.floor(Math.log10(Math.abs(roughStep) || 1)));
+  let step = mag;
+  for (const c of [1, 2, 2.5, 5, 10]) {
+    if (c * mag >= roughStep) { step = c * mag; break; }
+  }
+  const start = Math.ceil(minV / step) * step;
+  const ticks = [];
+  for (let t = start; t <= maxV + step * 0.001; t += step) {
+    ticks.push(Math.round(t * 1000) / 1000);
+    if (ticks.length >= 4) break;
+  }
+  return ticks;
+}
+
 function BalanceLineChart({
   points,
   width,
@@ -85,21 +110,23 @@ function BalanceLineChart({
   tooltipStyle,
   tooltipDateStyle,
   tooltipValueStyle,
+  defaultIndex,
 }) {
   const [activeIndex, setActiveIndex] = useState(null);
 
-  // Default to last point; scrub overrides it
-  const displayIndex = activeIndex !== null ? activeIndex : points.length - 1;
+  // defaultIndex vem de fora (ex: dia de hoje no modo mês); fallback = último ponto
+  const resolvedDefault = defaultIndex != null ? defaultIndex : points.length - 1;
+  const displayIndex = activeIndex !== null ? activeIndex : resolvedDefault;
 
   const geom = useMemo(() => {
-    const padL = 2;
-    const padR = 4;
-    const padT = 12;
+    const padL = 52; // espaço para labels do eixo Y
+    const padR = 6;
+    const padT = 14;
     const padB = 4;
     const innerW = Math.max(width - padL - padR, 1);
     const innerH = Math.max(height - padT - padB, 1);
     if (!points.length) {
-      return { padL, padR, padT, padB, innerW, innerH, coords: [], minV: 0, maxV: 1, span: 1, n: 1, yZero: 0, showZero: false };
+      return { padL, padR, padT, padB, innerW, innerH, coords: [], minV: 0, maxV: 1, span: 1, n: 1, yZero: 0, showZero: false, yTicks: [] };
     }
     const vals = points.map((p) => p.balance);
     let minV = Math.min(...vals);
@@ -114,7 +141,8 @@ function BalanceLineChart({
     });
     const yZero = padT + innerH - ((0 - minV) / span) * innerH;
     const showZero = yZero >= padT && yZero <= padT + innerH;
-    return { padL, padR, padT, padB, innerW, innerH, coords, minV, maxV, span, n, yZero, showZero };
+    const yTicks = niceYTicks(minV, maxV);
+    return { padL, padR, padT, padB, innerW, innerH, coords, minV, maxV, span, n, yZero, showZero, yTicks };
   }, [points, width, height]);
 
   const xToIndex = useCallback(
@@ -150,10 +178,8 @@ function BalanceLineChart({
     );
   }
 
-  const { padL, padR, padT, innerW, innerH, coords, yZero, showZero } = geom;
+  const { padL, padR, padT, innerW, innerH, coords, minV, maxV, span, yZero, showZero, yTicks } = geom;
   const linePointsStr = coords.map((c) => `${c.x},${c.y}`).join(' ');
-
-  // Area fill: line coords + bottom-right + bottom-left corners
   const areaPointsStr = [
     ...coords.map((c) => `${c.x},${c.y}`),
     `${coords[coords.length - 1].x},${padT + innerH}`,
@@ -169,17 +195,36 @@ function BalanceLineChart({
         <Svg width={width} height={height}>
           <Defs>
             <LinearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0%" stopColor={lineColor} stopOpacity="0.25" />
+              <Stop offset="0%" stopColor={lineColor} stopOpacity="0.22" />
               <Stop offset="100%" stopColor={lineColor} stopOpacity="0.02" />
             </LinearGradient>
           </Defs>
 
+          {/* Eixo Y: linhas de grade + labels */}
+          {yTicks.map((tick) => {
+            const yPos = padT + innerH - ((tick - minV) / span) * innerH;
+            return (
+              <React.Fragment key={tick}>
+                <Line
+                  x1={padL} y1={yPos} x2={padL + innerW} y2={yPos}
+                  stroke={zeroColor} strokeWidth={0.5} strokeDasharray="3,5" opacity={0.4}
+                />
+                <SvgText
+                  x={padL - 6} y={yPos + 3.5}
+                  textAnchor="end" fontSize={9} fill={mutedColor}
+                >
+                  {fmtYLabel(tick)}
+                </SvgText>
+              </React.Fragment>
+            );
+          })}
+
           {/* Área preenchida */}
           <Polygon points={areaPointsStr} fill="url(#areaGrad)" />
 
-          {/* Linha zero */}
+          {/* Linha zero (destaque extra se cruzar zero) */}
           {showZero ? (
-            <Line x1={padL} y1={yZero} x2={width - padR} y2={yZero}
+            <Line x1={padL} y1={yZero} x2={padL + innerW} y2={yZero}
               stroke={zeroColor} strokeWidth={1} strokeDasharray="3,5" />
           ) : null}
 
@@ -187,15 +232,15 @@ function BalanceLineChart({
           <Polyline points={linePointsStr} fill="none" stroke={lineColor}
             strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
 
-          {/* Marcador do ponto ativo (padrão = último ponto) */}
+          {/* Marcador do ponto ativo */}
           <Line x1={activeCoord.x} y1={padT} x2={activeCoord.x} y2={padT + innerH}
-            stroke={lineColor} strokeWidth={1} opacity={activeIndex !== null ? 0.5 : 0.25} />
+            stroke={lineColor} strokeWidth={1} opacity={activeIndex !== null ? 0.55 : 0.25} />
           <Circle cx={activeCoord.x} cy={activeCoord.y} r={7} fill={lineColor} opacity={0.2} />
           <Circle cx={activeCoord.x} cy={activeCoord.y} r={4} fill={lineColor} />
         </Svg>
       </View>
 
-      {/* Tooltip sempre visível — padrão = último ponto */}
+      {/* Tooltip sempre visível */}
       <View style={tooltipStyle} accessibilityLiveRegion="polite">
         <Text style={tooltipDateStyle} numberOfLines={1}>
           {formatTooltipDate(activePt.date)}
@@ -449,6 +494,13 @@ export default function DashboardScreen({ navigation }) {
     ? Math.max(300, Math.floor((winW - 104) * 0.6) - 48)
     : Math.max(260, winW - 72);
   const chartH = isDesktop ? 220 : 148;
+
+  // Índice padrão do gráfico: no modo "mês atual" aponta para hoje; nos demais, último ponto
+  const chartDefaultIndex = useMemo(() => {
+    if (balanceMode !== 'current_month') return balanceSeries.length - 1;
+    const todayIdx = new Date().getDate() - 1; // série começa no dia 1 = índice 0
+    return Math.min(todayIdx, balanceSeries.length - 1);
+  }, [balanceMode, balanceSeries.length]);
 
   const labelIndexes = useMemo(() => {
     const len = balanceSeries.length;
@@ -786,6 +838,7 @@ export default function DashboardScreen({ navigation }) {
                 tooltipStyle={styles.chartScrubReadout}
                 tooltipDateStyle={styles.chartTooltipDate}
                 tooltipValueStyle={styles.chartTooltipValue}
+                defaultIndex={chartDefaultIndex}
               />
               {balanceSeries.length > 0 ? (
                 <View style={styles.chartLabels}>
