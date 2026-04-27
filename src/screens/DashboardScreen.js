@@ -25,6 +25,7 @@ import {
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { buildBalanceEvolutionSeries } from '../utils/chart';
 import { sortTransactionsByDate } from '../utils/txSort';
+import { useResponsiveLayout, useMainLayoutDimensions } from '../utils/responsiveLayout';
 
 const BALANCE_MODES = [
   { key: 'current_month', short: 'Mês' },
@@ -191,7 +192,7 @@ function BalanceLineChart({
 
 const logo = require('../../assets/logo.png');
 
-function createStyles(T) {
+function createStyles(T, isDesktop, isMobile) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: T.chocolate },
     logo: { width: 120, height: 36 },
@@ -199,7 +200,7 @@ function createStyles(T) {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: 20,
+      paddingHorizontal: isDesktop ? 40 : 20,
       paddingBottom: 8,
     },
     avatar: {
@@ -211,12 +212,12 @@ function createStyles(T) {
       justifyContent: 'center',
       overflow: 'hidden',
     },
-    accountsSection: { marginBottom: 16 },
-    accountsRow: { paddingHorizontal: 20, gap: 10 },
+    accountsSection: { marginBottom: isDesktop ? 24 : 16 },
+    accountsRow: { paddingHorizontal: isDesktop ? 40 : 20, gap: isDesktop ? 16 : 10 },
     accountCard: {
-      width: 120,
+      width: isDesktop ? 160 : 120,
       borderRadius: 16,
-      padding: 14,
+      padding: isDesktop ? 16 : 14,
       gap: 4,
       backgroundColor: T.homeGlass,
       borderWidth: 1.5,
@@ -226,48 +227,50 @@ function createStyles(T) {
       backgroundColor: 'rgba(240,80,0,0.18)',
       borderColor: T.orange,
     },
-    accountCardIcon: { fontSize: 20 },
+    accountCardIcon: { fontSize: isDesktop ? 24 : 20 },
     accountCardName: {
       fontFamily: 'Poppins_400Regular',
-      fontSize: 11,
+      fontSize: isDesktop ? 12 : 11,
       color: T.brandFgMuted,
       marginTop: 2,
     },
     accountCardNameActive: { color: T.brandFg },
     accountCardBalance: {
       fontFamily: 'Poppins_600SemiBold',
-      fontSize: 13,
+      fontSize: isDesktop ? 15 : 13,
       color: T.brandFgMuted,
     },
     accountCardBalanceActive: { color: T.orange },
     saldoCard: {
       backgroundColor: T.orange,
       borderRadius: 20,
-      padding: 24,
-      marginHorizontal: 20,
-      marginBottom: 20,
+      padding: isDesktop ? 32 : 24,
+      marginHorizontal: isDesktop ? 40 : 20,
+      marginBottom: isDesktop ? 28 : 20,
       shadowColor: T.orange,
       shadowOpacity: 0.3,
       shadowRadius: 16,
       shadowOffset: { width: 0, height: 8 },
       elevation: 6,
+      maxWidth: isDesktop ? 600 : 'auto',
     },
     saldoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     eyeBtn: { padding: 4 },
     eyeIcon: { fontSize: 16 },
-    saldoLabel: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: 'rgba(255,255,255,0.7)' },
-    saldoValue: { fontFamily: 'Poppins_100Thin', fontSize: 32, color: '#fff', marginVertical: 4 },
-    miniLabel: { fontFamily: 'Poppins_400Regular', fontSize: 10, color: 'rgba(255,255,255,0.6)' },
-    miniValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 15 },
+    saldoLabel: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 14 : 12, color: 'rgba(255,255,255,0.7)' },
+    saldoValue: { fontFamily: 'Poppins_100Thin', fontSize: isDesktop ? 48 : 32, color: '#fff', marginVertical: 4 },
+    miniLabel: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 11 : 10, color: 'rgba(255,255,255,0.6)' },
+    miniValue: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 18 : 15 },
     chartBox: {
       backgroundColor: T.homeGlass,
       borderRadius: 16,
-      padding: 16,
-      marginHorizontal: 20,
-      marginBottom: 20,
+      padding: isDesktop ? 24 : 16,
+      marginHorizontal: isDesktop ? 40 : 20,
+      marginBottom: isDesktop ? 28 : 20,
+      maxWidth: isDesktop ? 800 : 'auto',
     },
     chartHead: { marginBottom: 10 },
-    chartTitle: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.brandFgMuted, marginBottom: 8 },
+    chartTitle: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 15 : 13, color: T.brandFgMuted, marginBottom: 8 },
     filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
     filterChip: {
       paddingHorizontal: 8,
@@ -301,30 +304,31 @@ function createStyles(T) {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginHorizontal: 20,
+      marginHorizontal: isDesktop ? 40 : 20,
       marginBottom: 12,
     },
-    recentTitle: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.brandFgMuted },
+    recentTitle: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 16 : 14, color: T.brandFgMuted },
     seeAllText: { fontFamily: 'Poppins_600SemiBold', fontSize: 12, color: T.orange },
     txRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
-      paddingVertical: 10,
-      marginHorizontal: 20,
+      paddingVertical: isDesktop ? 14 : 10,
+      marginHorizontal: isDesktop ? 40 : 20,
+      paddingHorizontal: isDesktop ? 12 : 0,
       borderBottomWidth: 1,
       borderBottomColor: T.homeHairline,
     },
-    txDesc: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.brandFg },
-    txDate: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.brandFgMuted },
-    txValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 14 },
+    txDesc: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 15 : 14, color: T.brandFg },
+    txDate: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 12 : 11, color: T.brandFgMuted },
+    txValue: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 15 : 14 },
     fab: {
       position: 'absolute',
-      bottom: 24,
-      right: 20,
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      bottom: isDesktop ? 40 : 24,
+      right: isDesktop ? 40 : 20,
+      width: isDesktop ? 64 : 56,
+      height: isDesktop ? 64 : 56,
+      borderRadius: isDesktop ? 32 : 28,
       backgroundColor: T.orange,
       alignItems: 'center',
       justifyContent: 'center',
@@ -334,14 +338,15 @@ function createStyles(T) {
       shadowOffset: { width: 0, height: 4 },
       elevation: 8,
     },
-    fabText: { fontSize: 28, color: '#fff', fontFamily: 'Poppins_600SemiBold', marginTop: -2 },
+    fabText: { fontSize: isDesktop ? 32 : 28, color: '#fff', fontFamily: 'Poppins_600SemiBold', marginTop: -2 },
   });
 }
 
 export default function DashboardScreen({ navigation }) {
   const T = useThemeColors();
   const { profile, transactionListOrder } = useAppPreferences();
-  const styles = useMemo(() => createStyles(T), [T]);
+  const { isDesktop, isMobile } = useResponsiveLayout();
+  const styles = useMemo(() => createStyles(T, isDesktop, isMobile), [T, isDesktop, isMobile]);
   const insets = useSafeAreaInsets();
   const { width: winW } = useWindowDimensions();
   const { accounts, creditCards, transactions } = useFinance();
@@ -374,8 +379,8 @@ export default function DashboardScreen({ navigation }) {
     [accounts, transactions, selectedAccount, balanceMode]
   );
 
-  const chartW = Math.max(260, winW - 72);
-  const chartH = 148;
+  const chartW = isDesktop ? Math.min(760, winW - 160) : Math.max(260, winW - 72);
+  const chartH = isDesktop ? 220 : 148;
 
   const labelIndexes = useMemo(() => {
     const len = balanceSeries.length;
