@@ -7,7 +7,9 @@
     "start:tunnel": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-expo-with-ngrok.ps1",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build": "expo export -p web",
+    "vercel-build": "expo export -p web"
   },
   "dependencies": {
     "@expo-google-fonts/poppins": "^0.4.1",

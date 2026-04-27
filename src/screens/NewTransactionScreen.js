@@ -34,17 +34,9 @@ function invoiceKeyShift(key, deltaMonths) {
   return `${y2}-${m2}`;
 }
 
-<<<<<<< HEAD
-function createNewTransactionStyles(T, isDesktop) {
-=======
 const PARCELA_NUMS = Array.from({ length: 365 }, (_, i) => i + 1);
 
-function createNewTransactionStyles(T) {
-<<<<<<< HEAD
->>>>>>> 820466f (feat: Implementa gerenciamento de parcelas em transações financeiras)
-=======
->>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
->>>>>>> 4871156b4f7701724651c4e0f3192cffe52c4e8f
+function createNewTransactionStyles(T, isDesktop) {
   return StyleSheet.create({
     form: { flexGrow: 1, padding: isDesktop ? 40 : 20, gap: isDesktop ? 24 : 20, maxWidth: isDesktop ? 800 : 'auto' },
     modeRow: { flexDirection: 'row', gap: isDesktop ? 16 : 10 },

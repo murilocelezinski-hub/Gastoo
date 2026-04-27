@@ -24,15 +24,8 @@ import {
 } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { buildBalanceEvolutionSeries } from '../utils/chart';
-<<<<<<< HEAD
 import { sortTransactionsByDate } from '../utils/txSort';
 import { useResponsiveLayout, useMainLayoutDimensions } from '../utils/responsiveLayout';
-=======
-<<<<<<< HEAD
->>>>>>> 820466f (feat: Implementa gerenciamento de parcelas em transações financeiras)
-=======
->>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
->>>>>>> 4871156b4f7701724651c4e0f3192cffe52c4e8f
 
 const BALANCE_MODES = [
   { key: 'current_month', short: 'Mês' },
@@ -219,25 +212,16 @@ function createStyles(T, isDesktop, isMobile) {
       justifyContent: 'center',
       overflow: 'hidden',
     },
-<<<<<<< HEAD
     accountsSection: { marginBottom: isDesktop ? 24 : 16 },
-    accountsRow: { paddingHorizontal: isDesktop ? 40 : 20, gap: isDesktop ? 16 : 10 },
-=======
-    accountsSection: { marginBottom: 12 },
     sectionLabel: {
       fontFamily: 'Poppins_600SemiBold',
       fontSize: 12,
       color: T.brandFgMuted,
       marginBottom: 8,
-      marginHorizontal: 20,
+      marginHorizontal: isDesktop ? 40 : 20,
       letterSpacing: 0.3,
     },
-    accountsRow: { paddingHorizontal: 20, gap: 10, paddingBottom: 4 },
-<<<<<<< HEAD
->>>>>>> 820466f (feat: Implementa gerenciamento de parcelas em transações financeiras)
-=======
->>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
->>>>>>> 4871156b4f7701724651c4e0f3192cffe52c4e8f
+    accountsRow: { paddingHorizontal: isDesktop ? 40 : 20, gap: isDesktop ? 16 : 10, paddingBottom: 4 },
     accountCard: {
       width: isDesktop ? 160 : 120,
       borderRadius: 16,
@@ -324,7 +308,6 @@ function createStyles(T, isDesktop, isMobile) {
     },
     chartTooltipDate: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.brandFgMuted, flex: 1 },
     chartTooltipValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.orange, flexShrink: 0 },
-<<<<<<< HEAD
     recentHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -347,12 +330,6 @@ function createStyles(T, isDesktop, isMobile) {
     txDesc: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 15 : 14, color: T.brandFg },
     txDate: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 12 : 11, color: T.brandFgMuted },
     txValue: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 15 : 14 },
-=======
-<<<<<<< HEAD
->>>>>>> 820466f (feat: Implementa gerenciamento de parcelas em transações financeiras)
-=======
->>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
->>>>>>> 4871156b4f7701724651c4e0f3192cffe52c4e8f
     fab: {
       position: 'absolute',
       bottom: isDesktop ? 40 : 24,
@@ -375,18 +352,9 @@ function createStyles(T, isDesktop, isMobile) {
 
 export default function DashboardScreen({ navigation }) {
   const T = useThemeColors();
-<<<<<<< HEAD
   const { profile, transactionListOrder } = useAppPreferences();
   const { isDesktop, isMobile } = useResponsiveLayout();
   const styles = useMemo(() => createStyles(T, isDesktop, isMobile), [T, isDesktop, isMobile]);
-=======
-  const { profile } = useAppPreferences();
-  const styles = useMemo(() => createStyles(T), [T]);
-<<<<<<< HEAD
->>>>>>> 820466f (feat: Implementa gerenciamento de parcelas em transações financeiras)
-=======
->>>>>>> 820466fd853be1c7247deac9dcf9d73c0388a676
->>>>>>> 4871156b4f7701724651c4e0f3192cffe52c4e8f
   const insets = useSafeAreaInsets();
   const { width: winW } = useWindowDimensions();
   const { accounts, creditCards, transactions } = useFinance();
