@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fmt } from '../theme';
@@ -16,6 +17,7 @@ import BrCalendarModal from '../components/BrCalendarModal';
 import { useFinance, activeAccounts, activeCreditCards } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { parseTxDate } from '../utils/chart';
+import { gerarResumoGastos } from '../services/ai';
 
 const FALLBACK_SLICE_COLORS = [
   '#E67E22',
@@ -185,6 +187,67 @@ function createStyles(T) {
       alignItems: 'center',
     },
     filterCloseBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: '#fff' },
+    aiCard: {
+      backgroundColor: T.white,
+      borderRadius: 16,
+      padding: 20,
+      borderWidth: 1.5,
+      borderColor: T.orange,
+    },
+    aiCardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 12,
+    },
+    aiCardBadge: {
+      backgroundColor: T.orange,
+      borderRadius: 6,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+    },
+    aiCardBadgeText: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 10,
+      color: '#fff',
+      letterSpacing: 0.5,
+    },
+    aiCardTitle: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 14,
+      color: T.charcoal,
+      flex: 1,
+    },
+    aiCardText: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 13,
+      color: T.graphite,
+      lineHeight: 21,
+    },
+    aiCardLoading: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    aiCardLoadingText: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 13,
+      color: T.grayMed,
+    },
+    aiCardRetry: {
+      marginTop: 12,
+      alignSelf: 'flex-start',
+      paddingVertical: 6,
+      paddingHorizontal: 14,
+      borderRadius: 8,
+      borderWidth: 1.5,
+      borderColor: T.orange,
+    },
+    aiCardRetryText: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 12,
+      color: T.orange,
+    },
   });
 }
 
@@ -207,6 +270,11 @@ export default function ProjectionScreen({ navigation }) {
   const [accountId, setAccountId] = useState(null);
   const [creditKey, setCreditKey] = useState('all');
   const [categoryName, setCategoryName] = useState(null);
+
+  const [aiResumo, setAiResumo] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState(false);
+  const aiAbortRef = useRef(null);
 
   const accountsList = useMemo(() => activeAccounts(accounts), [accounts]);
   const cardsList = useMemo(() => activeCreditCards(creditCards), [creditCards]);
@@ -266,6 +334,40 @@ export default function ProjectionScreen({ navigation }) {
 
   const expenseTotal = useMemo(() => expenseSlices.reduce((s, x) => s + x.value, 0), [expenseSlices]);
   const incomeTotal = useMemo(() => incomeSlices.reduce((s, x) => s + x.value, 0), [incomeSlices]);
+
+  // Label legível do período ativo para contextualizar o resumo da IA
+  const periodoLabel = useMemo(() => {
+    const preset = PERIOD_PRESETS.find((p) => p.key === periodPreset);
+    if (preset && periodPreset !== 'custom') return preset.label;
+    return `${dateFrom} a ${dateTo}`;
+  }, [periodPreset, dateFrom, dateTo]);
+
+  const gerarResumo = useCallback(async (txList, label) => {
+    if (aiAbortRef.current) aiAbortRef.current.abort();
+    const controller = new AbortController();
+    aiAbortRef.current = controller;
+
+    setAiLoading(true);
+    setAiError(false);
+    setAiResumo(null);
+
+    try {
+      const texto = await gerarResumoGastos(txList, label, { signal: controller.signal });
+      setAiResumo(texto);
+    } catch (err) {
+      if (err?.name !== 'AbortError') setAiError(true);
+    } finally {
+      setAiLoading(false);
+    }
+  }, []);
+
+  // Dispara nova análise sempre que as transações filtradas ou o período mudarem
+  useEffect(() => {
+    gerarResumo(filteredTx, periodoLabel);
+    return () => {
+      if (aiAbortRef.current) aiAbortRef.current.abort();
+    };
+  }, [filteredTx, periodoLabel]);
 
   const chartSize = Math.max(180, Math.min(240, windowWidth - 72));
 
@@ -330,6 +432,36 @@ export default function ProjectionScreen({ navigation }) {
             <PieChart data={incomeSlices} size={chartSize} strokeColor={pieStroke} emptyLabel="Sem receitas" />
           </View>
           {incomeSlices.length > 0 ? <Legend slices={incomeSlices} total={incomeTotal} /> : null}
+        </View>
+
+        {/* Card de resumo IA */}
+        <View style={styles.aiCard}>
+          <View style={styles.aiCardHeader}>
+            <View style={styles.aiCardBadge}>
+              <Text style={styles.aiCardBadgeText}>IA</Text>
+            </View>
+            <Text style={styles.aiCardTitle}>Análise do período</Text>
+          </View>
+
+          {aiLoading ? (
+            <View style={styles.aiCardLoading}>
+              <ActivityIndicator size="small" color={T.orange} />
+              <Text style={styles.aiCardLoadingText}>Analisando seus gastos...</Text>
+            </View>
+          ) : aiError ? (
+            <View>
+              <Text style={styles.aiCardLoadingText}>Não foi possível gerar a análise.</Text>
+              <TouchableOpacity
+                style={styles.aiCardRetry}
+                onPress={() => gerarResumo(filteredTx, periodoLabel)}
+                activeOpacity={0.75}
+              >
+                <Text style={styles.aiCardRetryText}>Tentar novamente</Text>
+              </TouchableOpacity>
+            </View>
+          ) : aiResumo ? (
+            <Text style={styles.aiCardText}>{aiResumo}</Text>
+          ) : null}
         </View>
       </ScrollView>
 

@@ -138,6 +138,98 @@ export async function gerarRecomendacaoProjecao(spendByCategory, categoriasFixas
   }
 }
 
+// ─── Resumo analítico de gastos do período ──────────────
+/**
+ * Gera um resumo completo em linguagem natural sobre os gastos de um período.
+ * Analisa categorias, maiores despesas individuais, tendências e dá insights acionáveis.
+ *
+ * @param {Object[]} transactions - Transações filtradas do período
+ * @param {string} periodoLabel - Ex: "Mês Atual", "Últimos 30 dias"
+ * @param {{ signal?: AbortSignal }} options
+ * @returns {Promise<string>}
+ */
+export async function gerarResumoGastos(transactions, periodoLabel = 'período selecionado', { signal } = {}) {
+  const saidas = (Array.isArray(transactions) ? transactions : []).filter(
+    (t) => t && t.tipo === 'saída' && !t.isTransfer
+  );
+
+  if (saidas.length === 0) {
+    return 'Nenhuma despesa registrada neste período.';
+  }
+
+  // Agrega por categoria
+  const porCategoria = {};
+  for (const t of saidas) {
+    const cat = t.categoria || 'Outros';
+    porCategoria[cat] = (porCategoria[cat] || 0) + (Number(t.valor) || 0);
+  }
+
+  const totalGasto = Object.values(porCategoria).reduce((a, b) => a + b, 0);
+
+  // Top 5 categorias por valor
+  const topCats = Object.entries(porCategoria)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([cat, val]) => `${cat}: R$ ${val.toFixed(2)} (${((val / totalGasto) * 100).toFixed(1)}%)`)
+    .join(', ');
+
+  // Top 3 maiores transações individuais
+  const top3tx = [...saidas]
+    .sort((a, b) => b.valor - a.valor)
+    .slice(0, 3)
+    .map((t) => `"${t.descricao || t.categoria}" R$ ${Number(t.valor).toFixed(2)}`)
+    .join('; ');
+
+  const numTransacoes = saidas.length;
+  const ticketMedio = (totalGasto / numTransacoes).toFixed(2);
+
+  const fallback = `No ${periodoLabel}, você gastou R$ ${totalGasto.toFixed(2)} em ${numTransacoes} transações. Principais categorias: ${topCats}.`;
+
+  if (!GEMINI_API_KEY) return fallback;
+
+  // Cache por hash dos dados
+  const cacheKey = `resumo|${periodoLabel}|${Math.round(totalGasto * 100)}|${numTransacoes}|${topCats}`;
+  if (_cache.has(cacheKey)) return _cache.get(cacheKey);
+
+  const prompt = `Você é um assistente de finanças pessoais. Analise os gastos do usuário e escreva um resumo claro e útil em português brasileiro.
+
+Período: ${periodoLabel}
+Total gasto: R$ ${totalGasto.toFixed(2)}
+Número de transações: ${numTransacoes}
+Ticket médio: R$ ${ticketMedio}
+Top categorias: ${topCats}
+Maiores despesas: ${top3tx}
+
+Escreva um parágrafo único de 3 a 5 frases que:
+1. Destaque os principais padrões de gasto
+2. Aponte o que mais pesou no orçamento
+3. Dê 1 ou 2 insights práticos e personalizados para o usuário economizar
+Seja direto, use linguagem simples e não use emojis.`;
+
+  try {
+    const response = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 200, temperature: 0.5 },
+      }),
+      signal,
+    });
+
+    if (!response.ok) throw new Error(`Gemini error: ${response.status}`);
+
+    const data = await response.json();
+    const texto = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+    const out = texto || fallback;
+    _cache.set(cacheKey, out);
+    return out;
+  } catch (err) {
+    if (err?.name === 'AbortError') throw err;
+    return fallback;
+  }
+}
+
 // ─── Gemini API call ────────────────────────────────────
 export async function categorizeTransaction(descricao, valor, categoryList = DEFAULT_CATEGORIES, signal) {
   // Verifica cache antes de chamar a API — evita requisições duplicadas para a mesma entrada
