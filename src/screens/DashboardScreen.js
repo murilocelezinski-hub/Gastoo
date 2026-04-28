@@ -27,7 +27,8 @@ import { buildBalanceEvolutionSeries, parseBrDate } from '../utils/chart';
 import { sortTransactionsByDate } from '../utils/txSort';
 import { useResponsiveLayout, useMainLayoutDimensions } from '../utils/responsiveLayout';
 import ProjectionCard from '../components/ProjectionCard';
-import { computeMonthEndProjectionCents, projectionStatus } from '../utils/monthEndProjection';
+import { computeMonthEndProjectionCents } from '../utils/monthEndProjection';
+import { classificarStatusProjecao } from '../utils/projection';
 import { projectionTipFromWeek } from '../services/ai';
 
 const BALANCE_MODES = [
@@ -454,26 +455,39 @@ export default function DashboardScreen({ navigation }) {
   const [inOutYear, setInOutYear] = useState(() => new Date().getFullYear());
   const mask = '••••••';
 
-  const projectionResult = useMemo(
+  const projectionRaw = useMemo(
     () => computeMonthEndProjectionCents({ accounts, transactions, now: new Date() }),
     [accounts, transactions]
   );
-  const projStatus = useMemo(() => {
-    if (!projectionResult) return 'collecting';
-    return projectionStatus({
-      projectionCents: projectionResult.projectionCents,
-      saldoInicialCents: projectionResult.breakdown?.saldoInicialCents,
-    });
-  }, [projectionResult]);
+
+  // Adapta resultado da API nova para o formato esperado pelo ProjectionCard
+  const projectionResult = useMemo(() => {
+    if (!projectionRaw) return null;
+    const b = projectionRaw.breakdown;
+    return {
+      projecaoCentavos: projectionRaw.projectionCents,
+      mediaDiariaVariavelCentavos: b.mediaDiariaVariavelCents,
+      diasRestantes: b.daysRemaining,
+      receitasPendentesCentavos: b.receitasPendentesCents,
+      despesasPendentesCentavos: b.despesasPendentesCents,
+    };
+  }, [projectionRaw]);
+
+  const saldoInicialProjecaoCentavos = projectionRaw?.breakdown?.saldoInicialCents ?? 0;
 
   const [aiTip, setAiTip] = useState('');
+
+  const projStatus = useMemo(() => {
+    if (!projectionResult) return null;
+    return classificarStatusProjecao(projectionResult.projecaoCentavos, saldoInicialProjecaoCentavos);
+  }, [projectionResult, saldoInicialProjecaoCentavos]);
 
   React.useEffect(() => {
     let mounted = true;
     const controller = new AbortController();
 
     (async () => {
-      if (projStatus !== 'warning' && projStatus !== 'critical') {
+      if (projStatus !== 'amarelo' && projStatus !== 'vermelho') {
         if (mounted) setAiTip('');
         return;
       }
@@ -833,7 +847,11 @@ export default function DashboardScreen({ navigation }) {
             </View>
 
             {/* Projeção de fim de mês */}
-            <ProjectionCard result={projectionResult} status={projStatus} aiTip={aiTip} />
+            <ProjectionCard
+              resultado={projectionResult}
+              saldoInicialMesCentavos={saldoInicialProjecaoCentavos}
+              recomendacaoIA={aiTip || null}
+            />
           </View>
 
           {/* Right column: Chart */}
