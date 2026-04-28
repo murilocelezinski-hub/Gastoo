@@ -25,6 +25,7 @@ import {
   creditCardName,
 } from '../context/FinanceContext';
 import { CatIcon } from '../components/Shared';
+import BankIcon from '../components/BankIcon';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { buildBalanceEvolutionSeries, parseBrDate } from '../utils/chart';
 import { formatLastSync } from '../services/openFinanceService';
@@ -614,9 +615,7 @@ function RecentTransactions({ transactions, creditCards, selectedAccount, select
                 {tx.tipo === 'entrada' ? '+' : '-'}{hidden ? mask : fmt(tx.valor)}
               </Text>
               {tx.origin?.type === 'openFinance' ? (
-                <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: tx.origin.bankColor, alignItems: 'center', justifyContent: 'center', marginLeft: 4 }}>
-                  <Text style={{ fontSize: 7, color: '#fff', fontFamily: 'Poppins_600SemiBold' }}>{tx.origin.bankInitial}</Text>
-                </View>
+                <BankIcon bankName={tx.origin.bankName} bankColor={tx.origin.bankColor} bankInitial={tx.origin.bankInitial} size={16} />
               ) : tx.origin?.type === 'notification' ? (
                 <Text style={{ fontSize: 10, marginLeft: 4 }}>🔔</Text>
               ) : null}

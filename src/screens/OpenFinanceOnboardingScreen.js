@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { T } from '../theme';
 import { syncBankData } from '../services/openFinanceService';
 import { BANKS } from '../utils/mockDataHelpers';
+import BankIcon from '../components/BankIcon';
 import { useFinance } from '../context/FinanceContext';
 
 const CONNECT_MESSAGES = [
@@ -44,9 +45,7 @@ export default function OpenFinanceOnboardingScreen({ navigation }) {
   if (step === 'connecting' && selectedBank) {
     return (
       <View style={styles.connectingContainer}>
-        <View style={[styles.bankCircleLg, { backgroundColor: selectedBank.color }]}>
-          <Text style={styles.bankInitialLg}>{selectedBank.initial}</Text>
-        </View>
+        <BankIcon bankName={selectedBank.name} bankColor={selectedBank.color} bankInitial={selectedBank.initial} size={64} />
         <ActivityIndicator size="large" color={T.orange} style={{ marginTop: 24 }} />
         <Text style={styles.connectingMsg}>{connectingMessage}</Text>
       </View>
@@ -76,9 +75,7 @@ export default function OpenFinanceOnboardingScreen({ navigation }) {
             activeOpacity={0.75}
             onPress={() => startConnection(item)}
           >
-            <View style={[styles.bankCircle, { backgroundColor: item.color }]}>
-              <Text style={styles.bankInitial}>{item.initial}</Text>
-            </View>
+            <BankIcon bankName={item.name} bankColor={item.color} bankInitial={item.initial} size={48} />
             <Text style={styles.bankName}>{item.name}</Text>
           </TouchableOpacity>
         )}
