@@ -1,6 +1,6 @@
 export const T = {
-  orange: '#F05000',
-  amber: '#D98C00',
+  orange: '#FE5E03',
+  amber: '#FEB506',
   white: '#FFFFFF',
   graphite: '#333333',
   chocolate: '#2A1200',
@@ -19,7 +19,7 @@ export const T = {
 };
 
 export const DEFAULT_CATEGORIES = [
-  { name: 'Alimentação', color: '#F05000', icon: '🍽' },
+  { name: 'Alimentação', color: '#FE5E03', icon: '🍽' },
   { name: 'Transporte', color: '#3C3C34', icon: '🚗' },
   { name: 'Moradia', color: '#2A1200', icon: '🏠' },
   { name: 'Saúde', color: '#989890', icon: '💊' },
@@ -44,7 +44,7 @@ export const ACCOUNTS = [
 ];
 
 export const fmt = (v) =>
-  v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  (Number.isFinite(v) ? v : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 /** Dados de exemplo vêm de `buildDemoSeedTransactions` no FinanceContext. */
 export const MOCK_TRANSACTIONS = [];

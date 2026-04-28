@@ -23,7 +23,7 @@ import {
   isTransactionEffectiveOnOrBefore,
 } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
-import { buildBalanceEvolutionSeries } from '../utils/chart';
+import { buildBalanceEvolutionSeries, parseBrDate } from '../utils/chart';
 import { sortTransactionsByDate } from '../utils/txSort';
 import { useResponsiveLayout, useMainLayoutDimensions } from '../utils/responsiveLayout';
 
@@ -58,18 +58,6 @@ function formatTooltipDate(d) {
   const day = String(d.getDate()).padStart(2, '0');
   const m = String(d.getMonth() + 1).padStart(2, '0');
   return `${day}/${m}/${d.getFullYear()}`;
-}
-
-function parseBrDate(s) {
-  if (!s) return null;
-  const m = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!m) return null;
-  const dd = parseInt(m[1], 10);
-  const mm = parseInt(m[2], 10);
-  const yy = parseInt(m[3], 10);
-  const d = new Date(yy, mm - 1, dd);
-  if (Number.isNaN(d.getTime())) return null;
-  return d;
 }
 
 function fmtYLabel(v) {
@@ -301,7 +289,7 @@ function createStyles(T, isDesktop, isMobile) {
       borderColor: T.homeHairline,
     },
     accountCardActive: {
-      backgroundColor: 'rgba(240,80,0,0.18)',
+      backgroundColor: 'rgba(254,94,3,0.18)',
       borderColor: T.orange,
     },
     accountCardIcon: { fontSize: isDesktop ? 24 : 20 },
@@ -348,7 +336,7 @@ function createStyles(T, isDesktop, isMobile) {
     eyeBtn: { padding: 4 },
     eyeIcon: { fontSize: 16 },
     saldoLabel: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 14 : 12, color: 'rgba(255,255,255,0.7)' },
-    saldoValue: { fontFamily: 'Poppins_100Thin', fontSize: isDesktop ? 44 : 32, color: '#fff', marginVertical: 4 },
+    saldoValue: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 44 : 32, color: '#fff', marginVertical: 4 },
     miniLabel: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 11 : 10, color: 'rgba(255,255,255,0.6)' },
     miniValue: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 18 : 15 },
     chartBox: {
@@ -370,7 +358,7 @@ function createStyles(T, isDesktop, isMobile) {
       borderColor: T.homeHairline,
       backgroundColor: 'transparent',
     },
-    filterChipOn: { borderColor: T.orange, backgroundColor: 'rgba(240,80,0,0.12)' },
+    filterChipOn: { borderColor: T.orange, backgroundColor: 'rgba(254,94,3,0.12)' },
     filterChipText: { fontFamily: 'Poppins_400Regular', fontSize: 10, color: T.brandFgMuted },
     filterChipTextOn: { fontFamily: 'Poppins_600SemiBold', fontSize: 10, color: T.orange },
     chartLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6, paddingHorizontal: 2, gap: 2 },

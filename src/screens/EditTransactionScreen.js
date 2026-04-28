@@ -15,20 +15,9 @@ import { useThemeColors } from '../context/AppPreferencesContext';
 import { Header, PrimaryButton, CatIcon } from '../components/Shared';
 import { useFinance, activeAccounts, activeCreditCards, invoiceKeyFromDateAndCloseDay, invoiceLabelPtBr } from '../context/FinanceContext';
 import { PERIOD_LABEL } from '../utils/recurrence';
+import { parseBrDate } from '../utils/chart';
 
 const PARCELA_NUMS = Array.from({ length: 365 }, (_, i) => i + 1);
-
-function parseBrDate(s) {
-  if (!s) return null;
-  const m = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!m) return null;
-  const dd = parseInt(m[1], 10);
-  const mm = parseInt(m[2], 10);
-  const yy = parseInt(m[3], 10);
-  const d = new Date(yy, mm - 1, dd);
-  if (Number.isNaN(d.getTime())) return null;
-  return d;
-}
 
 function formatBrDate(d) {
   const p = (n) => String(n).padStart(2, '0');
@@ -109,7 +98,7 @@ function createEditTransactionStyles(T) {
       borderColor: T.graySilver,
       backgroundColor: T.white,
     },
-    accountPillActive: { borderColor: T.orange, backgroundColor: 'rgba(240,80,0,0.06)' },
+    accountPillActive: { borderColor: T.orange, backgroundColor: 'rgba(254,94,3,0.06)' },
     accountIcon: { fontSize: 16 },
     accountText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.graphite },
     accountTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.orange },
@@ -195,7 +184,8 @@ export default function EditTransactionScreen({ navigation, route }) {
   }, [route.params?.selectedCategory]);
 
   useEffect(() => {
-    setTimeout(() => valorRef.current?.focus?.(), 120);
+    const t = setTimeout(() => valorRef.current?.focus?.(), 120);
+    return () => clearTimeout(t);
   }, []);
 
   const handleValor = (text) => {

@@ -97,7 +97,7 @@ function createNewTransactionStyles(T, isDesktop) {
       borderColor: T.graySilver,
       backgroundColor: T.white,
     },
-    accountPillActive: { borderColor: T.orange, backgroundColor: 'rgba(240,80,0,0.06)' },
+    accountPillActive: { borderColor: T.orange, backgroundColor: 'rgba(254,94,3,0.06)' },
     accountIcon: { fontSize: isDesktop ? 18 : 16 },
     accountText: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 14 : 13, color: T.graphite },
     accountTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.orange },
@@ -183,23 +183,25 @@ export default function NewTransactionScreen({ navigation }) {
   }, [act]);
 
   useEffect(() => {
-    setTimeout(() => valorRef.current?.focus?.(), 80);
+    const t = setTimeout(() => valorRef.current?.focus?.(), 80);
+    return () => clearTimeout(t);
   }, [kind]);
 
   useEffect(() => {
-    // Fonte de pagamento é exclusiva
+    // Fonte de pagamento é exclusiva — este efeito roda apenas quando paySource muda.
+    // Usa setters funcionais para evitar leituras de valores stale de outros estados.
     if (paySource === 'conta') {
-      if (creditCardId) setCreditCardId(null);
-      if (!accountId && act[0]?.id) setAccountId(act[0].id);
+      setCreditCardId(null);
+      setAccountId((id) => id || act[0]?.id || null);
       setInvoiceKey(null);
       setInvoiceManual(false);
       prevCardIdRef.current = null;
     } else {
       // cartao
-      if (accountId) setAccountId(null);
-      if (!creditCardId && cardsAct[0]?.id) setCreditCardId(cardsAct[0].id);
+      setAccountId(null);
+      setCreditCardId((id) => id || cardsAct[0]?.id || null);
     }
-  }, [paySource]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [paySource, act, cardsAct]);
 
   const invoiceKeyAuto = useMemo(() => {
     if (paySource !== 'cartao' || !creditCardId) return null;

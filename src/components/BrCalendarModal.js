@@ -99,7 +99,7 @@ export default function BrCalendarModal({ visible, title, valueBr, onConfirm, on
         grid: { flexDirection: 'row', flexWrap: 'wrap' },
         dayCell: { width: '14.28%', minHeight: 36, alignItems: 'center', justifyContent: 'center', padding: 2 },
         dayTxt: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.graphite },
-        dayToday: { backgroundColor: 'rgba(240,80,0,0.15)', borderRadius: 999 },
+        dayToday: { backgroundColor: 'rgba(254,94,3,0.15)', borderRadius: 999 },
         cancelBtn: { marginTop: 12, alignItems: 'center', padding: 10 },
         cancelTxt: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.grayMed },
       }),

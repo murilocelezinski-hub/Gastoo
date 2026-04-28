@@ -1,19 +1,22 @@
 import { DEFAULT_CATEGORIES } from '../theme';
 
+// Cache em memória para evitar chamadas duplicadas ao Gemini para a mesma descrição+valor
+const _cache = new Map();
+
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
 
 // ─── Fallback por keywords ──────────────────────────────
 const KEYWORDS = {
-  Alimentação: ['comida', 'restaurante', 'ifood', 'almoço', 'jantar', 'café', 'mercado', 'padaria', 'lanche', 'pizza', 'burger', 'churrasco', 'açougue', 'supermercado', 'hortifruti', 'feira', 'sushi', 'delivery'],
-  Transporte: ['uber', '99', 'gasolina', 'combustível', 'ônibus', 'metrô', 'estacion', 'pedágio', 'táxi'],
+  Alimentação: ['comida', 'restaurante', 'ifood', 'almoço', 'jantar', 'café', 'mercado', 'padaria', 'lanche', 'pizza', 'burger', 'hamburguer', 'burguer', 'churrasco', 'açougue', 'supermercado', 'hortifruti', 'feira', 'sushi', 'delivery', 'rappi', 'sorvete'],
+  Transporte: ['uber', '99app', 'cabify', 'gasolina', 'combustível', 'ônibus', 'metrô', 'estacion', 'pedágio', 'táxi', 'passagem', 'bilhete'],
   Moradia: ['aluguel', 'condomínio', 'luz', 'água', 'gás', 'iptu', 'internet', 'energia', 'reforma', 'pintura', 'encanador', 'eletricista', 'móveis', 'decoração', 'casa'],
   Saúde: ['farmácia', 'médic', 'consulta', 'plano de saúde', 'exame', 'dentista', 'hospital'],
   Lazer: ['cinema', 'viagem', 'bar', 'festa', 'show', 'ingresso', 'parque', 'jogo'],
   Educação: ['curso', 'livro', 'escola', 'faculdade', 'aula', 'mensalidade', 'udemy'],
   Vestuário: ['roupa', 'tênis', 'camisa', 'calça', 'sapato', 'nike', 'adidas', 'zara'],
-  Assinaturas: ['netflix', 'spotify', 'disney', 'amazon', 'assinatura', 'plano', 'hbo', 'prime'],
-  Investimentos: ['investimento', 'ação', 'fundo', 'cripto', 'tesouro', 'poupança', 'bitcoin'],
+  Assinaturas: ['netflix', 'spotify', 'disney', 'amazon', 'assinatura', 'plano', 'hbo', 'prime', 'youtube', 'globoplay', 'deezer', 'crunchyroll', 'apple tv', 'paramount'],
+  Investimentos: ['investimento', 'ação', 'fundo', 'cripto', 'tesouro', 'poupança', 'bitcoin', 'cdb', 'lci', 'lca', 'renda fixa', 'btg'],
 };
 
 function fallbackCategorize(descricao, categoryList) {
@@ -83,13 +86,14 @@ Descrição: "Conserto celular", Valor: R$ 350,00 → Outros`;
 
 // ─── Gemini API call ────────────────────────────────────
 export async function categorizeTransaction(descricao, valor, categoryList = DEFAULT_CATEGORIES, signal) {
+  // Verifica cache antes de chamar a API — evita requisições duplicadas para a mesma entrada
+  const cacheKey = `${descricao?.trim().toLowerCase()}|${valor}`;
+  if (_cache.has(cacheKey)) return _cache.get(cacheKey);
+
   const prompt = `${FEW_SHOT}
 
 Agora categorize:
 Descrição: "${descricao}", Valor: R$ ${valor.toFixed(2)} →`;
-
-  console.log('[AI] Chave carregada:', GEMINI_API_KEY ? `${GEMINI_API_KEY.slice(0, 8)}...` : 'UNDEFINED');
-  console.log('[AI] URL:', GEMINI_URL);
 
   try {
     const response = await fetch(GEMINI_URL, {
@@ -103,21 +107,20 @@ Descrição: "${descricao}", Valor: R$ ${valor.toFixed(2)} →`;
     });
 
     if (!response.ok) {
-      const errorBody = await response.json().catch(() => ({}));
-      console.log('[AI] Erro HTTP:', response.status, JSON.stringify(errorBody));
+      await response.json().catch(() => ({}));
       throw new Error(`Gemini error: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('[AI] Resposta bruta:', JSON.stringify(data));
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'Outros';
-    console.log('[AI] Categoria retornada:', text);
     const outros = categoryList.find((c) => c.name === 'Outros') || categoryList[categoryList.length - 1];
     const match = categoryList.find((c) => text.toLowerCase().includes(c.name.toLowerCase()));
-    return { category: match || outros, fromAI: true };
+    const result = { category: match || outros, fromAI: true };
+    // Salva no cache apenas no caminho de sucesso da IA (erros transitórios não são cacheados)
+    _cache.set(cacheKey, result);
+    return result;
   } catch (err) {
     if (err.name === 'AbortError') throw err;
-    console.log('[AI] Fallback ativado. Motivo:', err.message);
     return { category: fallbackCategorize(descricao, categoryList), fromAI: false };
   }
 }

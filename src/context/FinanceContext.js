@@ -1,24 +1,13 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { secureGet, secureSet, secureRemove } from '../services/secureStorage';
 import { addPeriod, fmtDate } from '../utils/recurrence';
+import { parseBrDate } from '../utils/chart';
 
 const STORAGE_KEY = '@gastoo_finance_v2';
 
 export const DEFAULT_ACCOUNT_ID = 'acc-seed-default';
 export const ACC_SEED_POUP = 'acc-seed-poup';
 const CARD_SEED_DEMO = 'card-seed-demo';
-
-function parseBrDate(s) {
-  if (!s) return null;
-  const m = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!m) return null;
-  const dd = parseInt(m[1], 10);
-  const mm = parseInt(m[2], 10);
-  const yy = parseInt(m[3], 10);
-  const d = new Date(yy, mm - 1, dd);
-  if (Number.isNaN(d.getTime())) return null;
-  return d;
-}
 
 /**
  * Lançamento já "vale" no calendário para saldo de caixa: data (DD/MM/AAAA) <= dia de referência.
@@ -403,9 +392,16 @@ export function FinanceProvider({ children }) {
           setTransactions(m.transactions);
           setCreditCards(m.creditCards);
         } catch (e) {
-          console.warn('[FinanceContext] Dado corrompido, limpando:', e);
-          await secureRemove(STORAGE_KEY);
-          await secureRemove('@gastoo_finance_v1');
+          console.warn('[FinanceContext] Dado corrompido detectado. Chave:', STORAGE_KEY, '— Erro:', e?.message ?? e);
+          // Tenta salvar backup do dado bruto antes de apagar
+          try {
+            await secureSet('@gastoo_corrupted_backup', raw);
+            console.warn('[FinanceContext] Backup do dado corrompido salvo em @gastoo_corrupted_backup');
+            await secureRemove(STORAGE_KEY);
+            await secureRemove('@gastoo_finance_v1');
+          } catch (backupErr) {
+            console.error('[FinanceContext] Falha ao salvar backup — dado corrompido NÃO foi apagado:', backupErr);
+          }
         }
       }
       setReady(true);
@@ -414,12 +410,20 @@ export function FinanceProvider({ children }) {
 
   useEffect(() => {
     if (!ready) return;
-    secureSet(STORAGE_KEY, JSON.stringify({ accounts, transactions, creditCards })).catch(() => {});
+    secureSet(STORAGE_KEY, JSON.stringify({ accounts, transactions, creditCards })).catch(() => {
+      showToast('Erro ao salvar dados. Verifique o armazenamento do dispositivo.');
+    });
   }, [accounts, transactions, creditCards, ready]);
 
+  const toastTimerRef = useRef(null);
+
   const showToast = useCallback((msg) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast(msg);
-    setTimeout(() => setToast(null), 2400);
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, 2400);
   }, []);
 
   const addAccount = useCallback(({ name, icon, saldoInicial }) => {
@@ -558,7 +562,7 @@ export function FinanceProvider({ children }) {
           return;
         }
 
-        const numInstallments = 12;
+        const numInstallments = Number(tx.numParcelas) || 12;
         const dates = getInstallmentDates(startDate, tx.periodicidade, numInstallments);
         const installmentValue = parseFloat(tx.valor) / numInstallments;
 

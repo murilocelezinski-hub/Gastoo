@@ -17,7 +17,7 @@ import { useAppPreferences, useThemeColors } from '../context/AppPreferencesCont
 import { useFinance } from '../context/FinanceContext';
 
 const PRESET_COLORS = [
-  '#F05000',
+  '#FE5E03',
   '#3C3C34',
   '#2A1200',
   '#989890',

@@ -1,10 +1,26 @@
-/** Parse DD/MM/YYYY */
+/** Parse DD/MM/YYYY — retorna new Date(0) para entrada inválida (uso interno de gráficos). */
 export function parseTxDate(str) {
   if (!str || typeof str !== 'string') return new Date(0);
   const parts = str.split('/');
   if (parts.length !== 3) return new Date(0);
   const [d, m, y] = parts.map(Number);
   return new Date(y, m - 1, d);
+}
+
+/**
+ * Parse DD/MM/YYYY — retorna null para entrada inválida.
+ * Versão canônica compartilhada entre contextos e telas.
+ */
+export function parseBrDate(s) {
+  if (!s) return null;
+  const match = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return null;
+  const dd = parseInt(match[1], 10);
+  const mm = parseInt(match[2], 10);
+  const yy = parseInt(match[3], 10);
+  const d = new Date(yy, mm - 1, dd);
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
 }
 
 function endOfCalendarDay(d) {

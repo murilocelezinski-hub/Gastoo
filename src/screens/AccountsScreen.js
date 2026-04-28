@@ -87,7 +87,7 @@ function createAccountsStyles(T, isDesktop) {
       justifyContent: 'center',
       backgroundColor: T.white,
     },
-    iconPillActive: { borderColor: T.orange, backgroundColor: 'rgba(240,80,0,0.06)' },
+    iconPillActive: { borderColor: T.orange, backgroundColor: 'rgba(254,94,3,0.06)' },
     iconEmoji: { fontSize: isDesktop ? 28 : 22 },
     modalOverlay: {
       flex: 1,
@@ -116,7 +116,7 @@ function createAccountsStyles(T, isDesktop) {
       borderWidth: 1.5,
       borderColor: T.graySilver,
     },
-    mergePillActive: { borderColor: T.orange, backgroundColor: 'rgba(240,80,0,0.08)' },
+    mergePillActive: { borderColor: T.orange, backgroundColor: 'rgba(254,94,3,0.08)' },
     mergeIcon: { fontSize: isDesktop ? 20 : 18 },
     mergeName: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 14 : 13, color: T.graphite },
     mergeNameActive: { fontFamily: 'Poppins_600SemiBold', color: T.orange },

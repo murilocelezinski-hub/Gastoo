@@ -2,8 +2,8 @@
 
 /** Tema claro: fundos esbranquiçados; texto escuro em barras de marca. */
 export const lightPalette = {
-  orange: '#F05000',
-  amber: '#D98C00',
+  orange: '#FE5E03',
+  amber: '#FEB506',
   white: '#FFFFFF',
   graphite: '#333333',
   /** Fundo principal (início, abas, cabeçalhos) — tom crema claro */
@@ -30,8 +30,8 @@ export const lightPalette = {
 
 /** Tema escuro: visual marrom atual do app (início e marca). */
 export const darkPalette = {
-  orange: '#FF6B1A',
-  amber: '#E8A020',
+  orange: '#FE5E03',
+  amber: '#FEB506',
   white: '#1E1C1A',
   graphite: '#E8E8E4',
   chocolate: '#2A1200',

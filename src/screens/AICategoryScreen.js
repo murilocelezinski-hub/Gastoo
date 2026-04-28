@@ -74,6 +74,8 @@ export default function AICategoryScreen({ navigation, route }) {
 
   useEffect(() => {
     const controller = new AbortController();
+    // Aborta automaticamente após 10 segundos para evitar loading infinito
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     (async () => {
       setLoading(true);
       setHasError(false);
@@ -89,6 +91,7 @@ export default function AICategoryScreen({ navigation, route }) {
       }
     })();
     return () => {
+      clearTimeout(timeoutId);
       controller.abort();
     };
   }, [txData.descricao, txData.valor, categories]);

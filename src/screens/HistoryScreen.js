@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, FlatList, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { fmt, CATEGORIES } from '../theme';
+import { fmt } from '../theme';
 import { Header, CatIcon } from '../components/Shared';
 import { useFinance } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
@@ -39,7 +39,7 @@ export default function HistoryScreen({ navigation }) {
   const T = useThemeColors();
   const styles = useMemo(() => createHistoryStyles(T), [T]);
   const { transactions } = useFinance();
-  const { transactionListOrder } = useAppPreferences();
+  const { transactionListOrder, categories } = useAppPreferences();
   const { isDesktop } = useResponsiveLayout();
 
   const now = new Date();
@@ -84,7 +84,7 @@ export default function HistoryScreen({ navigation }) {
   const totalSaidas   = useMemo(() => byMonth.reduce((s, t) => !t.isTransfer && t.tipo === 'saída'   ? s + t.valor : s, 0), [byMonth]);
   const saldo = totalEntradas - totalSaidas;
 
-  const cats = ['Todos', ...CATEGORIES.map((c) => c.name)];
+  const cats = ['Todos', ...categories.map((c) => c.name)];
 
   return (
     <View style={styles.container}>

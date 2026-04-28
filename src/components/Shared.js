@@ -178,5 +178,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  headerTitle: { fontFamily: 'Poppins_400Regular', fontSize: 20, flex: 1 },
+  headerTitle: { fontFamily: 'Poppins_300Light', fontSize: 20, flex: 1 },
 });

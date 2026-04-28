@@ -88,7 +88,7 @@ function createStyles(palette) {
       borderColor: p.graySilver,
       backgroundColor: p.white,
     },
-    kindPillOn: { borderColor: p.orange, backgroundColor: 'rgba(240,80,0,0.12)' },
+    kindPillOn: { borderColor: p.orange, backgroundColor: 'rgba(254,94,3,0.12)' },
     kindText: { fontFamily: 'Poppins_600SemiBold', fontSize: 11, color: p.grayMed },
     kindTextOn: { color: p.orange },
     barWrap: { height: 8, borderRadius: 999, backgroundColor: p.grayVLight, overflow: 'hidden', marginTop: 8 },

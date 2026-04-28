@@ -28,7 +28,7 @@ function createStyles(T) {
     },
     catCardActive: {
       borderColor: T.orange,
-      backgroundColor: 'rgba(240,80,0,0.1)',
+      backgroundColor: 'rgba(254,94,3,0.1)',
     },
     check: {
       position: 'absolute',

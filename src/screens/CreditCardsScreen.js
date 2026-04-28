@@ -84,7 +84,7 @@ function createCreditCardsStyles(T, isDesktop) {
       justifyContent: 'center',
       backgroundColor: T.white,
     },
-    iconPillActive: { borderColor: T.orange, backgroundColor: 'rgba(240,80,0,0.06)' },
+    iconPillActive: { borderColor: T.orange, backgroundColor: 'rgba(254,94,3,0.06)' },
     iconEmoji: { fontSize: isDesktop ? 28 : 22 },
     accountRow: { gap: isDesktop ? 12 : 8, paddingVertical: 4, flexWrap: 'wrap' },
     accountPill: {
@@ -98,7 +98,7 @@ function createCreditCardsStyles(T, isDesktop) {
       borderColor: T.graySilver,
       backgroundColor: T.white,
     },
-    accountPillActive: { borderColor: T.orange, backgroundColor: 'rgba(240,80,0,0.06)' },
+    accountPillActive: { borderColor: T.orange, backgroundColor: 'rgba(254,94,3,0.06)' },
     accountIcon: { fontSize: isDesktop ? 17 : 15 },
     accountText: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 13 : 12, color: T.graphite },
     accountTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.orange },

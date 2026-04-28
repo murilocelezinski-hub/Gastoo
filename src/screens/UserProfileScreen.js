@@ -55,7 +55,12 @@ export default function UserProfileScreen({ navigation }) {
   const clearPhoto = () => setAvatarUri('');
 
   const save = () => {
-    setProfile({ name: name.trim(), email: email.trim(), avatarUri: avatarUri || '' });
+    const trimmedEmail = email.trim();
+    if (trimmedEmail && !trimmedEmail.includes('@')) {
+      Alert.alert('E-mail inválido', 'Informe um endereço de e-mail válido.');
+      return;
+    }
+    setProfile({ name: name.trim(), email: trimmedEmail, avatarUri: avatarUri || '' });
     showToast('Dados salvos.');
     navigation.goBack();
   };

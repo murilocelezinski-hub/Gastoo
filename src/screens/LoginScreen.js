@@ -129,7 +129,7 @@ export default function LoginScreen({ navigation }) {
           Não tem conta?{' '}
           <Text
             style={styles.signupLink}
-            onPress={() => showToastLocal('Cadastro em breve. Por enquanto, qualquer e-mail e senha funcionam.')}
+            onPress={() => showToastLocal('Cadastro disponível em breve.')}
             accessibilityRole="button"
           >
             Cadastre-se

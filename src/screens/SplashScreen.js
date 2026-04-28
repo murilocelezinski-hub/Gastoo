@@ -41,7 +41,7 @@ export default function SplashScreen({ navigation }) {
       navigation.replace('Login');
     }, 2200);
     return () => clearTimeout(timer);
-  }, []);
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
@@ -49,7 +49,7 @@ export default function SplashScreen({ navigation }) {
         source={logo}
         style={[styles.logo, { opacity, transform: [{ scale }] }]}
         resizeMode="contain"
-        accessibilityLabel="Logo Gastoo"
+        accessibilityLabel="Logo GA$TOO"
       />
       <Animated.Text style={[styles.subtitle, { opacity, color: T.brandFgMuted }]}>Seu companheiro de finanças</Animated.Text>
     </View>

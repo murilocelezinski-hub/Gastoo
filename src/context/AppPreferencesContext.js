@@ -54,7 +54,7 @@ export function AppPreferencesProvider({ children }) {
           setSpendingGoalsState(m.spendingGoals || {});
         }
       } catch (e) {
-        console.warn(e);
+        console.warn('[AppPreferencesContext] Erro ao carregar preferências:', e);
       }
       setReady(true);
     })();
