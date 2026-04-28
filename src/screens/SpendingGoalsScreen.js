@@ -1,10 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, CatIcon } from '../components/Shared';
-import { useFinance } from '../context/FinanceContext';
+import { useFinance, totalBalance } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { fmt } from '../theme';
+import ProjectionCard from '../components/ProjectionCard';
+import { calcularProjecaoFimMes, classificarStatusProjecao } from '../utils/projection';
+import { gerarRecomendacaoProjecao } from '../services/ai';
 
 function pad2(n) {
   return String(n).padStart(2, '0');
@@ -102,9 +105,10 @@ export default function SpendingGoalsScreen() {
   const theme = useThemeColors();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
-  const { transactions } = useFinance();
+  const { transactions, accounts } = useFinance();
   const { categories, spendingGoals, setCategorySpendingGoal, copySpendingGoals } = useAppPreferences();
   const [monthKey, setMonthKey] = useState(() => monthKeyFromDate(new Date()));
+  const [recomendacaoIA, setRecomendacaoIA] = useState(null);
 
   const monthGoals = spendingGoals?.[monthKey]?.categories || {};
 
@@ -139,6 +143,54 @@ export default function SpendingGoalsScreen() {
     return sum;
   }, [categories, monthGoals]);
 
+  // Categorias marcadas como fixas nas metas do mês atual
+  const categoriasFixas = useMemo(() => {
+    const lista = [];
+    for (const c of categories) {
+      const g = monthGoals?.[c.name];
+      if (g?.kind === 'fixed') lista.push(c.name);
+    }
+    return lista;
+  }, [categories, monthGoals]);
+
+  // Saldo atual em centavos (usa totalBalance do FinanceContext)
+  const saldoAtualCentavos = useMemo(() => {
+    try {
+      const saldo = totalBalance(accounts || [], transactions, new Date());
+      return Math.round((Number.isFinite(saldo) ? saldo : 0) * 100);
+    } catch {
+      return 0;
+    }
+  }, [accounts, transactions]);
+
+  // Projeção de fim de mês
+  const resultadoProjecao = useMemo(() => {
+    try {
+      return calcularProjecaoFimMes({
+        saldoAtualCentavos,
+        transactions,
+        monthKey,
+        hoje: new Date(),
+        categoriasFixas,
+      });
+    } catch {
+      return null;
+    }
+  }, [saldoAtualCentavos, transactions, monthKey, categoriasFixas]);
+
+  // Saldo inicial do mês (fallback: saldo atual)
+  const saldoInicialMesCentavos = saldoAtualCentavos;
+
+  // Aciona IA de recomendação apenas quando status for amarelo ou vermelho
+  useEffect(() => {
+    if (!resultadoProjecao) { setRecomendacaoIA(null); return; }
+    const status = classificarStatusProjecao(resultadoProjecao.projecaoCentavos, saldoInicialMesCentavos);
+    if (status === 'verde') { setRecomendacaoIA(null); return; }
+    gerarRecomendacaoProjecao(spendByCategory, categoriasFixas, status)
+      .then(setRecomendacaoIA)
+      .catch(() => setRecomendacaoIA(null));
+  }, [resultadoProjecao, saldoInicialMesCentavos]);
+
   const copyFromPrev = () => {
     const prev = shiftMonthKey(monthKey, -1);
     copySpendingGoals(prev, monthKey);
@@ -152,6 +204,14 @@ export default function SpendingGoalsScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: 24 + insets.bottom }]}
         showsVerticalScrollIndicator={false}
       >
+        {/* Card de Projeção de Fim de Mês */}
+        <ProjectionCard
+          resultado={resultadoProjecao}
+          saldoInicialMesCentavos={saldoInicialMesCentavos}
+          recomendacaoIA={recomendacaoIA}
+          onInfoPress={() => {}}
+        />
+
         <View style={styles.monthRow}>
           <TouchableOpacity style={styles.monthBtn} onPress={() => setMonthKey(shiftMonthKey(monthKey, -1))} activeOpacity={0.75}>
             <Text style={styles.monthBtnText}>←</Text>

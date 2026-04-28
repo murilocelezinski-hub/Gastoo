@@ -84,6 +84,60 @@ Descrição: "Taxa bancária", Valor: R$ 12,00 → Outros
 Descrição: "Multa de trânsito", Valor: R$ 293,00 → Outros
 Descrição: "Conserto celular", Valor: R$ 350,00 → Outros`;
 
+// ─── Recomendação de Projeção de Fim de Mês ────────────
+/**
+ * Identifica categoria com maior gasto variável e retorna recomendação curta.
+ * Acionar apenas quando status for 'amarelo' ou 'vermelho'.
+ * @param {Object} spendByCategory - { [categoriaNome]: valorEmReais }
+ * @param {string[]} categoriasFixas
+ * @param {string} status - 'amarelo' | 'vermelho'
+ * @returns {Promise<string>}
+ */
+export async function gerarRecomendacaoProjecao(spendByCategory, categoriasFixas, status) {
+  // Filtra categorias fixas e Transferência, encontra a de maior gasto
+  const fixasSet = new Set([...(categoriasFixas || []), 'Transferência']);
+  const variaveis = Object.entries(spendByCategory || {}).filter(([cat]) => !fixasSet.has(cat));
+
+  if (variaveis.length === 0) {
+    return 'Revise seus gastos variáveis para equilibrar o mês.';
+  }
+
+  // Categoria com maior valor gasto
+  const [categoriaMaior, valorMaior] = variaveis.reduce((max, cur) => (cur[1] > max[1] ? cur : max));
+  const valorFmt = valorMaior.toFixed(2).replace('.', ',');
+
+  const fallback = `Reduza gastos em ${categoriaMaior} para equilibrar o mês.`;
+
+  if (!GEMINI_API_KEY) return fallback;
+
+  const prompt = `Gastos altos em ${categoriaMaior}: R$ ${valorFmt}. Status financeiro: ${status}. Dê uma recomendação financeira direta em no máximo 10 palavras em português, sem emojis.`;
+
+  try {
+    const response = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 40, temperature: 0.3 },
+      }),
+    });
+
+    if (!response.ok) throw new Error(`Gemini error: ${response.status}`);
+
+    const data = await response.json();
+    let texto = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+
+    if (!texto) return fallback;
+
+    // Trunca para 80 chars se necessário
+    if (texto.length > 80) texto = texto.slice(0, 80) + '…';
+
+    return texto;
+  } catch {
+    return fallback;
+  }
+}
+
 // ─── Gemini API call ────────────────────────────────────
 export async function categorizeTransaction(descricao, valor, categoryList = DEFAULT_CATEGORIES, signal) {
   // Verifica cache antes de chamar a API — evita requisições duplicadas para a mesma entrada
