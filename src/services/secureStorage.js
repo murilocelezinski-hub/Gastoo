@@ -14,6 +14,27 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CHUNK_SIZE = 1800; // bytes — margem abaixo do limite de 2 KB do SecureStore
 
+let secureAvailablePromise = null;
+
+async function isSecureStoreAvailable() {
+  // No Web, o módulo pode existir mas falhar em runtime. Preferimos um fallback seguro.
+  if (!secureAvailablePromise) {
+    secureAvailablePromise = (async () => {
+      try {
+        if (typeof SecureStore?.isAvailableAsync === 'function') {
+          const ok = await SecureStore.isAvailableAsync();
+          return Boolean(ok);
+        }
+        // Se não existir isAvailableAsync, assume indisponível para evitar crash.
+        return false;
+      } catch {
+        return false;
+      }
+    })();
+  }
+  return secureAvailablePromise;
+}
+
 function chunkString(str) {
   const chunks = [];
   for (let i = 0; i < str.length; i += CHUNK_SIZE) {
@@ -33,6 +54,12 @@ function indexKey(key) {
 }
 
 export async function secureSet(key, value) {
+  const canUseSecure = await isSecureStoreAvailable();
+  if (!canUseSecure) {
+    // Fallback (Web/dev): usa AsyncStorage, que suporta payloads maiores.
+    await AsyncStorage.setItem(key, value);
+    return;
+  }
   const chunks = chunkString(value);
 
   // Salva cada chunk
@@ -45,6 +72,10 @@ export async function secureSet(key, value) {
 }
 
 export async function secureGet(key) {
+  const canUseSecure = await isSecureStoreAvailable();
+  if (!canUseSecure) {
+    return await AsyncStorage.getItem(key);
+  }
   let countStr = await SecureStore.getItemAsync(indexKey(key));
 
   // Migração: dado ainda está no AsyncStorage legado
@@ -72,6 +103,11 @@ export async function secureGet(key) {
 }
 
 export async function secureRemove(key) {
+  const canUseSecure = await isSecureStoreAvailable();
+  if (!canUseSecure) {
+    await AsyncStorage.removeItem(key);
+    return;
+  }
   const countStr = await SecureStore.getItemAsync(indexKey(key));
 
   if (countStr !== null) {

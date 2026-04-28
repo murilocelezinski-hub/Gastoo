@@ -123,11 +123,14 @@ function MainTabs() {
           borderTopColor: theme.homeHairline,
           height: 56 + bottomPad,
           paddingBottom: bottomPad,
-          paddingTop: 8,
+          paddingTop: 6,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 4,
         },
         tabBarActiveTintColor: theme.orange,
         tabBarInactiveTintColor: theme.brandFgMuted,
-        tabBarLabelStyle: { fontFamily: 'Poppins_400Regular', fontSize: 11 },
+        tabBarLabelStyle: { fontFamily: 'Poppins_400Regular', fontSize: 11, marginTop: -2 },
       }}
     >
       <Tab.Screen
@@ -135,7 +138,11 @@ function MainTabs() {
         component={DashboardScreen}
         options={{
           tabBarLabel: 'Início',
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>🏠</Text>,
+          tabBarIcon: ({ color }) => (
+            <View style={{ alignItems: 'center', justifyContent: 'center', minHeight: 22 }}>
+              <Text style={{ fontSize: 20, color }}>{'🏠'}</Text>
+            </View>
+          ),
         }}
       />
       <Tab.Screen
@@ -143,7 +150,11 @@ function MainTabs() {
         component={HistoryScreen}
         options={{
           tabBarLabel: 'Histórico',
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>📋</Text>,
+          tabBarIcon: ({ color }) => (
+            <View style={{ alignItems: 'center', justifyContent: 'center', minHeight: 22 }}>
+              <Text style={{ fontSize: 20, color }}>{'📋'}</Text>
+            </View>
+          ),
         }}
       />
       <Tab.Screen
@@ -151,7 +162,11 @@ function MainTabs() {
         component={ProjectionScreen}
         options={{
           tabBarLabel: 'Relatórios',
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>📊</Text>,
+          tabBarIcon: ({ color }) => (
+            <View style={{ alignItems: 'center', justifyContent: 'center', minHeight: 22 }}>
+              <Text style={{ fontSize: 20, color }}>{'📊'}</Text>
+            </View>
+          ),
         }}
       />
       <Tab.Screen
@@ -159,7 +174,11 @@ function MainTabs() {
         component={SpendingGoalsScreen}
         options={{
           tabBarLabel: 'Metas',
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>🎯</Text>,
+          tabBarIcon: ({ color }) => (
+            <View style={{ alignItems: 'center', justifyContent: 'center', minHeight: 22 }}>
+              <Text style={{ fontSize: 20, color }}>{'🎯'}</Text>
+            </View>
+          ),
         }}
       />
     </Tab.Navigator>
