@@ -8,6 +8,7 @@ import {
   StyleSheet,
   useWindowDimensions,
   PanResponder,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polyline, Polygon, Line, Circle, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
@@ -26,6 +27,7 @@ import {
 import { CatIcon } from '../components/Shared';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { buildBalanceEvolutionSeries, parseBrDate } from '../utils/chart';
+import { formatLastSync } from '../services/openFinanceService';
 import { sortTransactionsByDate } from '../utils/txSort';
 import { useResponsiveLayout, useMainLayoutDimensions } from '../utils/responsiveLayout';
 
@@ -490,6 +492,18 @@ function createStyles(T, isDesktop, isMobile) {
     monthMiniArrowBtn: { padding: 4 },
     monthMiniArrow: { fontSize: 20, color: 'rgba(255,255,255,0.9)', fontFamily: 'Poppins_600SemiBold', lineHeight: 22 },
     monthMiniLabel: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.white, flex: 1, textAlign: 'center' },
+    syncRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: isDesktop ? 40 : 20,
+      paddingBottom: 6,
+      gap: 6,
+    },
+    syncText: { fontFamily: 'Poppins_300Light', fontSize: 11, color: T.brandFgMuted },
+    syncTextMuted: { fontFamily: 'Poppins_300Light', fontSize: 11, color: T.brandFgMuted, opacity: 0.7 },
+    syncDot: { fontSize: 8, color: '#4CAF50' },
+    syncLink: { marginLeft: 4 },
+    syncLinkText: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.orange },
   });
 }
 
@@ -595,9 +609,18 @@ function RecentTransactions({ transactions, creditCards, selectedAccount, select
               <Text style={styles.recentTxDesc} numberOfLines={1}>{tx.descricao}</Text>
               <Text style={styles.recentTxMeta}>{tx.categoria}</Text>
             </View>
-            <Text style={[styles.recentTxValue, { color: tx.tipo === 'entrada' ? T.gold : T.burnt }]}>
-              {tx.tipo === 'entrada' ? '+' : '-'}{hidden ? mask : fmt(tx.valor)}
-            </Text>
+            <View style={{ alignItems: 'flex-end', flexDirection: 'row', flexShrink: 0 }}>
+              <Text style={[styles.recentTxValue, { color: tx.tipo === 'entrada' ? T.gold : T.burnt }]}>
+                {tx.tipo === 'entrada' ? '+' : '-'}{hidden ? mask : fmt(tx.valor)}
+              </Text>
+              {tx.origin?.type === 'openFinance' ? (
+                <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: tx.origin.bankColor, alignItems: 'center', justifyContent: 'center', marginLeft: 4 }}>
+                  <Text style={{ fontSize: 7, color: '#fff', fontFamily: 'Poppins_600SemiBold' }}>{tx.origin.bankInitial}</Text>
+                </View>
+              ) : tx.origin?.type === 'notification' ? (
+                <Text style={{ fontSize: 10, marginLeft: 4 }}>🔔</Text>
+              ) : null}
+            </View>
           </TouchableOpacity>
         );
       })}
@@ -612,7 +635,8 @@ export default function DashboardScreen({ navigation }) {
   const styles = useMemo(() => createStyles(T, isDesktop, isMobile), [T, isDesktop, isMobile]);
   const insets = useSafeAreaInsets();
   const { width: winW } = useWindowDimensions();
-  const { accounts, creditCards, transactions } = useFinance();
+  const { accounts, creditCards, transactions, isSyncing } = useFinance();
+  const [lastSync, setLastSync] = useState(null);
   const act = activeAccounts(accounts);
   const activeIds = useMemo(() => new Set(act.map((a) => a.id)), [act]);
   const cardsAct = useMemo(() => activeCreditCards(creditCards), [creditCards]);
@@ -769,6 +793,26 @@ export default function DashboardScreen({ navigation }) {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Indicador de sincronização Open Finance */}
+      {isSyncing ? (
+        <View style={styles.syncRow}>
+          <ActivityIndicator size="small" color={T.orange} />
+          <Text style={styles.syncText}>Sincronizando...</Text>
+        </View>
+      ) : lastSync ? (
+        <View style={styles.syncRow}>
+          <Text style={styles.syncDot}>●</Text>
+          <Text style={styles.syncText}>{formatLastSync(lastSync)}</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('OpenFinanceOnboarding')} style={styles.syncLink}>
+            <Text style={styles.syncLinkText}>Gerenciar</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity style={styles.syncRow} onPress={() => navigation.navigate('OpenFinanceOnboarding')}>
+          <Text style={styles.syncTextMuted}>Conectar banco →</Text>
+        </TouchableOpacity>
+      )}
 
       <ScrollView
         showsVerticalScrollIndicator={false}

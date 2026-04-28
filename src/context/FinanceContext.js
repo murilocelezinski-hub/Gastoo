@@ -372,6 +372,7 @@ export function FinanceProvider({ children }) {
   const [creditCards, setCreditCards] = useState(seedCreditCards);
   const [ready, setReady] = useState(false);
   const [toast, setToast] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -735,6 +736,8 @@ export function FinanceProvider({ children }) {
       creditCards,
       toast,
       showToast,
+      isSyncing,
+      setIsSyncing,
       addAccount,
       updateAccount,
       deleteAccount,
@@ -759,6 +762,8 @@ export function FinanceProvider({ children }) {
       creditCards,
       toast,
       showToast,
+      isSyncing,
+      setIsSyncing,
       addAccount,
       updateAccount,
       deleteAccount,
