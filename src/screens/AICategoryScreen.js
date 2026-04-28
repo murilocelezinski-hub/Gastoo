@@ -22,7 +22,8 @@ function createAICategoryStyles(T) {
     catIcon: {
       width: 72,
       height: 72,
-      borderRadius: 72 * 0.23,
+      // Circular conforme Design System
+      borderRadius: 36,
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 14,
@@ -32,19 +33,21 @@ function createAICategoryStyles(T) {
     btnRow: { flexDirection: 'row', gap: 12, marginTop: 32, width: '100%' },
     correctBtn: {
       flex: 1,
-      paddingVertical: 14,
+      height: 52,
       borderRadius: 12,
       borderWidth: 1.5,
       borderColor: T.homeHairline,
       alignItems: 'center',
+      justifyContent: 'center',
     },
     correctBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.brandFg },
     confirmBtn: {
       flex: 1,
-      paddingVertical: 14,
+      height: 52,
       borderRadius: 12,
       backgroundColor: T.orange,
       alignItems: 'center',
+      justifyContent: 'center',
       shadowColor: T.orange,
       shadowOpacity: 0.4,
       shadowRadius: 12,

@@ -124,7 +124,7 @@ function createNewTransactionStyles(T, isDesktop) {
   });
 }
 
-export default function NewTransactionScreen({ navigation }) {
+export default function NewTransactionScreen({ navigation, route }) {
   const T = useThemeColors();
   const { isDesktop } = useResponsiveLayout();
   const styles = useMemo(() => createNewTransactionStyles(T, isDesktop), [T, isDesktop]);
@@ -132,7 +132,8 @@ export default function NewTransactionScreen({ navigation }) {
   const { accounts, creditCards, addTransfer, showToast } = useFinance();
   const act = useMemo(() => activeAccounts(accounts), [accounts]);
   const cardsAct = useMemo(() => activeCreditCards(creditCards), [creditCards]);
-  const [kind, setKind] = useState('despesa'); // despesa | receita | transfer
+  // Aceita defaultKind vindo dos botões de ação rápida do Dashboard
+  const [kind, setKind] = useState(route?.params?.defaultKind || 'despesa'); // despesa | receita | transfer
   const [valor, setValor] = useState('');
   const [descricao, setDescricao] = useState('');
   const [dataObj, setDataObj] = useState(() => new Date());

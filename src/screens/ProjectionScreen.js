@@ -191,38 +191,45 @@ function createStyles(T) {
       backgroundColor: T.white,
       borderRadius: 16,
       padding: 20,
-      borderWidth: 1.5,
+      borderWidth: 2,
       borderColor: T.orange,
+      // Destaque visual suave: sombra laranja
+      shadowColor: T.orange,
+      shadowOpacity: 0.15,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 3,
     },
     aiCardHeader: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
-      marginBottom: 12,
+      gap: 10,
+      marginBottom: 14,
     },
     aiCardBadge: {
       backgroundColor: T.orange,
-      borderRadius: 6,
-      paddingHorizontal: 8,
-      paddingVertical: 3,
+      borderRadius: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
     },
     aiCardBadgeText: {
       fontFamily: 'Poppins_600SemiBold',
-      fontSize: 10,
+      fontSize: 11,
       color: '#fff',
-      letterSpacing: 0.5,
+      letterSpacing: 0.8,
     },
     aiCardTitle: {
       fontFamily: 'Poppins_600SemiBold',
-      fontSize: 14,
+      fontSize: 15,
       color: T.charcoal,
       flex: 1,
     },
     aiCardText: {
       fontFamily: 'Poppins_400Regular',
-      fontSize: 13,
+      fontSize: 14,
       color: T.graphite,
-      lineHeight: 21,
+      // line-height aumentado para leitura confortável
+      lineHeight: 24,
     },
     aiCardLoading: {
       flexDirection: 'row',
@@ -247,6 +254,19 @@ function createStyles(T) {
       fontFamily: 'Poppins_600SemiBold',
       fontSize: 12,
       color: T.orange,
+    },
+    // Alerta de gasto acima da receita (#FEB506 conforme Design System)
+    alertBanner: {
+      backgroundColor: '#FEB506',
+      borderRadius: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+    },
+    alertBannerText: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 13,
+      color: '#2A1200',
+      lineHeight: 20,
     },
   });
 }
@@ -418,6 +438,15 @@ export default function ProjectionScreen({ navigation }) {
         contentContainerStyle={{ padding: 20, paddingBottom: 100 + insets.bottom, gap: 18 }}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Alerta visual em amarelo quando despesas excedem receitas */}
+        {expenseTotal > incomeTotal && incomeTotal > 0 ? (
+          <View style={styles.alertBanner}>
+            <Text style={styles.alertBannerText}>
+              Atenção: suas despesas ({fmt(expenseTotal)}) superam suas receitas ({fmt(incomeTotal)}) neste período.
+            </Text>
+          </View>
+        ) : null}
+
         <View style={styles.card}>
           <Text style={styles.chartTitle}>Despesas por categoria</Text>
           <View style={styles.chartWrap}>

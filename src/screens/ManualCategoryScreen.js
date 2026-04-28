@@ -44,7 +44,8 @@ function createStyles(T) {
     catIconBox: {
       width: 44,
       height: 44,
-      borderRadius: 44 * 0.23,
+      // Circular conforme Design System
+      borderRadius: 22,
       alignItems: 'center',
       justifyContent: 'center',
     },

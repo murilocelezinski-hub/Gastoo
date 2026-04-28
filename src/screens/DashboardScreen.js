@@ -320,17 +320,52 @@ function createStyles(T, isDesktop, isMobile) {
       flex: isDesktop ? 6 : undefined,
     },
     saldoCard: {
-      backgroundColor: T.orange,
       borderRadius: 20,
-      padding: isDesktop ? 28 : 24,
+      overflow: 'hidden',
       marginHorizontal: isDesktop ? 0 : 20,
       marginBottom: isDesktop ? 0 : 20,
       shadowColor: T.orange,
-      shadowOpacity: 0.3,
-      shadowRadius: 16,
+      shadowOpacity: 0.35,
+      shadowRadius: 18,
       shadowOffset: { width: 0, height: 8 },
-      elevation: 6,
+      elevation: 8,
       flex: isDesktop ? 1 : undefined,
+    },
+    saldoCardGradient: {
+      padding: isDesktop ? 28 : 24,
+      // Simula gradiente com camadas: fundo laranja + sobreposição escurecida no canto
+      backgroundColor: T.orange,
+    },
+    saldoCardGradientOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'rgba(180,40,0,0.22)',
+      borderRadius: 20,
+    },
+    quickActionsRow: {
+      flexDirection: 'row',
+      gap: isDesktop ? 16 : 12,
+      marginHorizontal: isDesktop ? 0 : 20,
+      marginBottom: isDesktop ? 0 : 16,
+    },
+    quickBtn: {
+      flex: 1,
+      height: 52,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1.5,
+    },
+    quickBtnEntrada: {
+      backgroundColor: 'rgba(254,181,6,0.12)',
+      borderColor: T.amber,
+    },
+    quickBtnSaida: {
+      backgroundColor: 'rgba(254,94,3,0.08)',
+      borderColor: T.orange,
+    },
+    quickBtnText: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: isDesktop ? 14 : 13,
     },
     saldoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     eyeBtn: { padding: 4 },
@@ -763,37 +798,60 @@ export default function DashboardScreen({ navigation }) {
         </View>
 
         <View style={styles.mainTwoCol}>
-          {/* Left column: Saldo card */}
+          {/* Left column: Saldo card com gradiente */}
           <View style={styles.leftCol}>
             <View style={[styles.saldoCard, saldo < 0 && { borderWidth: 2, borderColor: T.burnt }]}>
-              <View style={styles.saldoHeader}>
-                <Text style={styles.saldoLabel}>{saldoLabel}</Text>
-                <TouchableOpacity onPress={() => setHidden(!hidden)} hitSlop={12} style={styles.eyeBtn}>
-                  <Text style={styles.eyeIcon}>{hidden ? '👁' : '🙈'}</Text>
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.saldoValue}>{hidden ? mask : fmt(saldo)}</Text>
-              <View style={{ flexDirection: 'row', gap: 20, marginBottom: 12 }}>
-                <View>
-                  <Text style={styles.miniLabel}>{selectedCard ? 'Créditos' : 'Entradas'}</Text>
-                  <Text style={[styles.miniValue, { color: T.gold }]}>{hidden ? mask : `+${fmt(totalIn)}`}</Text>
+              {/* Camada de gradiente simulada */}
+              <View style={styles.saldoCardGradient}>
+                <View style={styles.saldoCardGradientOverlay} pointerEvents="none" />
+                <View style={styles.saldoHeader}>
+                  <Text style={styles.saldoLabel}>{saldoLabel}</Text>
+                  <TouchableOpacity onPress={() => setHidden(!hidden)} hitSlop={12} style={styles.eyeBtn}>
+                    <Text style={styles.eyeIcon}>{hidden ? '👁' : '🙈'}</Text>
+                  </TouchableOpacity>
                 </View>
-                <View>
-                  <Text style={styles.miniLabel}>{selectedCard ? 'Compras' : 'Saídas'}</Text>
-                  <Text style={[styles.miniValue, { color: '#FFB899' }]}>{hidden ? mask : `-${fmt(totalOut)}`}</Text>
+                <Text style={styles.saldoValue}>{hidden ? mask : fmt(saldo)}</Text>
+                <View style={{ flexDirection: 'row', gap: 20, marginBottom: 12 }}>
+                  <View>
+                    <Text style={styles.miniLabel}>{selectedCard ? 'Créditos' : 'Entradas'}</Text>
+                    <Text style={[styles.miniValue, { color: T.gold }]}>{hidden ? mask : `+${fmt(totalIn)}`}</Text>
+                  </View>
+                  <View>
+                    <Text style={styles.miniLabel}>{selectedCard ? 'Compras' : 'Saídas'}</Text>
+                    <Text style={[styles.miniValue, { color: '#FFB899' }]}>{hidden ? mask : `-${fmt(totalOut)}`}</Text>
+                  </View>
                 </View>
-              </View>
-              <View style={styles.monthMiniNav}>
-                <TouchableOpacity onPress={() => goInOut(prevInOut)} hitSlop={12} style={styles.monthMiniArrowBtn}>
-                  <Text style={styles.monthMiniArrow}>‹</Text>
-                </TouchableOpacity>
-                <Text style={styles.monthMiniLabel}>{monthLabel(inOutMonth, inOutYear)}</Text>
-                <TouchableOpacity onPress={() => goInOut(nextInOut)} hitSlop={12} style={styles.monthMiniArrowBtn}>
-                  <Text style={styles.monthMiniArrow}>›</Text>
-                </TouchableOpacity>
+                <View style={styles.monthMiniNav}>
+                  <TouchableOpacity onPress={() => goInOut(prevInOut)} hitSlop={12} style={styles.monthMiniArrowBtn}>
+                    <Text style={styles.monthMiniArrow}>‹</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.monthMiniLabel}>{monthLabel(inOutMonth, inOutYear)}</Text>
+                  <TouchableOpacity onPress={() => goInOut(nextInOut)} hitSlop={12} style={styles.monthMiniArrowBtn}>
+                    <Text style={styles.monthMiniArrow}>›</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
 
+            {/* Botões de ação rápida: Entrada e Saída */}
+            <View style={styles.quickActionsRow}>
+              <TouchableOpacity
+                style={[styles.quickBtn, styles.quickBtnEntrada]}
+                activeOpacity={0.75}
+                onPress={() => navigation.navigate('NewTransaction', { defaultKind: 'receita' })}
+                accessibilityLabel="Nova entrada"
+              >
+                <Text style={[styles.quickBtnText, { color: T.amberDark }]}>+ Entrada</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.quickBtn, styles.quickBtnSaida]}
+                activeOpacity={0.75}
+                onPress={() => navigation.navigate('NewTransaction', { defaultKind: 'despesa' })}
+                accessibilityLabel="Nova saída"
+              >
+                <Text style={[styles.quickBtnText, { color: T.orange }]}>- Saída</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Right column: Chart */}

@@ -18,7 +18,7 @@ export function GastooLogo({ variant = 'orange', size = 32 }) {
         style={{
           width: size,
           height: size,
-          borderRadius: size * 0.23,
+          borderRadius: size * 0.28,
           backgroundColor: c.iconBg,
           alignItems: 'center',
           justifyContent: 'center',
@@ -34,6 +34,7 @@ export function GastooLogo({ variant = 'orange', size = 32 }) {
 }
 
 // ─── CATEGORY ICON ───────────────────────────────────────
+// Ícone circular padronizado com cores da marca
 export function CatIcon({ category, size = 40 }) {
   const { categories } = useAppPreferences();
   const cat =
@@ -45,13 +46,13 @@ export function CatIcon({ category, size = 40 }) {
       style={{
         width: size,
         height: size,
-        borderRadius: size * 0.23,
+        borderRadius: size / 2,
         backgroundColor: cat?.color || '#BCBCB8',
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <Text style={{ fontSize: size * 0.5 }}>{cat?.icon || '📦'}</Text>
+      <Text style={{ fontSize: size * 0.46 }}>{cat?.icon || '📦'}</Text>
     </View>
   );
 }
@@ -112,6 +113,7 @@ export function ConfirmModal({ show, title, message, onConfirm, onCancel }) {
 }
 
 // ─── PRIMARY BUTTON ──────────────────────────────────────
+// Altura fixa de 52px conforme Design System
 export function PrimaryButton({ label, onPress, disabled, style }) {
   const T = useThemeColors();
   return (
@@ -122,9 +124,10 @@ export function PrimaryButton({ label, onPress, disabled, style }) {
       style={[
         {
           backgroundColor: disabled ? T.graySilver : T.orange,
-          borderRadius: 14,
-          paddingVertical: 16,
+          borderRadius: 12,
+          height: 52,
           alignItems: 'center',
+          justifyContent: 'center',
           shadowColor: T.orange,
           shadowOpacity: disabled ? 0 : 0.3,
           shadowRadius: 12,

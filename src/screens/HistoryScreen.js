@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, FlatList, SectionList, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fmt } from '../theme';
 import { Header, CatIcon } from '../components/Shared';
@@ -165,6 +165,26 @@ export default function HistoryScreen({ navigation }) {
 
   const cats = ['Todos', ...categories.map((c) => c.name)];
 
+  // Agrupa transações por rótulo de data (Hoje, Ontem, dd/mm/yyyy)
+  const groupedSections = useMemo(() => {
+    const today = new Date();
+    const todayStr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
+    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+    const yestStr = `${String(yesterday.getDate()).padStart(2,'0')}/${String(yesterday.getMonth()+1).padStart(2,'0')}/${yesterday.getFullYear()}`;
+
+    const map = {};
+    const order = [];
+    for (const tx of ordered) {
+      const rawDate = tx.data || '';
+      let label = rawDate;
+      if (rawDate === todayStr) label = 'Hoje';
+      else if (rawDate === yestStr) label = 'Ontem';
+      if (!map[label]) { map[label] = []; order.push(label); }
+      map[label].push(tx);
+    }
+    return order.map((title) => ({ title, data: map[title] }));
+  }, [ordered]);
+
   return (
     <View style={styles.container}>
       <Header
@@ -255,13 +275,17 @@ export default function HistoryScreen({ navigation }) {
         ))}
       </ScrollView>
 
-      {/* ── lista ── */}
-      <FlatList
+      {/* ── lista agrupada por data (Hoje, Ontem, dd/mm/yyyy) ── */}
+      <SectionList
         style={{ flex: 1 }}
-        data={ordered}
+        sections={groupedSections}
         keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={{ paddingHorizontal: isDesktop ? 40 : 20, paddingBottom: 100 + insets.bottom }}
+        contentContainerStyle={{ paddingHorizontal: isDesktop ? 40 : 16, paddingBottom: 100 + insets.bottom }}
         ListEmptyComponent={<Text style={styles.emptyText}>Nenhuma transação encontrada</Text>}
+        stickySectionHeadersEnabled={false}
+        renderSectionHeader={({ section: { title } }) => (
+          <Text style={styles.sectionDateLabel}>{title}</Text>
+        )}
         renderItem={({ item: tx }) => {
           if (tx.__invoiceGroup) {
             return (
@@ -304,7 +328,7 @@ export default function HistoryScreen({ navigation }) {
               <CatIcon category={tx.categoria} size={isDesktop ? 48 : 40} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.txDesc, isDesktop && styles.txDescDesktop]} numberOfLines={1}>{tx.descricao}</Text>
-                <Text style={[styles.txMeta, isDesktop && styles.txMetaDesktop]}>{tx.categoria} · {tx.data}</Text>
+                <Text style={[styles.txMeta, isDesktop && styles.txMetaDesktop]}>{tx.categoria}</Text>
               </View>
               <Text style={[styles.txValue, isDesktop && styles.txValueDesktop, { color: tx.tipo === 'entrada' ? T.gold : T.burnt }]}>
                 {tx.tipo === 'entrada' ? '+' : '-'}{fmt(tx.valor)}
@@ -425,5 +449,14 @@ function createHistoryStyles(T) {
     },
     invoiceIconText: { fontSize: 18 },
     invoiceChevron: { fontSize: 11, color: T.grayNeutral, fontFamily: 'Poppins_400Regular' },
+    // Rótulo de agrupamento por data (Hoje, Ontem, dd/mm/yyyy)
+    sectionDateLabel: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 12,
+      color: T.grayMed,
+      marginTop: 18,
+      marginBottom: 6,
+      letterSpacing: 0.3,
+    },
   });
 }
