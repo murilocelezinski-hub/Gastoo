@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal as RNModal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
+import { getCategoryIcon } from './CategoryIcons';
 
 // ─── LOGO ────────────────────────────────────────────────
 export function GastooLogo({ variant = 'orange', size = 32 }) {
@@ -34,13 +35,15 @@ export function GastooLogo({ variant = 'orange', size = 32 }) {
 }
 
 // ─── CATEGORY ICON ───────────────────────────────────────
-// Ícone circular padronizado com cores da marca
+// Ícone circular com SVG de linha fina conforme identidade visual GA$TOO
 export function CatIcon({ category, size = 40 }) {
   const { categories } = useAppPreferences();
   const cat =
     categories.find((c) => c.name === category) ||
     categories.find((c) => c.name === 'Outros') ||
     categories[categories.length - 1];
+  const IconComponent = getCategoryIcon(cat?.name);
+  const iconSize = Math.round(size * 0.52);
   return (
     <View
       style={{
@@ -52,7 +55,7 @@ export function CatIcon({ category, size = 40 }) {
         justifyContent: 'center',
       }}
     >
-      <Text style={{ fontSize: size * 0.46 }}>{cat?.icon || '📦'}</Text>
+      <IconComponent size={iconSize} color="#fff" />
     </View>
   );
 }

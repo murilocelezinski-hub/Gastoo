@@ -4,6 +4,7 @@ import { fmt } from '../theme';
 import { categorizeTransaction } from '../services/ai';
 import { useFinance } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
+import { getCategoryIcon } from '../components/CategoryIcons';
 
 function createAICategoryStyles(T) {
   return StyleSheet.create({
@@ -141,7 +142,7 @@ export default function AICategoryScreen({ navigation, route }) {
           <Text style={styles.resultLabel}>Sugestão da IA</Text>
 
           <View style={[styles.catIcon, { backgroundColor: suggestion.color }]}>
-            <Text style={{ fontSize: 36 }}>{suggestion.icon}</Text>
+            {(() => { const Icon = getCategoryIcon(suggestion.name); return <Icon size={36} color="#fff" />; })()}
           </View>
 
           <Text style={styles.catName}>{suggestion.name}</Text>

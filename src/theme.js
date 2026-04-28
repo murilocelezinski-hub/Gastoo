@@ -19,17 +19,17 @@ export const T = {
 };
 
 export const DEFAULT_CATEGORIES = [
-  { name: 'Alimentação', color: '#FE5E03', icon: '🍽' },
-  { name: 'Transporte', color: '#3C3C34', icon: '🚗' },
-  { name: 'Moradia', color: '#2A1200', icon: '🏠' },
-  { name: 'Saúde', color: '#989890', icon: '💊' },
-  { name: 'Lazer', color: '#CB7D00', icon: '🎮' },
-  { name: 'Educação', color: '#844213', icon: '📚' },
-  { name: 'Vestuário', color: '#797970', icon: '👕' },
-  { name: 'Assinaturas', color: '#C96A1E', icon: '📱' },
-  { name: 'Investimentos', color: '#E09A00', icon: '📈' },
-  { name: 'Transferência', color: '#5C5C56', icon: '⇄' },
-  { name: 'Outros', color: '#BCBCB8', icon: '📦' },
+  { name: 'Alimentação',  color: '#FE5E03' },
+  { name: 'Transporte',   color: '#3C3C34' },
+  { name: 'Moradia',      color: '#2A1200' },
+  { name: 'Saúde',        color: '#989890' },
+  { name: 'Lazer',        color: '#CB7D00' },
+  { name: 'Educação',     color: '#844213' },
+  { name: 'Vestuário',    color: '#797970' },
+  { name: 'Assinaturas',  color: '#C96A1E' },
+  { name: 'Investimentos',color: '#E09A00' },
+  { name: 'Transferência',color: '#5C5C56' },
+  { name: 'Outros',       color: '#BCBCB8' },
 ];
 
 /** Lista padrão (compatível com imports antigos `CATEGORIES`) */
