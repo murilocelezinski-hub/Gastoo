@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
@@ -64,7 +64,12 @@ function AppNavigation() {
 
   // Sem backend de usuários: abre direto no app. Com auth: trocar para initialRouteName="Splash" no Stack abaixo.
   return (
-    <View style={{ flex: 1 }}>
+    <View
+      style={{
+        flex: 1,
+        ...(Platform.OS === 'web' ? { minHeight: '100vh', backgroundColor: '#000' } : null),
+      }}
+    >
       <NavigationContainer onReady={onLayoutReady}>
         <ThemedStatusBar />
         <Stack.Navigator
@@ -112,7 +117,7 @@ const Tab = createBottomTabNavigator();
 
 function MainTabs() {
   const insets = useSafeAreaInsets();
-  const bottomPad = Math.max(insets.bottom, 10);
+  const bottomPad = Math.max(insets.bottom, Platform.OS === 'web' ? 16 : 10);
   const theme = useThemeColors();
   return (
     <Tab.Navigator
@@ -121,7 +126,7 @@ function MainTabs() {
         tabBarStyle: {
           backgroundColor: theme.chocolate,
           borderTopColor: theme.homeHairline,
-          height: 56 + bottomPad,
+          height: (Platform.OS === 'web' ? 64 : 56) + bottomPad,
           paddingBottom: bottomPad,
           paddingTop: 6,
         },
