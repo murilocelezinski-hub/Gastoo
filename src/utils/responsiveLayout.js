@@ -1,4 +1,4 @@
-import { useWindowDimensions } from 'react-native';
+import { Platform, useWindowDimensions } from 'react-native';
 import { useMemo } from 'react';
 
 /**
@@ -10,14 +10,18 @@ import { useMemo } from 'react';
 export function useResponsiveLayout() {
   const { width } = useWindowDimensions();
 
+  // No Web, o foco é UX mobile: "trava" o layout para não virar desktop em telas grandes.
+  // Em telas menores (ex: mobile real), respeita a largura disponível.
+  const effectiveWidth = Platform.OS === 'web' ? Math.min(width, 430) : width;
+
   return useMemo(() => ({
-    isMobile: width < 500,
-    isTablet: width >= 500 && width < 1024,
-    isDesktop: width >= 1024,
-    width,
-    isWide: width >= 1024,
-    maxWidth: width >= 1024 ? 1200 : width,
-  }), [width]);
+    isMobile: effectiveWidth < 500,
+    isTablet: effectiveWidth >= 500 && effectiveWidth < 1024,
+    isDesktop: effectiveWidth >= 1024,
+    width: effectiveWidth,
+    isWide: effectiveWidth >= 1024,
+    maxWidth: effectiveWidth >= 1024 ? 1200 : effectiveWidth,
+  }), [effectiveWidth]);
 }
 
 /**

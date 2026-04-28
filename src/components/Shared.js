@@ -93,11 +93,15 @@ export function ConfirmModal({ show, title, message, onConfirm, onCancel }) {
         <View style={[styles.modalCard, { backgroundColor: T.white }]} accessibilityViewIsModal={true}>
           <Text style={[styles.modalTitle, { color: T.graphite }]}>{title}</Text>
           <Text style={[styles.modalMessage, { color: T.grayMed }]}>{message}</Text>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <TouchableOpacity onPress={onCancel} style={[styles.modalBtn, { borderWidth: 1.5, borderColor: T.graySilver }]}>
+          <View style={styles.modalBtnRow}>
+            <TouchableOpacity
+              onPress={onCancel}
+              activeOpacity={0.8}
+              style={[styles.modalBtn, { borderWidth: 1.5, borderColor: T.graySilver }]}
+            >
               <Text style={[styles.modalBtnText, { color: T.graphite }]}>Cancelar</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={onConfirm} style={[styles.modalBtn, { backgroundColor: T.burnt }]}>
+            <TouchableOpacity onPress={onConfirm} activeOpacity={0.85} style={[styles.modalBtn, { backgroundColor: T.burnt }]}>
               <Text style={[styles.modalBtnText, { color: '#fff' }]}>Excluir</Text>
             </TouchableOpacity>
           </View>
@@ -169,6 +173,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 17, marginBottom: 8 },
   modalMessage: { fontFamily: 'Poppins_400Regular', fontSize: 14, marginBottom: 20, textAlign: 'center' },
+  modalBtnRow: { flexDirection: 'row', gap: 10, width: '100%' },
   modalBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
   modalBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14 },
   header: {

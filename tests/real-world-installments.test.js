@@ -1,13 +1,16 @@
 /**
+<<<<<<< HEAD
  * Testes de Integração: Parcelas em Cartão de Crédito — GA$TOO
  * Simula cenários reais de compras parceladas e valida chaves de fatura.
+=======
+ * Teste Real de Parcelas em Cartão de Crédito (Jest)
+>>>>>>> 20feee68e1f16c9d4007b2f12159e99a34cbe4a8
  */
 
 // ─── Funções utilitárias locais (espelham FinanceContext) ──────────────────────
 
 function parseBrDate(s) {
-  if (!s) return null;
-  const m = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  const m = String(s || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (!m) return null;
   const dd = parseInt(m[1], 10);
   const mm = parseInt(m[2], 10);
@@ -17,6 +20,7 @@ function parseBrDate(s) {
   return d;
 }
 
+<<<<<<< HEAD
 function addDays(d, days) {
   const dt = new Date(d);
   dt.setDate(dt.getDate() + days);
@@ -53,6 +57,8 @@ function getInstallmentDates(startDate, periodo, numInstallments) {
  * Determina a chave de fatura (YYYY-MM) a partir da data da transação e do dia de fechamento.
  * Se a data cai APÓS o fechamento, vai para a fatura do mês seguinte.
  */
+=======
+>>>>>>> 20feee68e1f16c9d4007b2f12159e99a34cbe4a8
 function invoiceKeyFromDateAndCloseDay(dateObj, closeDay) {
   if (!dateObj || !(dateObj instanceof Date) || Number.isNaN(dateObj.getTime())) return null;
   const cd = Math.min(31, Math.max(1, parseInt(closeDay, 10) || 10));
@@ -63,6 +69,7 @@ function invoiceKeyFromDateAndCloseDay(dateObj, closeDay) {
   return `${y}-${mm}`;
 }
 
+<<<<<<< HEAD
 function splitInstallmentAmounts(total, n) {
   const safe = Math.max(0, Number(total) || 0);
   const ni = Math.max(1, Math.min(365, n));
@@ -204,3 +211,19 @@ describe('Caso real 3: Assinatura R$ 1200 / 12x semanal (fechamento dia 20)', ()
     expect(invoiceKeyFromDateAndCloseDay(dates[1], closeDay)).toBe('2026-05');
   });
 });
+=======
+describe('invoiceKeyFromDateAndCloseDay', () => {
+  test('antes do fechamento: fatura do mês', () => {
+    expect(invoiceKeyFromDateAndCloseDay(parseBrDate('10/04/2026'), 15)).toBe('2026-04');
+  });
+
+  test('após o fechamento: fatura do próximo mês', () => {
+    expect(invoiceKeyFromDateAndCloseDay(parseBrDate('27/04/2026'), 15)).toBe('2026-05');
+  });
+
+  test('entrada inválida: null', () => {
+    expect(invoiceKeyFromDateAndCloseDay(null, 10)).toBeNull();
+  });
+});
+
+>>>>>>> 20feee68e1f16c9d4007b2f12159e99a34cbe4a8
