@@ -246,7 +246,7 @@ function BalanceLineChart({
   );
 }
 
-const logo = require('../../assets/logo.png');
+const logo = require('../../assets/logo2.png');
 
 function createStyles(T, isDesktop, isMobile) {
   return StyleSheet.create({

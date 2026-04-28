@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/Shared';
 import { useThemeColors } from '../context/AppPreferencesContext';
 
-const logo = require('../../assets/logo.png');
+const logo = require('../../assets/logo2.png');
 
 function createLoginStyles(T) {
   return StyleSheet.create({
