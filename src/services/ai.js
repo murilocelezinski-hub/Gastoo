@@ -124,3 +124,91 @@ Descrição: "${descricao}", Valor: R$ ${valor.toFixed(2)} →`;
     return { category: fallbackCategorize(descricao, categoryList), fromAI: false };
   }
 }
+
+function startOfDay(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function parseBrDateSafe(s) {
+  const m = String(s || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const dd = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  const yy = parseInt(m[3], 10);
+  const d = new Date(yy, mm - 1, dd);
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
+}
+
+function biggestOffenderCategoryLast7d(transactions, now = new Date()) {
+  const today = startOfDay(now);
+  const from = new Date(today);
+  from.setDate(from.getDate() - 6); // 7 dias incluindo hoje
+
+  const sumByCat = new Map();
+  for (const t of Array.isArray(transactions) ? transactions : []) {
+    if (!t || t.isTransfer) continue;
+    if (t.tipo !== 'saída') continue;
+    if (t.gastoTipo === 'fixo') continue;
+    const d = parseBrDateSafe(t.data);
+    if (!d) continue;
+    const day = startOfDay(d);
+    if (day < from || day > today) continue;
+    const cat = t.categoria || 'Outros';
+    const prev = sumByCat.get(cat) || 0;
+    sumByCat.set(cat, prev + (Number(t.valor) || 0));
+  }
+
+  let best = null;
+  for (const [cat, total] of sumByCat.entries()) {
+    if (!best || total > best.total) best = { cat, total };
+  }
+  return best;
+}
+
+/**
+ * Recomendação curta para ajudar a fechar o mês no azul.
+ * Só deve ser usada quando status visual estiver AMARELO/VERMELHO.
+ */
+export async function projectionTipFromWeek(transactions, { signal } = {}) {
+  const offender = biggestOffenderCategoryLast7d(transactions);
+  if (!offender) return '';
+  if (!GEMINI_API_KEY) {
+    // Sem chave: devolve recomendação simples sem IA.
+    return `Atenção: reduzir gastos de "${offender.cat}" nesta semana ajuda a fechar no azul.`;
+  }
+
+  const cacheKey = `projTip|${offender.cat}|${Math.round(offender.total * 100)}`;
+  if (_cache.has(cacheKey)) return _cache.get(cacheKey);
+
+  const prompt = `Você é um assistente de finanças pessoais.
+Gere UMA frase curta (máx. 110 caracteres), em pt-BR, recomendando uma ação para reduzir gastos.
+Contexto: a projeção de fim de mês está apertada. A categoria com maior gasto nos últimos 7 dias foi "${offender.cat}".
+Responda com apenas a frase (sem aspas).`;
+
+  try {
+    const response = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 60, temperature: 0.4 },
+      }),
+      signal,
+    });
+
+    if (!response.ok) {
+      await response.json().catch(() => ({}));
+      throw new Error(`Gemini error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+    const out = text || `Atenção: reduzir gastos de "${offender.cat}" nesta semana ajuda a fechar no azul.`;
+    _cache.set(cacheKey, out);
+    return out;
+  } catch (err) {
+    if (err?.name === 'AbortError') throw err;
+    return `Atenção: reduzir gastos de "${offender.cat}" nesta semana ajuda a fechar no azul.`;
+  }
+}

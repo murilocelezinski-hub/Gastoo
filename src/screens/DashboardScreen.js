@@ -26,6 +26,9 @@ import { useAppPreferences, useThemeColors } from '../context/AppPreferencesCont
 import { buildBalanceEvolutionSeries, parseBrDate } from '../utils/chart';
 import { sortTransactionsByDate } from '../utils/txSort';
 import { useResponsiveLayout, useMainLayoutDimensions } from '../utils/responsiveLayout';
+import ProjectionCard from '../components/ProjectionCard';
+import { computeMonthEndProjectionCents, projectionStatus } from '../utils/monthEndProjection';
+import { projectionTipFromWeek } from '../services/ai';
 
 const BALANCE_MODES = [
   { key: 'current_month', short: 'Mês' },
@@ -451,6 +454,41 @@ export default function DashboardScreen({ navigation }) {
   const [inOutYear, setInOutYear] = useState(() => new Date().getFullYear());
   const mask = '••••••';
 
+  const projectionResult = useMemo(
+    () => computeMonthEndProjectionCents({ accounts, transactions, now: new Date() }),
+    [accounts, transactions]
+  );
+  const projStatus = useMemo(() => {
+    if (!projectionResult) return 'collecting';
+    return projectionStatus({
+      projectionCents: projectionResult.projectionCents,
+      saldoInicialCents: projectionResult.breakdown?.saldoInicialCents,
+    });
+  }, [projectionResult]);
+
+  const [aiTip, setAiTip] = useState('');
+
+  React.useEffect(() => {
+    let mounted = true;
+    const controller = new AbortController();
+
+    (async () => {
+      if (projStatus !== 'warning' && projStatus !== 'critical') {
+        if (mounted) setAiTip('');
+        return;
+      }
+      const tip = await projectionTipFromWeek(transactions, { signal: controller.signal });
+      if (mounted) setAiTip(tip || '');
+    })().catch(() => {
+      if (mounted) setAiTip('');
+    });
+
+    return () => {
+      mounted = false;
+      controller.abort();
+    };
+  }, [projStatus, transactions]);
+
   const prevInOut = offsetMonth(inOutMonth, inOutYear, -1);
   const nextInOut = offsetMonth(inOutMonth, inOutYear, +1);
   const goInOut = ({ month, year }) => { setInOutMonth(month); setInOutYear(year); };
@@ -793,6 +831,9 @@ export default function DashboardScreen({ navigation }) {
                 </TouchableOpacity>
               </View>
             </View>
+
+            {/* Projeção de fim de mês */}
+            <ProjectionCard result={projectionResult} status={projStatus} aiTip={aiTip} />
           </View>
 
           {/* Right column: Chart */}

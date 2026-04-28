@@ -1,6 +1,6 @@
 /**
  * Teste de Parcelas
- * Valida se as parcelas estão sendo criadas corretamente nos próximos meses
+ * Valida se as datas de parcelas avançam no tempo.
  */
 
 function parseBrDate(s) {
@@ -51,53 +51,21 @@ function getInstallmentDates(startDate, periodo, numInstallments) {
   return dates;
 }
 
-// TESTES
-console.log('=== TESTE 1: Parcelas Mensais ===');
-const startDate = parseBrDate('15/04/2026');
-const dates = getInstallmentDates(startDate, 'mensal', 12);
-const valor = 1200;
-const valorParcela = (valor / 12).toFixed(2);
+describe('getInstallmentDates', () => {
+  test('mensal cria 12 datas e avança no tempo', () => {
+    const startDate = parseBrDate('15/04/2026');
+    const dates = getInstallmentDates(startDate, 'mensal', 12);
+    expect(dates).toHaveLength(12);
+    expect(dates[0].getTime()).toBe(startDate.getTime());
+    for (let i = 1; i < dates.length; i++) {
+      expect(dates[i].getTime()).toBeGreaterThan(dates[i - 1].getTime());
+    }
+  });
 
-console.log(`Valor Total: R$ ${valor}`);
-console.log(`Valor por Parcela: R$ ${valorParcela}`);
-console.log(`\nParcelas:`);
-
-let totalCalculado = 0;
-dates.forEach((date, idx) => {
-  const brDate = formatBrDate(date);
-  totalCalculado += parseFloat(valorParcela);
-  console.log(`  ${idx + 1}. ${brDate} - R$ ${valorParcela}`);
+  test('semanal avança ~7 dias', () => {
+    const startDate = parseBrDate('15/04/2026');
+    const dates = getInstallmentDates(startDate, 'semanal', 3);
+    const diff = (dates[1] - dates[0]) / (1000 * 60 * 60 * 24);
+    expect(Math.round(diff)).toBe(7);
+  });
 });
-
-console.log(`\nValidação:`);
-console.log(`✓ Total parcelas: 12`);
-console.log(`✓ Valor total recalculado: R$ ${totalCalculado.toFixed(2)}`);
-console.log(`✓ Diferença (arredondamento): R$ ${Math.abs(valor - totalCalculado).toFixed(2)}`);
-
-console.log('\n=== TESTE 2: Parcelas Quinzenais ===');
-const dates2 = getInstallmentDates(startDate, 'quinzenal', 12);
-console.log(`Primeiras 3 parcelas:`);
-dates2.slice(0, 3).forEach((date, idx) => {
-  console.log(`  ${idx + 1}. ${formatBrDate(date)}`);
-});
-console.log(`... (total 12 parcelas)`);
-console.log(`Última parcela: ${formatBrDate(dates2[11])}`);
-
-console.log('\n=== TESTE 3: Parcelas Semanais ===');
-const dates3 = getInstallmentDates(startDate, 'semanal', 12);
-console.log(`Primeira: ${formatBrDate(dates3[0])}`);
-console.log(`Segunda: ${formatBrDate(dates3[1])}`);
-console.log(`Terceira: ${formatBrDate(dates3[2])}`);
-console.log(`... (total 12 parcelas)`);
-console.log(`Última: ${formatBrDate(dates3[11])}`);
-
-console.log('\n=== TESTE 4: Diferença entre Períodos ===');
-const diffMensal = (dates[1] - dates[0]) / (1000 * 60 * 60 * 24);
-const diffQuinzenal = (dates2[1] - dates2[0]) / (1000 * 60 * 60 * 24);
-const diffSemanal = (dates3[1] - dates3[0]) / (1000 * 60 * 60 * 24);
-
-console.log(`Intervalo Mensal: ${Math.round(diffMensal)} dias`);
-console.log(`Intervalo Quinzenal: ${Math.round(diffQuinzenal)} dias`);
-console.log(`Intervalo Semanal: ${Math.round(diffSemanal)} dias`);
-
-console.log('\n✅ Todos os testes passaram!');
