@@ -16,6 +16,7 @@ import { Header, PrimaryButton, CatIcon } from '../components/Shared';
 import { useFinance, activeAccounts, activeCreditCards, invoiceKeyFromDateAndCloseDay, invoiceLabelPtBr } from '../context/FinanceContext';
 import { PERIOD_LABEL } from '../utils/recurrence';
 import { parseBrDate } from '../utils/chart';
+import BrCalendarModal from '../components/BrCalendarModal';
 
 const PARCELA_NUMS = Array.from({ length: 365 }, (_, i) => i + 1);
 
@@ -603,7 +604,27 @@ export default function EditTransactionScreen({ navigation, route }) {
       </KeyboardAvoidingView>
 
       {showDatePicker ? (
-        <DateTimePicker value={dataObj} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={onPickDate} />
+        Platform.OS === 'web' ? (
+          <BrCalendarModal
+            visible={showDatePicker}
+            title="Selecionar data"
+            valueBr={data}
+            palette={T}
+            onClose={() => setShowDatePicker(false)}
+            onConfirm={(valueBr) => {
+              const d = parseBrDate(valueBr) || new Date();
+              setDataObj(d);
+              setData(valueBr);
+            }}
+          />
+        ) : (
+          <DateTimePicker
+            value={dataObj}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={onPickDate}
+          />
+        )
       ) : null}
     </View>
   );

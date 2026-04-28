@@ -14,8 +14,10 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../context/AppPreferencesContext';
 import { Header, PrimaryButton } from '../components/Shared';
+import BrCalendarModal from '../components/BrCalendarModal';
 import { useFinance, activeAccounts, activeCreditCards, invoiceKeyFromDateAndCloseDay, invoiceLabelPtBr } from '../context/FinanceContext';
 import { useResponsiveLayout } from '../utils/responsiveLayout';
+import { parseBrDate } from '../utils/chart';
 
 function formatBrDate(d) {
   const p = (n) => String(n).padStart(2, '0');
@@ -635,7 +637,27 @@ export default function NewTransactionScreen({ navigation }) {
           )}
 
           {showDatePicker ? (
-            <DateTimePicker value={dataObj} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={onPickDate} />
+            Platform.OS === 'web' ? (
+              <BrCalendarModal
+                visible={showDatePicker}
+                title="Selecionar data"
+                valueBr={data}
+                palette={T}
+                onClose={() => setShowDatePicker(false)}
+                onConfirm={(valueBr) => {
+                  const d = parseBrDate(valueBr) || new Date();
+                  setDataObj(d);
+                  setData(valueBr);
+                }}
+              />
+            ) : (
+              <DateTimePicker
+                value={dataObj}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={onPickDate}
+              />
+            )
           ) : null}
         </ScrollView>
       </KeyboardAvoidingView>

@@ -7,6 +7,8 @@ import { useFinance } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { sortTransactionsByDate } from '../utils/txSort';
 import { useResponsiveLayout } from '../utils/responsiveLayout';
+import { addPeriod, fmtDate } from '../utils/recurrence';
+import { parseBrDate } from '../utils/chart';
 
 const MONTHS_PT = [
   'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -54,13 +56,54 @@ export default function HistoryScreen({ navigation }) {
   const goTo = ({ month, year }) => { setSelMonth(month); setSelYear(year); };
 
   // 1. filtro por mês
-  const byMonth = useMemo(() =>
-    transactions.filter((t) => {
+  const byMonth = useMemo(() => {
+    const out = [];
+    const monthStart = new Date(selYear, selMonth - 1, 1);
+    const monthEnd = new Date(selYear, selMonth, 0);
+
+    for (const t of transactions) {
+      if (!t?.data || typeof t.data !== 'string') continue;
+
       const p = t.data.split('/');
-      return p.length === 3 && parseInt(p[1], 10) === selMonth && parseInt(p[2], 10) === selYear;
-    }),
-    [transactions, selMonth, selYear]
-  );
+      const inSelectedMonth = p.length === 3 && parseInt(p[1], 10) === selMonth && parseInt(p[2], 10) === selYear;
+      if (inSelectedMonth) out.push(t);
+
+      // Expande "fixo" para o mês selecionado, para aparecer nos meses futuros.
+      // Parcelado já vira múltiplas transações reais (parcelaGrupoId), então não re-projeta aqui.
+      if (t.isTransfer) continue;
+      if (t.gastoTipo !== 'fixo') continue;
+      if (!t.periodicidade) continue;
+
+      const base = parseBrDate(t.data);
+      if (!base || Number.isNaN(base.getTime())) continue;
+
+      let d = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+      let guard = 0;
+      while (d < monthStart && guard < 500) {
+        d = addPeriod(d, t.periodicidade);
+        guard++;
+      }
+
+      guard = 0;
+      while (d <= monthEnd && guard < 800) {
+        const dBr = fmtDate(d);
+        // evita duplicar a própria transação no mês de origem
+        if (!(inSelectedMonth && dBr === t.data)) {
+          out.push({
+            ...t,
+            id: `${t.id}-fx-${selYear}-${String(selMonth).padStart(2, '0')}-${dBr}`,
+            data: dBr,
+            __virtualRecurring: true,
+            __virtualSourceId: t.id,
+          });
+        }
+        d = addPeriod(d, t.periodicidade);
+        guard++;
+      }
+    }
+
+    return out;
+  }, [transactions, selMonth, selYear]);
 
   // 2. filtro por tipo (transferências nunca aparecem em Receitas/Despesas)
   const byTipo = useMemo(() => {
