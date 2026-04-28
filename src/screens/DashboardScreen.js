@@ -26,10 +26,6 @@ import { useAppPreferences, useThemeColors } from '../context/AppPreferencesCont
 import { buildBalanceEvolutionSeries, parseBrDate } from '../utils/chart';
 import { sortTransactionsByDate } from '../utils/txSort';
 import { useResponsiveLayout, useMainLayoutDimensions } from '../utils/responsiveLayout';
-import ProjectionCard from '../components/ProjectionCard';
-import { computeMonthEndProjectionCents } from '../utils/monthEndProjection';
-import { classificarStatusProjecao } from '../utils/projection';
-import { projectionTipFromWeek } from '../services/ai';
 
 const BALANCE_MODES = [
   { key: 'current_month', short: 'Mês' },
@@ -455,54 +451,6 @@ export default function DashboardScreen({ navigation }) {
   const [inOutYear, setInOutYear] = useState(() => new Date().getFullYear());
   const mask = '••••••';
 
-  const projectionRaw = useMemo(
-    () => computeMonthEndProjectionCents({ accounts, transactions, now: new Date() }),
-    [accounts, transactions]
-  );
-
-  // Adapta resultado da API nova para o formato esperado pelo ProjectionCard
-  const projectionResult = useMemo(() => {
-    if (!projectionRaw) return null;
-    const b = projectionRaw.breakdown;
-    return {
-      projecaoCentavos: projectionRaw.projectionCents,
-      mediaDiariaVariavelCentavos: b.mediaDiariaVariavelCents,
-      diasRestantes: b.daysRemaining,
-      receitasPendentesCentavos: b.receitasPendentesCents,
-      despesasPendentesCentavos: b.despesasPendentesCents,
-    };
-  }, [projectionRaw]);
-
-  const saldoInicialProjecaoCentavos = projectionRaw?.breakdown?.saldoInicialCents ?? 0;
-
-  const [aiTip, setAiTip] = useState('');
-
-  const projStatus = useMemo(() => {
-    if (!projectionResult) return null;
-    return classificarStatusProjecao(projectionResult.projecaoCentavos, saldoInicialProjecaoCentavos);
-  }, [projectionResult, saldoInicialProjecaoCentavos]);
-
-  React.useEffect(() => {
-    let mounted = true;
-    const controller = new AbortController();
-
-    (async () => {
-      if (projStatus !== 'amarelo' && projStatus !== 'vermelho') {
-        if (mounted) setAiTip('');
-        return;
-      }
-      const tip = await projectionTipFromWeek(transactions, { signal: controller.signal });
-      if (mounted) setAiTip(tip || '');
-    })().catch(() => {
-      if (mounted) setAiTip('');
-    });
-
-    return () => {
-      mounted = false;
-      controller.abort();
-    };
-  }, [projStatus, transactions]);
-
   const prevInOut = offsetMonth(inOutMonth, inOutYear, -1);
   const nextInOut = offsetMonth(inOutMonth, inOutYear, +1);
   const goInOut = ({ month, year }) => { setInOutMonth(month); setInOutYear(year); };
@@ -846,12 +794,6 @@ export default function DashboardScreen({ navigation }) {
               </View>
             </View>
 
-            {/* Projeção de fim de mês */}
-            <ProjectionCard
-              resultado={projectionResult}
-              saldoInicialMesCentavos={saldoInicialProjecaoCentavos}
-              recomendacaoIA={aiTip || null}
-            />
           </View>
 
           {/* Right column: Chart */}
