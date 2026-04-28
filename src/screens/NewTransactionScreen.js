@@ -36,7 +36,6 @@ function invoiceKeyShift(key, deltaMonths) {
   return `${y2}-${m2}`;
 }
 
-const PARCELA_NUMS = Array.from({ length: 365 }, (_, i) => i + 1);
 
 function createNewTransactionStyles(T, isDesktop) {
   return StyleSheet.create({
@@ -118,20 +117,8 @@ function createNewTransactionStyles(T, isDesktop) {
     installmentRow: { flexDirection: 'row', gap: 10, marginTop: 2 },
     installmentCol: { flex: 1 },
     installmentLabel: { fontFamily: 'Poppins_600SemiBold', fontSize: 11, color: T.charcoal, marginBottom: 6 },
-    installmentScroll: {
-      maxHeight: 200,
-      borderWidth: 1.5,
-      borderColor: T.graySilver,
-      borderRadius: 12,
-      backgroundColor: T.white,
-    },
-    installPick: {
-      paddingVertical: 10,
-      paddingHorizontal: 4,
-      alignItems: 'center',
-      borderBottomWidth: 1,
-      borderBottomColor: T.grayVLight,
-    },
+    installmentScroll: { maxHeight: 160, borderRadius: 12, borderWidth: 1.5, borderColor: T.graySilver, backgroundColor: T.white },
+    installPick: { paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: T.grayVLight },
     installPickText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.graphite },
     installPickTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.orange },
   });
@@ -472,31 +459,20 @@ export default function NewTransactionScreen({ navigation }) {
                   <Text style={styles.label}>Parcelas e periodicidade</Text>
                   <View style={styles.installmentRow}>
                     <View style={styles.installmentCol}>
-                      <Text style={styles.installmentLabel}>Número (1 a 365)</Text>
-                      <ScrollView
-                        style={styles.installmentScroll}
-                        nestedScrollEnabled
-                        keyboardShouldPersistTaps="handled"
-                        showsVerticalScrollIndicator
-                      >
-                        {PARCELA_NUMS.map((n) => (
-                          <TouchableOpacity
-                            key={n}
-                            onPress={() => setNumParcelas(n)}
-                            style={styles.installPick}
-                            activeOpacity={0.65}
-                          >
-                            <Text
-                              style={[
-                                styles.installPickText,
-                                numParcelas === n && styles.installPickTextActive,
-                              ]}
-                            >
-                              {n}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
+                      <Text style={styles.installmentLabel}>Número de parcelas</Text>
+                      <TextInput
+                        value={String(numParcelas)}
+                        onChangeText={(txt) => {
+                          const n = parseInt(txt.replace(/\D/g, ''), 10);
+                          if (!isNaN(n) && n >= 1) setNumParcelas(n);
+                          else if (txt === '') setNumParcelas(1);
+                        }}
+                        keyboardType="numeric"
+                        style={[styles.input, { textAlign: 'center', fontSize: isDesktop ? 18 : 16 }]}
+                        maxLength={3}
+                        placeholder="12"
+                        placeholderTextColor={T.grayNeutral}
+                      />
                     </View>
                     <View style={styles.installmentCol}>
                       <Text style={styles.installmentLabel}>Período</Text>

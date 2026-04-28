@@ -28,6 +28,7 @@ import ProfileMenuScreen from './src/screens/ProfileMenuScreen';
 import UserProfileScreen from './src/screens/UserProfileScreen';
 import CategoriesSettingsScreen from './src/screens/CategoriesSettingsScreen';
 import SpendingGoalsScreen from './src/screens/SpendingGoalsScreen';
+import InvoiceDetailScreen from './src/screens/InvoiceDetailScreen';
 
 SplashScreenExpo.preventAutoHideAsync();
 
@@ -94,6 +95,7 @@ function AppNavigation() {
           <Stack.Screen name="ProfileMenu" component={ProfileMenuScreen} />
           <Stack.Screen name="UserProfile" component={UserProfileScreen} />
           <Stack.Screen name="CategoriesSettings" component={CategoriesSettingsScreen} />
+          <Stack.Screen name="InvoiceDetail" component={InvoiceDetailScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       <ToastHost />

@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, FlatList, StyleSheet } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fmt } from '../theme';
 import { Header, CatIcon } from '../components/Shared';
-import { useFinance } from '../context/FinanceContext';
+import { useFinance, invoiceLabelPtBr, creditCardName } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { sortTransactionsByDate } from '../utils/txSort';
 import { useResponsiveLayout } from '../utils/responsiveLayout';
@@ -40,7 +40,7 @@ export default function HistoryScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const T = useThemeColors();
   const styles = useMemo(() => createHistoryStyles(T), [T]);
-  const { transactions } = useFinance();
+  const { transactions, creditCards } = useFinance();
   const { transactionListOrder, categories } = useAppPreferences();
   const { isDesktop } = useResponsiveLayout();
 
@@ -55,7 +55,7 @@ export default function HistoryScreen({ navigation }) {
 
   const goTo = ({ month, year }) => { setSelMonth(month); setSelYear(year); };
 
-  // 1. filtro por mês
+  // 1. filtro por mês (inclui fixos projetados)
   const byMonth = useMemo(() => {
     const out = [];
     const monthStart = new Date(selYear, selMonth - 1, 1);
@@ -68,8 +68,6 @@ export default function HistoryScreen({ navigation }) {
       const inSelectedMonth = p.length === 3 && parseInt(p[1], 10) === selMonth && parseInt(p[2], 10) === selYear;
       if (inSelectedMonth) out.push(t);
 
-      // Expande "fixo" para o mês selecionado, para aparecer nos meses futuros.
-      // Parcelado já vira múltiplas transações reais (parcelaGrupoId), então não re-projeta aqui.
       if (t.isTransfer) continue;
       if (t.gastoTipo !== 'fixo') continue;
       if (!t.periodicidade) continue;
@@ -87,7 +85,6 @@ export default function HistoryScreen({ navigation }) {
       guard = 0;
       while (d <= monthEnd && guard < 800) {
         const dBr = fmtDate(d);
-        // evita duplicar a própria transação no mês de origem
         if (!(inSelectedMonth && dBr === t.data)) {
           out.push({
             ...t,
@@ -105,13 +102,52 @@ export default function HistoryScreen({ navigation }) {
     return out;
   }, [transactions, selMonth, selYear]);
 
-  // 2. filtro por tipo (transferências nunca aparecem em Receitas/Despesas)
-  const byTipo = useMemo(() => {
-    if (tipoFilter === 'todos') return byMonth;
-    return byMonth.filter((t) => !t.isTransfer && t.tipo === tipoFilter);
-  }, [byMonth, tipoFilter]);
+  // 2. agrupa gastos de cartão por invoiceKey em itens sintéticos "Fatura cartão [mês]"
+  const byMonthWithInvoices = useMemo(() => {
+    const invoiceGroups = {};
+    const nonCard = [];
 
-  // 3. filtro por categoria
+    for (const t of byMonth) {
+      if (t.creditCardId && t.invoiceKey && !t.isTransfer) {
+        const key = `${t.creditCardId}::${t.invoiceKey}`;
+        if (!invoiceGroups[key]) {
+          invoiceGroups[key] = {
+            id: `invoice-group-${key}`,
+            __invoiceGroup: true,
+            creditCardId: t.creditCardId,
+            invoiceKey: t.invoiceKey,
+            tipo: 'saída',
+            valor: 0,
+            count: 0,
+            // usa a data mais recente do grupo para ordenação
+            data: t.data,
+          };
+        }
+        invoiceGroups[key].valor += t.valor;
+        invoiceGroups[key].count += 1;
+        if (t.data > invoiceGroups[key].data) invoiceGroups[key].data = t.data;
+      } else {
+        nonCard.push(t);
+      }
+    }
+
+    const invoiceItems = Object.values(invoiceGroups).map((g) => ({
+      ...g,
+      descricao: `Fatura cartão ${invoiceLabelPtBr(g.invoiceKey)}`,
+      categoria: 'Cartão de Crédito',
+      cardLabel: creditCardName(creditCards, g.creditCardId),
+    }));
+
+    return [...nonCard, ...invoiceItems];
+  }, [byMonth, creditCards]);
+
+  // 3. filtro por tipo
+  const byTipo = useMemo(() => {
+    if (tipoFilter === 'todos') return byMonthWithInvoices;
+    return byMonthWithInvoices.filter((t) => !t.isTransfer && t.tipo === tipoFilter);
+  }, [byMonthWithInvoices, tipoFilter]);
+
+  // 4. filtro por categoria
   const filtered = useMemo(() =>
     catFilter === 'Todos' ? byTipo : byTipo.filter((t) => t.categoria === catFilter),
     [byTipo, catFilter]
@@ -226,22 +262,56 @@ export default function HistoryScreen({ navigation }) {
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={{ paddingHorizontal: isDesktop ? 40 : 20, paddingBottom: 100 + insets.bottom }}
         ListEmptyComponent={<Text style={styles.emptyText}>Nenhuma transação encontrada</Text>}
-        renderItem={({ item: tx }) => (
-          <TouchableOpacity
-            style={[styles.txRow, isDesktop && styles.txRowDesktop]}
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate('Detail', { tx })}
-          >
-            <CatIcon category={tx.categoria} size={isDesktop ? 48 : 40} />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.txDesc, isDesktop && styles.txDescDesktop]} numberOfLines={1}>{tx.descricao}</Text>
-              <Text style={[styles.txMeta, isDesktop && styles.txMetaDesktop]}>{tx.categoria} · {tx.data}</Text>
-            </View>
-            <Text style={[styles.txValue, isDesktop && styles.txValueDesktop, { color: tx.tipo === 'entrada' ? T.gold : T.burnt }]}>
-              {tx.tipo === 'entrada' ? '+' : '-'}{fmt(tx.valor)}
-            </Text>
-          </TouchableOpacity>
-        )}
+        renderItem={({ item: tx }) => {
+          if (tx.__invoiceGroup) {
+            return (
+              <TouchableOpacity
+                style={[styles.txRow, isDesktop && styles.txRowDesktop]}
+                activeOpacity={0.7}
+                onPress={() =>
+                  navigation.navigate('InvoiceDetail', {
+                    invoiceKey: tx.invoiceKey,
+                    cardName: tx.cardLabel,
+                  })
+                }
+              >
+                <View style={styles.invoiceIcon}>
+                  <Text style={styles.invoiceIconText}>💳</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.txDesc, isDesktop && styles.txDescDesktop]} numberOfLines={1}>
+                    {tx.descricao}
+                  </Text>
+                  <Text style={[styles.txMeta, isDesktop && styles.txMetaDesktop]}>
+                    {tx.cardLabel} · {tx.count} {tx.count === 1 ? 'gasto' : 'gastos'}
+                  </Text>
+                </View>
+                <View style={{ alignItems: 'flex-end', gap: 2 }}>
+                  <Text style={[styles.txValue, isDesktop && styles.txValueDesktop, { color: T.burnt }]}>
+                    -{fmt(tx.valor)}
+                  </Text>
+                  <Text style={styles.invoiceChevron}>{'>'}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }
+          return (
+            <TouchableOpacity
+              style={[styles.txRow, isDesktop && styles.txRowDesktop]}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('Detail', { tx })}
+            >
+              <CatIcon category={tx.categoria} size={isDesktop ? 48 : 40} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.txDesc, isDesktop && styles.txDescDesktop]} numberOfLines={1}>{tx.descricao}</Text>
+                <Text style={[styles.txMeta, isDesktop && styles.txMetaDesktop]}>{tx.categoria} · {tx.data}</Text>
+              </View>
+              <Text style={[styles.txValue, isDesktop && styles.txValueDesktop, { color: tx.tipo === 'entrada' ? T.gold : T.burnt }]}>
+                {tx.tipo === 'entrada' ? '+' : '-'}{fmt(tx.valor)}
+              </Text>
+            </TouchableOpacity>
+          );
+        }}
       />
     </View>
   );
@@ -254,24 +324,27 @@ function createHistoryStyles(T) {
     monthNav: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: T.chocolate,
+      backgroundColor: T.offWhite,
       paddingHorizontal: 12,
       paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: T.grayVLight,
     },
     navArrow: { paddingHorizontal: 6 },
-    navArrowText: { fontSize: 18, color: T.grayNeutral, fontFamily: 'Poppins_400Regular' },
+    navArrowText: { fontSize: 18, color: T.orange, fontFamily: 'Poppins_600SemiBold' },
     navSide: { flex: 1, alignItems: 'center' },
-    navSideText: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: T.grayLight },
+    navSideText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.grayNeutral },
     navCurrent: {
       flex: 1.4,
       alignItems: 'center',
       borderWidth: 1.5,
-      borderColor: T.grayLight,
+      borderColor: T.orange,
       borderRadius: 24,
       paddingVertical: 6,
       paddingHorizontal: 10,
+      backgroundColor: 'rgba(254,94,3,0.08)',
     },
-    navCurrentText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.white },
+    navCurrentText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.orange },
 
     summary: {
       flexDirection: 'row',
@@ -342,5 +415,15 @@ function createHistoryStyles(T) {
       textAlign: 'center',
       marginTop: 40,
     },
+    invoiceIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: 'rgba(254,94,3,0.10)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    invoiceIconText: { fontSize: 18 },
+    invoiceChevron: { fontSize: 11, color: T.grayNeutral, fontFamily: 'Poppins_400Regular' },
   });
 }
