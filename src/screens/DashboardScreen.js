@@ -21,7 +21,9 @@ import {
   invoiceKeyFromDateAndCloseDay,
   invoiceLabelPtBr,
   isTransactionEffectiveOnOrBefore,
+  creditCardName,
 } from '../context/FinanceContext';
+import { CatIcon } from '../components/Shared';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { buildBalanceEvolutionSeries, parseBrDate } from '../utils/chart';
 import { sortTransactionsByDate } from '../utils/txSort';
@@ -341,32 +343,6 @@ function createStyles(T, isDesktop, isMobile) {
       backgroundColor: 'rgba(180,40,0,0.22)',
       borderRadius: 20,
     },
-    quickActionsRow: {
-      flexDirection: 'row',
-      gap: isDesktop ? 16 : 12,
-      marginHorizontal: isDesktop ? 0 : 20,
-      marginBottom: isDesktop ? 0 : 16,
-    },
-    quickBtn: {
-      flex: 1,
-      height: 52,
-      borderRadius: 12,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderWidth: 1.5,
-    },
-    quickBtnEntrada: {
-      backgroundColor: 'rgba(254,181,6,0.12)',
-      borderColor: T.amber,
-    },
-    quickBtnSaida: {
-      backgroundColor: 'rgba(254,94,3,0.08)',
-      borderColor: T.orange,
-    },
-    quickBtnText: {
-      fontFamily: 'Poppins_600SemiBold',
-      fontSize: isDesktop ? 14 : 13,
-    },
     saldoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     eyeBtn: { padding: 4 },
     eyeIcon: { fontSize: 16 },
@@ -452,6 +428,56 @@ function createStyles(T, isDesktop, isMobile) {
       elevation: 8,
     },
     fabText: { fontSize: isDesktop ? 32 : 28, color: T.white, fontFamily: 'Poppins_600SemiBold', marginTop: -2 },
+    recentSection: {
+      marginTop: isDesktop ? 8 : 16,
+      marginBottom: isDesktop ? 28 : 16,
+    },
+    recentSectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginHorizontal: isDesktop ? 40 : 20,
+      marginBottom: 8,
+    },
+    recentSectionTitle: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: isDesktop ? 15 : 13,
+      color: T.brandFgMuted,
+      letterSpacing: 0.3,
+    },
+    recentSeeAll: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 12,
+      color: T.orange,
+    },
+    recentTxRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: isDesktop ? 14 : 10,
+      marginHorizontal: isDesktop ? 40 : 20,
+      borderBottomWidth: 1,
+      borderBottomColor: T.homeHairline,
+    },
+    recentTxDesc: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: isDesktop ? 15 : 14,
+      color: T.brandFg,
+    },
+    recentTxMeta: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: isDesktop ? 12 : 11,
+      color: T.brandFgMuted,
+    },
+    recentTxValue: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: isDesktop ? 15 : 14,
+    },
+    recentInvoiceChevron: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 14,
+      color: T.brandFgMuted,
+    },
     monthMiniNav: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -465,6 +491,118 @@ function createStyles(T, isDesktop, isMobile) {
     monthMiniArrow: { fontSize: 20, color: 'rgba(255,255,255,0.9)', fontFamily: 'Poppins_600SemiBold', lineHeight: 22 },
     monthMiniLabel: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.white, flex: 1, textAlign: 'center' },
   });
+}
+
+function RecentTransactions({ transactions, creditCards, selectedAccount, selectedCard, accounts, hidden, mask, styles, T, navigation }) {
+  const recentTxs = useMemo(() => {
+    let base;
+    if (selectedCard) {
+      // Agrupa por invoiceKey para o cartão selecionado
+      const invoiceGroups = {};
+      for (const t of transactions) {
+        if (String(t.creditCardId) !== String(selectedCard)) continue;
+        if (!isTransactionEffectiveOnOrBefore(t)) continue;
+        if (t.isTransfer) continue;
+        const key = t.invoiceKey || t.data?.split('/').reverse().join('-') || '';
+        if (!invoiceGroups[key]) {
+          invoiceGroups[key] = {
+            creditCardId: t.creditCardId,
+            invoiceKey: t.invoiceKey || key,
+            valor: 0,
+            count: 0,
+            data: t.data,
+          };
+        }
+        invoiceGroups[key].valor += t.valor;
+        invoiceGroups[key].count += 1;
+        if (t.data > invoiceGroups[key].data) invoiceGroups[key].data = t.data;
+      }
+      base = Object.values(invoiceGroups).map((g) => ({
+        ...g,
+        descricao: `Fatura cartão ${invoiceLabelPtBr(g.invoiceKey)}`,
+        categoria: 'Cartão de Crédito',
+        cardLabel: creditCardName(creditCards, g.creditCardId),
+        tipo: 'saída',
+        isInvoiceGroup: true,
+      }));
+    } else {
+      base = transactions.filter((t) => {
+        if (!isTransactionEffectiveOnOrBefore(t)) return false;
+        if (selectedAccount) return t.accountId === selectedAccount;
+        return true;
+      });
+    }
+    return [...base]
+      .sort((a, b) => (b.data || '').localeCompare(a.data || ''))
+      .slice(0, 10);
+  }, [transactions, creditCards, selectedAccount, selectedCard]);
+
+  const sectionTitle = useMemo(() => {
+    if (selectedCard) {
+      const card = creditCards.find((c) => String(c.id) === String(selectedCard));
+      return `Transações — ${card?.name ?? 'Cartão'}`;
+    }
+    if (selectedAccount) {
+      const acc = accounts.find((a) => a.id === selectedAccount);
+      return `Transações — ${acc?.name ?? 'Conta'}`;
+    }
+    return 'Transações recentes';
+  }, [selectedCard, selectedAccount, creditCards, accounts]);
+
+  return (
+    <View style={styles.recentSection}>
+      <View style={styles.recentSectionHeader}>
+        <Text style={styles.recentSectionTitle}>{sectionTitle}</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('History')} hitSlop={8} activeOpacity={0.7}>
+          <Text style={styles.recentSeeAll}>Ver todas</Text>
+        </TouchableOpacity>
+      </View>
+      {recentTxs.length === 0 ? (
+        <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.brandFgMuted, marginHorizontal: 20 }}>
+          Nenhuma transação encontrada.
+        </Text>
+      ) : null}
+      {recentTxs.map((tx, idx) => {
+        if (tx.isInvoiceGroup) {
+          return (
+            <TouchableOpacity
+              key={tx.invoiceKey || idx}
+              style={styles.recentTxRow}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('InvoiceDetail', { invoiceKey: tx.invoiceKey, cardName: tx.cardLabel })}
+            >
+              <Text style={{ fontSize: 28 }}>💳</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.recentTxDesc} numberOfLines={1}>{tx.descricao}</Text>
+                <Text style={styles.recentTxMeta}>{tx.cardLabel} · {tx.count} {tx.count === 1 ? 'gasto' : 'gastos'}</Text>
+              </View>
+              <View style={{ alignItems: 'flex-end', gap: 2 }}>
+                <Text style={[styles.recentTxValue, { color: T.burnt }]}>{hidden ? mask : `-${fmt(tx.valor)}`}</Text>
+                <Text style={styles.recentInvoiceChevron}>{'>'}</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        }
+        return (
+          <TouchableOpacity
+            key={tx.id || idx}
+            style={styles.recentTxRow}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('Detail', { tx })}
+          >
+            <CatIcon category={tx.categoria} size={40} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.recentTxDesc} numberOfLines={1}>{tx.descricao}</Text>
+              <Text style={styles.recentTxMeta}>{tx.categoria}</Text>
+            </View>
+            <Text style={[styles.recentTxValue, { color: tx.tipo === 'entrada' ? T.gold : T.burnt }]}>
+              {tx.tipo === 'entrada' ? '+' : '-'}{hidden ? mask : fmt(tx.valor)}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
 }
 
 export default function DashboardScreen({ navigation }) {
@@ -618,7 +756,7 @@ export default function DashboardScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={[styles.headerRow, { paddingTop: Math.max(52, 12 + insets.top) }]}>
-        <Image source={logo} style={styles.logo} resizeMode="contain" />
+        <Image source={logo} style={[styles.logo, { tintColor: '#1A1A1A', opacity: 0.92 }]} resizeMode="contain" />
         <TouchableOpacity
           style={styles.avatar}
           onPress={() => navigation.navigate('ProfileMenu')}
@@ -833,25 +971,6 @@ export default function DashboardScreen({ navigation }) {
               </View>
             </View>
 
-            {/* Botões de ação rápida: Entrada e Saída */}
-            <View style={styles.quickActionsRow}>
-              <TouchableOpacity
-                style={[styles.quickBtn, styles.quickBtnEntrada]}
-                activeOpacity={0.75}
-                onPress={() => navigation.navigate('NewTransaction', { defaultKind: 'receita' })}
-                accessibilityLabel="Nova entrada"
-              >
-                <Text style={[styles.quickBtnText, { color: T.amberDark }]}>+ Entrada</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.quickBtn, styles.quickBtnSaida]}
-                activeOpacity={0.75}
-                onPress={() => navigation.navigate('NewTransaction', { defaultKind: 'despesa' })}
-                accessibilityLabel="Nova saída"
-              >
-                <Text style={[styles.quickBtnText, { color: T.orange }]}>- Saída</Text>
-              </TouchableOpacity>
-            </View>
           </View>
 
           {/* Right column: Chart */}
@@ -905,6 +1024,20 @@ export default function DashboardScreen({ navigation }) {
             </View>
           </View>
         </View>
+
+        {/* Transações recentes */}
+        <RecentTransactions
+          transactions={transactions}
+          creditCards={creditCards}
+          selectedAccount={selectedAccount}
+          selectedCard={selectedCard}
+          accounts={accounts}
+          hidden={hidden}
+          mask={mask}
+          styles={styles}
+          T={T}
+          navigation={navigation}
+        />
       </ScrollView>
 
       <TouchableOpacity
