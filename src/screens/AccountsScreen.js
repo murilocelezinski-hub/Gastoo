@@ -11,7 +11,7 @@ import {
   Platform,
   Modal,
 } from 'react-native';
-import { fmt, ACCOUNTS } from '../theme';
+import { fmt, ACCOUNTS, T } from '../theme';
 import { Header, PrimaryButton, ConfirmModal } from '../components/Shared';
 import { useFinance, balanceForAccount, activeAccounts } from '../context/FinanceContext';
 import { useThemeColors } from '../context/AppPreferencesContext';
@@ -156,7 +156,7 @@ function createAccountsStyles(T, isDesktop) {
       justifyContent: 'center',
       paddingHorizontal: 4,
     },
-    archiveBadgeText: { color: '#fff', fontSize: 10, fontFamily: 'Poppins_600SemiBold' },
+    archiveBadgeText: { color: T.white, fontSize: 10, fontFamily: 'Poppins_600SemiBold' },
   });
 }
 

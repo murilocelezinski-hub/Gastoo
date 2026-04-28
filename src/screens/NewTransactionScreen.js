@@ -51,7 +51,7 @@ function createNewTransactionStyles(T, isDesktop) {
     },
     modeBtnActive: { backgroundColor: T.orange, borderColor: T.orange },
     modeText: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 14 : 12, color: T.graphite },
-    modeTextActive: { color: '#fff' },
+    modeTextActive: { color: T.white },
     toggle: {
       flexDirection: 'row',
       borderRadius: 12,
@@ -62,7 +62,7 @@ function createNewTransactionStyles(T, isDesktop) {
     toggleBtn: { flex: 1, paddingVertical: isDesktop ? 14 : 12, alignItems: 'center' },
     toggleBtnActive: { backgroundColor: T.orange },
     toggleText: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 15 : 14, color: T.graphite },
-    toggleTextActive: { color: '#fff' },
+    toggleTextActive: { color: T.white },
     field: {},
     label: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 13 : 12, color: T.charcoal, marginBottom: 8 },
     input: {

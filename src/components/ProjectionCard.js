@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useThemeColors } from '../context/AppPreferencesContext';
 import { classificarStatusProjecao } from '../utils/projection';
+import { T } from '../theme';
 
 // Formata centavos para R$ com 2 casas decimais
 function fmtCentavos(centavos) {
@@ -18,9 +19,9 @@ function fmtCentavos(centavos) {
 }
 
 const STATUS_CORES = {
-  verde: '#FE5E03',
-  amarelo: '#FEB506',
-  vermelho: '#D32F2F',
+  verde: T.orange,
+  amarelo: T.amber,
+  vermelho: T.burnt,
 };
 
 export default function ProjectionCard({
@@ -37,9 +38,9 @@ export default function ProjectionCard({
     return (
       <View style={[styles.card, { backgroundColor: theme.white ?? '#FFFFFF' }]}>
         <View style={[styles.barWrap, { backgroundColor: theme.grayVLight ?? '#DEDEDC' }]}>
-          <View style={[styles.barFill, { width: '0%', backgroundColor: '#DEDEDC' }]} />
+          <View style={[styles.barFill, { width: '0%', backgroundColor: T.grayVLight }]} />
         </View>
-        <Text style={[styles.loadingText, { color: '#797970' }]}>
+        <Text style={[styles.loadingText, { color: T.grayMed }]}>
           Coletando dados da semana...
         </Text>
       </View>
@@ -91,12 +92,12 @@ export default function ProjectionCard({
         </Text>
       )}
       {status === 'amarelo' && (
-        <Text style={[styles.msgTexto, { color: '#CB7D00' }]}>
+        <Text style={[styles.msgTexto, { color: T.amberDark }]}>
           Atenção: margem baixa no fim do mês.
         </Text>
       )}
       {status === 'vermelho' && (
-        <Text style={[styles.msgTexto, { color: '#D32F2F' }]}>
+        <Text style={[styles.msgTexto, { color: T.burnt }]}>
           Saldo pode ficar negativo!
         </Text>
       )}
@@ -131,7 +132,7 @@ export default function ProjectionCard({
             </View>
 
             <TouchableOpacity
-              style={[styles.btnFechar, { backgroundColor: '#FE5E03' }]}
+              style={[styles.btnFechar, { backgroundColor: T.orange }]}
               onPress={() => setShowModal(false)}
               activeOpacity={0.8}
             >
@@ -148,8 +149,8 @@ export default function ProjectionCard({
 function LinhaDetalhe({ label, valor, theme, destaque = false }) {
   return (
     <View style={styles.modalLinha}>
-      <Text style={[styles.modalLabel, { color: theme.grayMed ?? '#797970' }]}>{label}</Text>
-      <Text style={[styles.modalValor, { color: destaque ? '#FE5E03' : (theme.graphite ?? '#333333'), fontFamily: destaque ? 'Poppins_600SemiBold' : 'Poppins_400Regular' }]}>
+      <Text style={[styles.modalLabel, { color: theme.grayMed ?? T.grayMed }]}>{label}</Text>
+      <Text style={[styles.modalValor, { color: destaque ? T.orange : (theme.graphite ?? T.graphite), fontFamily: destaque ? 'Poppins_600SemiBold' : 'Poppins_400Regular' }]}>
         {valor}
       </Text>
     </View>
@@ -266,6 +267,6 @@ const styles = StyleSheet.create({
   btnFecharText: {
     fontFamily: 'Poppins_600SemiBold',
     fontSize: 15,
-    color: '#FFFFFF',
+    color: T.white,
   },
 });

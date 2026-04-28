@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { fmt } from '../theme';
+import { fmt, T } from '../theme';
 import { Header, CatIcon, ConfirmModal } from '../components/Shared';
 import { useFinance, accountName, creditCardName, invoiceLabelPtBr } from '../context/FinanceContext';
 import { useThemeColors } from '../context/AppPreferencesContext';
@@ -60,7 +60,7 @@ function createDetailStyles(T) {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    deleteBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: '#fff' },
+    deleteBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.white },
     transferHint: {
       fontFamily: 'Poppins_400Regular',
       fontSize: 11,

@@ -3,14 +3,15 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal as RNModal } from 'reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { getCategoryIcon } from './CategoryIcons';
+import { T as THEME } from '../theme';
 
 // ─── LOGO ────────────────────────────────────────────────
 export function GastooLogo({ variant = 'orange', size = 32 }) {
   const T = useThemeColors();
   const configs = {
-    dark: { text: T.graphite, dollar: T.white, iconBg: T.orange, iconColor: '#fff' },
-    orange: { text: T.white, dollar: T.amber, iconBg: 'rgba(255,255,255,0.25)', iconColor: '#fff' },
-    light: { text: T.graphite, dollar: T.orange, iconBg: T.orange, iconColor: '#fff' },
+    dark: { text: T.graphite, dollar: T.white, iconBg: T.orange, iconColor: T.white },
+    orange: { text: T.white, dollar: T.amber, iconBg: 'rgba(255,255,255,0.25)', iconColor: T.white },
+    light: { text: T.graphite, dollar: T.orange, iconBg: T.orange, iconColor: T.white },
   };
   const c = configs[variant];
   return (
@@ -50,12 +51,12 @@ export function CatIcon({ category, size = 40 }) {
         width: size,
         height: size,
         borderRadius: size / 2,
-        backgroundColor: cat?.color || '#BCBCB8',
+        backgroundColor: cat?.color || THEME.graySilver,
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <IconComponent size={iconSize} color="#fff" />
+      <IconComponent size={iconSize} color={THEME.white} />
     </View>
   );
 }
@@ -106,7 +107,7 @@ export function ConfirmModal({ show, title, message, onConfirm, onCancel }) {
               <Text style={[styles.modalBtnText, { color: T.graphite }]}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={onConfirm} activeOpacity={0.85} style={[styles.modalBtn, { backgroundColor: T.burnt }]}>
-              <Text style={[styles.modalBtnText, { color: '#fff' }]}>Excluir</Text>
+              <Text style={[styles.modalBtnText, { color: T.white }]}>Excluir</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -140,7 +141,7 @@ export function PrimaryButton({ label, onPress, disabled, style }) {
         style,
       ]}
     >
-      <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 16, color: '#fff' }}>{label}</Text>
+      <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 16, color: T.white }}>{label}</Text>
     </TouchableOpacity>
   );
 }

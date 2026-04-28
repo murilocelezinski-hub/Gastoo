@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
-import { fmt } from '../theme';
+import { fmt, T } from '../theme';
 import { categorizeTransaction } from '../services/ai';
 import { useFinance } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
@@ -55,7 +55,7 @@ function createAICategoryStyles(T) {
       shadowOffset: { width: 0, height: 4 },
       elevation: 6,
     },
-    confirmBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: '#fff' },
+    confirmBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.white },
   });
 }
 

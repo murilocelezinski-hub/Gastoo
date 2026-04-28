@@ -5,6 +5,7 @@ import { Header, PrimaryButton } from '../components/Shared';
 import { getCategoryIcon } from '../components/CategoryIcons';
 import { useFinance } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
+import { T } from '../theme';
 
 function createStyles(T) {
   return StyleSheet.create({
@@ -106,7 +107,7 @@ export default function ManualCategoryScreen({ navigation, route }) {
           >
             {selected === cat.name && (
               <View style={styles.check}>
-                <Text style={{ color: '#fff', fontSize: 12 }}>✓</Text>
+                <Text style={{ color: T.white, fontSize: 12 }}>✓</Text>
               </View>
             )}
             <View style={[styles.catIconBox, { backgroundColor: cat.color }]}>

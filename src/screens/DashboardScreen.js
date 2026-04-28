@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polyline, Polygon, Line, Circle, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
-import { fmt } from '../theme';
+import { fmt, T } from '../theme';
 import {
   useFinance,
   balanceForAccount,
@@ -371,7 +371,7 @@ function createStyles(T, isDesktop, isMobile) {
     eyeBtn: { padding: 4 },
     eyeIcon: { fontSize: 16 },
     saldoLabel: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 14 : 12, color: 'rgba(255,255,255,0.7)' },
-    saldoValue: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 44 : 32, color: '#fff', marginVertical: 4 },
+    saldoValue: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 44 : 32, color: T.white, marginVertical: 4 },
     miniLabel: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 11 : 10, color: 'rgba(255,255,255,0.6)' },
     miniValue: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 18 : 15 },
     chartBox: {
@@ -451,7 +451,7 @@ function createStyles(T, isDesktop, isMobile) {
       shadowOffset: { width: 0, height: 4 },
       elevation: 8,
     },
-    fabText: { fontSize: isDesktop ? 32 : 28, color: '#fff', fontFamily: 'Poppins_600SemiBold', marginTop: -2 },
+    fabText: { fontSize: isDesktop ? 32 : 28, color: T.white, fontFamily: 'Poppins_600SemiBold', marginTop: -2 },
     monthMiniNav: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -463,7 +463,7 @@ function createStyles(T, isDesktop, isMobile) {
     },
     monthMiniArrowBtn: { padding: 4 },
     monthMiniArrow: { fontSize: 20, color: 'rgba(255,255,255,0.9)', fontFamily: 'Poppins_600SemiBold', lineHeight: 22 },
-    monthMiniLabel: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: '#fff', flex: 1, textAlign: 'center' },
+    monthMiniLabel: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.white, flex: 1, textAlign: 'center' },
   });
 }
 
@@ -818,7 +818,7 @@ export default function DashboardScreen({ navigation }) {
                   </View>
                   <View>
                     <Text style={styles.miniLabel}>{selectedCard ? 'Compras' : 'Saídas'}</Text>
-                    <Text style={[styles.miniValue, { color: '#FFB899' }]}>{hidden ? mask : `-${fmt(totalOut)}`}</Text>
+                    <Text style={[styles.miniValue, { color: T.warmWhite }]}>{hidden ? mask : `-${fmt(totalOut)}`}</Text>
                   </View>
                 </View>
                 <View style={styles.monthMiniNav}>

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { G, Path, Circle } from 'react-native-svg';
+import { T } from '../theme';
 
 // Gera path de arco para donut chart (anel)
 function describeDonutSlice(cx, cy, outerR, innerR, startAngle, endAngle) {
@@ -86,5 +87,5 @@ const styles = StyleSheet.create({
   holder: { alignItems: 'center', justifyContent: 'center' },
   svg: { backgroundColor: 'transparent' },
   emptyWrap: { alignItems: 'center', justifyContent: 'center', borderRadius: 8 },
-  emptyText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: '#888', textAlign: 'center', paddingHorizontal: 12 },
+  emptyText: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.grayMed, textAlign: 'center', paddingHorizontal: 12 },
 });

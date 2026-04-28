@@ -131,7 +131,7 @@ function createStyles(T) {
     },
     pillActive: { backgroundColor: T.orange, borderColor: T.orange },
     pillText: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.graphite },
-    pillTextActive: { fontFamily: 'Poppins_600SemiBold', color: '#fff' },
+    pillTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.white },
     customBlock: { marginTop: 4, marginBottom: 4 },
     dateBtnRow: { flexDirection: 'row', gap: 10, alignItems: 'stretch' },
     dateBtn: {
@@ -186,7 +186,7 @@ function createStyles(T) {
       backgroundColor: T.orange,
       alignItems: 'center',
     },
-    filterCloseBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: '#fff' },
+    filterCloseBtnText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: T.white },
     aiCard: {
       backgroundColor: T.white,
       borderRadius: 16,
@@ -215,7 +215,7 @@ function createStyles(T) {
     aiCardBadgeText: {
       fontFamily: 'Poppins_600SemiBold',
       fontSize: 11,
-      color: '#fff',
+      color: T.white,
       letterSpacing: 0.8,
     },
     aiCardTitle: {
@@ -257,7 +257,7 @@ function createStyles(T) {
     },
     // Alerta de gasto acima da receita (#FEB506 conforme Design System)
     alertBanner: {
-      backgroundColor: '#FEB506',
+      backgroundColor: T.amber,
       borderRadius: 12,
       paddingVertical: 12,
       paddingHorizontal: 16,
@@ -265,7 +265,7 @@ function createStyles(T) {
     alertBannerText: {
       fontFamily: 'Poppins_600SemiBold',
       fontSize: 13,
-      color: '#2A1200',
+      color: T.chocolate,
       lineHeight: 20,
     },
   });

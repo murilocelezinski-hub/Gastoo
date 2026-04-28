@@ -51,7 +51,7 @@ function createEditTransactionStyles(T) {
     toggleBtn: { flex: 1, paddingVertical: 12, alignItems: 'center' },
     toggleBtnActive: { backgroundColor: T.orange },
     toggleText: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.graphite },
-    toggleTextActive: { color: '#fff' },
+    toggleTextActive: { color: T.white },
     field: {},
     label: { fontFamily: 'Poppins_600SemiBold', fontSize: 12, color: T.charcoal, marginBottom: 6 },
     input: {
