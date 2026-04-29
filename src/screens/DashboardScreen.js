@@ -779,7 +779,7 @@ export default function DashboardScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={[styles.headerRow, { paddingTop: Math.max(52, 12 + insets.top) }]}>
-        <Image source={logo} style={[styles.logo, { tintColor: '#1A1A1A', opacity: 0.92 }]} resizeMode="contain" />
+        <Image source={logo} style={styles.logo} resizeMode="contain" />
         <TouchableOpacity
           style={styles.avatar}
           onPress={() => navigation.navigate('ProfileMenu')}
