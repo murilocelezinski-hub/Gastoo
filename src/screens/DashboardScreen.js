@@ -252,54 +252,263 @@ function createStyles(T, isDesktop, isMobile) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: T.chocolate },
     logo: { width: 120, height: 36 },
+
+    /* ── Header ── */
     headerRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: isDesktop ? 40 : 20,
-      paddingBottom: 8,
+      paddingBottom: 10,
     },
     avatar: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
       backgroundColor: T.homeGlass,
       alignItems: 'center',
       justifyContent: 'center',
       overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOpacity: 0.18,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 3,
     },
-    sectionLabel: {
-      fontFamily: 'Poppins_600SemiBold',
-      fontSize: 12,
-      color: T.brandFgMuted,
-      marginBottom: 8,
-      marginHorizontal: isDesktop ? 40 : 20,
-      letterSpacing: 0.3,
-    },
-    accountsSection: { marginBottom: isDesktop ? 24 : 16 },
-    accountsRow: {
+
+    /* ── Sync row ── */
+    syncRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
       paddingHorizontal: isDesktop ? 40 : 20,
-      gap: isDesktop ? 16 : 12,
+      paddingBottom: 8,
+      gap: 6,
+    },
+    syncText: { fontFamily: 'Poppins_300Light', fontSize: 11, color: T.brandFgMuted },
+    syncTextMuted: { fontFamily: 'Poppins_300Light', fontSize: 11, color: T.brandFgMuted, opacity: 0.55 },
+    syncDot: { fontSize: 8, color: '#4CAF50' },
+    syncLink: { marginLeft: 4 },
+    syncLinkText: { fontFamily: 'Poppins_600SemiBold', fontSize: 11, color: T.orange },
+
+    /* ── Layout principal ── */
+    mainTwoCol: {
+      flexDirection: isDesktop ? 'row' : 'column',
+      alignItems: 'stretch',
+      gap: isDesktop ? 20 : 0,
+      paddingHorizontal: isDesktop ? 40 : 0,
+      marginBottom: isDesktop ? 28 : 0,
+    },
+    leftCol: { flex: isDesktop ? 4 : undefined },
+    rightCol: { flex: isDesktop ? 6 : undefined },
+
+    /* ── Card de saldo (destaque premium) ── */
+    saldoCard: {
+      borderRadius: 28,
+      overflow: 'hidden',
+      marginHorizontal: isDesktop ? 0 : 16,
+      marginBottom: isDesktop ? 0 : 20,
+      shadowColor: '#FE5E03',
+      shadowOpacity: 0.42,
+      shadowRadius: 24,
+      shadowOffset: { width: 0, height: 10 },
+      elevation: 12,
+    },
+    /* Camada base laranja — simula início do gradiente */
+    saldoCardBase: {
+      padding: isDesktop ? 32 : 28,
+      backgroundColor: '#FE5E03',
+    },
+    /* Overlay amber no topo-esquerdo — simula gradiente diagonal */
+    saldoCardOverlayTop: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'rgba(254,181,6,0.28)',
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+    },
+    /* Overlay escuro no canto inferior — profundidade */
+    saldoCardOverlayBot: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'rgba(140,30,0,0.18)',
+      borderBottomLeftRadius: 28,
+      borderBottomRightRadius: 28,
+    },
+    saldoHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 4,
+    },
+    eyeBtn: { padding: 6, minHeight: 44, justifyContent: 'center' },
+    eyeIcon: { fontSize: 18 },
+    saldoLabel: {
+      fontFamily: 'Poppins_300Light',
+      fontSize: isDesktop ? 14 : 13,
+      color: 'rgba(255,255,255,0.75)',
+      letterSpacing: 0.4,
+    },
+    /* Valor do saldo: Poppins Thin para ar sofisticado */
+    saldoValue: {
+      fontFamily: 'Poppins_300Light',
+      fontSize: isDesktop ? 52 : 42,
+      color: '#FFFFFF',
+      marginVertical: 6,
+      letterSpacing: -1,
+    },
+    miniSection: {
+      flexDirection: 'row',
+      gap: 0,
+      marginBottom: 16,
+      alignItems: 'stretch',
+    },
+    miniBlock: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.12)',
+      borderRadius: 14,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+    },
+    miniBlockSep: { width: 8 },
+    miniLabel: {
+      fontFamily: 'Poppins_300Light',
+      fontSize: isDesktop ? 11 : 10,
+      color: 'rgba(255,255,255,0.65)',
+      marginBottom: 2,
+    },
+    miniValue: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: isDesktop ? 16 : 14,
+    },
+
+    /* Navegação de mês dentro do card */
+    monthMiniNav: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: 'rgba(0,0,0,0.18)',
+      borderRadius: 14,
+      paddingVertical: 8,
+      paddingHorizontal: 14,
+    },
+    monthMiniArrowBtn: { padding: 4, minHeight: 44, justifyContent: 'center' },
+    monthMiniArrow: {
+      fontSize: 22,
+      color: 'rgba(255,255,255,0.9)',
+      fontFamily: 'Poppins_600SemiBold',
+      lineHeight: 24,
+    },
+    monthMiniLabel: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 13,
+      color: '#FFFFFF',
+      flex: 1,
+      textAlign: 'center',
+    },
+
+    /* ── Box do gráfico ── */
+    chartBox: {
+      backgroundColor: T.homeGlass,
+      borderRadius: 24,
+      padding: isDesktop ? 24 : 18,
+      marginHorizontal: isDesktop ? 0 : 16,
+      marginBottom: isDesktop ? 0 : 20,
+      flex: isDesktop ? 1 : undefined,
+      shadowColor: '#000',
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 4,
+    },
+    chartHead: { marginBottom: 12 },
+    chartTitle: {
+      fontFamily: 'Poppins_300Light',
+      fontSize: isDesktop ? 15 : 13,
+      color: T.brandFgMuted,
+      marginBottom: 10,
+      letterSpacing: 0.2,
+    },
+    filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
+    filterChip: {
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 10,
+      backgroundColor: 'rgba(255,255,255,0.05)',
+    },
+    filterChipOn: { backgroundColor: 'rgba(254,94,3,0.15)' },
+    filterChipText: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.brandFgMuted },
+    filterChipTextOn: { fontFamily: 'Poppins_600SemiBold', fontSize: 11, color: T.orange },
+    chartLabels: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 8,
+      paddingHorizontal: 2,
+      gap: 2,
+    },
+    chartLabelMini: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 9,
+      color: T.brandFgMuted,
+      flex: 1,
+      textAlign: 'center',
+    },
+    chartScrubReadout: {
+      marginTop: 14,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 16,
+      backgroundColor: T.homeGlass,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 10,
+      shadowColor: '#000',
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 2,
+    },
+    chartTooltipDate: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.brandFgMuted, flex: 1 },
+    chartTooltipValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 16, color: T.orange, flexShrink: 0 },
+
+    /* ── Seção de contas/cartões ── */
+    sectionLabel: {
+      fontFamily: 'Poppins_300Light',
+      fontSize: 11,
+      color: T.brandFgMuted,
+      marginBottom: 10,
+      marginHorizontal: isDesktop ? 40 : 20,
+      letterSpacing: 1.2,
+      textTransform: 'uppercase',
+    },
+    accountsSection: { marginBottom: isDesktop ? 28 : 20 },
+    accountsRow: {
+      paddingHorizontal: isDesktop ? 40 : 16,
+      gap: isDesktop ? 14 : 10,
       paddingBottom: 4,
       flexDirection: 'row',
       flexWrap: isDesktop ? 'wrap' : 'nowrap',
     },
     accountCard: {
-      minHeight: 80,
-      width: isDesktop ? 160 : 130,
-      borderRadius: 16,
+      minHeight: 90,
+      width: isDesktop ? 160 : 136,
+      borderRadius: 20,
       padding: isDesktop ? 16 : 14,
-      gap: 4,
+      gap: 6,
       backgroundColor: T.homeGlass,
-      borderWidth: 1.5,
-      borderColor: T.homeHairline,
       justifyContent: 'space-between',
+      shadowColor: '#000',
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 3 },
+      elevation: 3,
     },
     accountCardActive: {
-      backgroundColor: 'rgba(254,94,3,0.18)',
-      borderColor: T.orange,
+      backgroundColor: 'rgba(254,94,3,0.16)',
+      shadowColor: '#FE5E03',
+      shadowOpacity: 0.28,
+      shadowRadius: 12,
+      elevation: 6,
     },
-    accountCardIcon: { fontSize: isDesktop ? 24 : 20 },
+    accountCardIcon: { fontSize: isDesktop ? 24 : 22 },
     accountCardName: {
       fontFamily: 'Poppins_400Regular',
       fontSize: isDesktop ? 12 : 11,
@@ -309,184 +518,100 @@ function createStyles(T, isDesktop, isMobile) {
     accountCardNameActive: { color: T.brandFg },
     accountCardBalance: {
       fontFamily: 'Poppins_600SemiBold',
-      fontSize: isDesktop ? 15 : 13,
+      fontSize: isDesktop ? 14 : 13,
       color: T.brandFgMuted,
     },
     accountCardBalanceActive: { color: T.orange },
-    mainTwoCol: {
-      flexDirection: isDesktop ? 'row' : 'column',
-      alignItems: isDesktop ? 'stretch' : 'stretch',
-      gap: isDesktop ? 24 : 0,
-      paddingHorizontal: isDesktop ? 40 : 0,
-      marginBottom: isDesktop ? 28 : 0,
-    },
-    leftCol: {
-      flex: isDesktop ? 4 : undefined,
-    },
-    rightCol: {
-      flex: isDesktop ? 6 : undefined,
-    },
-    saldoCard: {
-      borderRadius: 20,
-      overflow: 'hidden',
-      marginHorizontal: isDesktop ? 0 : 20,
-      marginBottom: isDesktop ? 0 : 20,
-      shadowColor: T.orange,
-      shadowOpacity: 0.35,
-      shadowRadius: 18,
-      shadowOffset: { width: 0, height: 8 },
-      elevation: 8,
-      flex: isDesktop ? 1 : undefined,
-    },
-    saldoCardGradient: {
-      padding: isDesktop ? 28 : 24,
-      backgroundColor: T.orange,
-    },
-    saldoCardGradientOverlay: {
-      ...StyleSheet.absoluteFillObject,
-      backgroundColor: 'rgba(180,40,0,0.22)',
-      borderRadius: 20,
-    },
-    saldoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    eyeBtn: { padding: 4 },
-    eyeIcon: { fontSize: 16 },
-    saldoLabel: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 14 : 12, color: 'rgba(255,255,255,0.7)' },
-    saldoValue: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 44 : 36, color: T.white, marginVertical: 8 },
-    miniLabel: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 11 : 10, color: 'rgba(255,255,255,0.6)' },
-    miniValue: { fontFamily: 'Poppins_600SemiBold', fontSize: isDesktop ? 18 : 15 },
-    miniSection: { flexDirection: 'row', gap: 20, marginBottom: 12, alignItems: 'flex-start' },
-    miniSeparator: { fontSize: 14, color: 'rgba(255,255,255,0.5)', marginHorizontal: 2 },
-    chartBox: {
-      backgroundColor: T.homeGlass,
-      borderRadius: 16,
-      padding: isDesktop ? 24 : 16,
-      marginHorizontal: isDesktop ? 0 : 20,
-      marginBottom: isDesktop ? 0 : 20,
-      flex: isDesktop ? 1 : undefined,
-    },
-    chartHead: { marginBottom: 10 },
-    chartTitle: { fontFamily: 'Poppins_400Regular', fontSize: isDesktop ? 15 : 13, color: T.brandFgMuted, marginBottom: 8 },
-    filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
-    filterChip: {
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: T.homeHairline,
-      backgroundColor: 'transparent',
-    },
-    filterChipOn: { borderColor: T.orange, backgroundColor: 'rgba(254,94,3,0.12)' },
-    filterChipText: { fontFamily: 'Poppins_400Regular', fontSize: 10, color: T.brandFgMuted },
-    filterChipTextOn: { fontFamily: 'Poppins_600SemiBold', fontSize: 10, color: T.orange },
-    chartLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6, paddingHorizontal: 2, gap: 2 },
-    chartLabelMini: { fontFamily: 'Poppins_400Regular', fontSize: 9, color: T.brandFgMuted, flex: 1, textAlign: 'center' },
-    chartScrubReadout: {
-      marginTop: 12,
-      paddingVertical: 10,
-      paddingHorizontal: 14,
-      borderRadius: 12,
-      backgroundColor: T.homeGlass,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      gap: 10,
-      borderWidth: 1.5,
-      borderColor: T.homeHairline,
-    },
-    chartTooltipDate: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.brandFgMuted, flex: 1 },
-    chartTooltipValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 16, color: T.orange, flexShrink: 0 },
-    fab: {
-      position: 'absolute',
-      bottom: isDesktop ? 40 : 24,
-      right: isDesktop ? 40 : 20,
-      width: isDesktop ? 64 : 56,
-      height: isDesktop ? 64 : 56,
-      borderRadius: isDesktop ? 32 : 28,
-      backgroundColor: T.orange,
-      alignItems: 'center',
-      justifyContent: 'center',
-      shadowColor: T.orange,
-      shadowOpacity: 0.4,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 8,
-    },
-    fabText: { fontSize: isDesktop ? 32 : 28, color: T.white, fontFamily: 'Poppins_600SemiBold', marginTop: -2 },
+
+    /* ── Transações recentes ── */
     recentSection: {
-      marginTop: isDesktop ? 8 : 16,
-      marginBottom: isDesktop ? 28 : 16,
+      marginTop: isDesktop ? 8 : 12,
+      marginBottom: isDesktop ? 28 : 20,
     },
     recentSectionHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       marginHorizontal: isDesktop ? 40 : 20,
-      marginBottom: 8,
+      marginBottom: 12,
     },
     recentSectionTitle: {
-      fontFamily: 'Poppins_600SemiBold',
+      fontFamily: 'Poppins_300Light',
       fontSize: isDesktop ? 15 : 13,
       color: T.brandFgMuted,
-      letterSpacing: 0.3,
+      letterSpacing: 0.8,
+      textTransform: 'uppercase',
     },
     recentSeeAll: {
       fontFamily: 'Poppins_600SemiBold',
       fontSize: 12,
       color: T.orange,
+      minHeight: 44,
+      textAlignVertical: 'center',
+      lineHeight: 44,
     },
     recentTxRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 12,
-      paddingVertical: isDesktop ? 14 : 16,
-      marginHorizontal: isDesktop ? 40 : 20,
-      borderBottomWidth: 1,
-      borderBottomColor: T.homeHairline,
+      gap: 14,
+      paddingVertical: isDesktop ? 14 : 15,
+      marginHorizontal: isDesktop ? 40 : 16,
+      marginBottom: 4,
+      backgroundColor: T.homeGlass,
+      borderRadius: 16,
+      paddingHorizontal: 14,
+      shadowColor: '#000',
+      shadowOpacity: 0.06,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 2,
     },
     recentTxDesc: {
       fontFamily: 'Poppins_400Regular',
-      fontSize: isDesktop ? 15 : 14,
+      fontSize: isDesktop ? 14 : 13,
       color: T.brandFg,
     },
     recentTxMeta: {
-      fontFamily: 'Poppins_400Regular',
-      fontSize: isDesktop ? 12 : 11,
+      fontFamily: 'Poppins_300Light',
+      fontSize: isDesktop ? 11 : 10,
       color: T.brandFgMuted,
+      marginTop: 2,
     },
     recentTxValue: {
       fontFamily: 'Poppins_600SemiBold',
-      fontSize: isDesktop ? 15 : 14,
+      fontSize: isDesktop ? 14 : 13,
     },
     recentInvoiceChevron: {
-      fontFamily: 'Poppins_600SemiBold',
-      fontSize: 14,
+      fontFamily: 'Poppins_300Light',
+      fontSize: 18,
       color: T.brandFgMuted,
+      opacity: 0.45,
     },
-    monthMiniNav: {
-      flexDirection: 'row',
+
+    /* ── FAB ── */
+    fab: {
+      position: 'absolute',
+      bottom: isDesktop ? 40 : 28,
+      right: isDesktop ? 40 : 20,
+      width: isDesktop ? 64 : 60,
+      height: isDesktop ? 64 : 60,
+      borderRadius: isDesktop ? 32 : 30,
+      backgroundColor: '#FE5E03',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      backgroundColor: 'rgba(0,0,0,0.15)',
-      borderRadius: 12,
-      paddingVertical: 6,
-      paddingHorizontal: 12,
-      marginTop: 8,
+      justifyContent: 'center',
+      shadowColor: '#FE5E03',
+      shadowOpacity: 0.55,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 6 },
+      elevation: 12,
     },
-    monthMiniArrowBtn: { padding: 4 },
-    monthMiniArrow: { fontSize: 20, color: 'rgba(255,255,255,0.9)', fontFamily: 'Poppins_600SemiBold', lineHeight: 22 },
-    monthMiniLabel: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.white, flex: 1, textAlign: 'center' },
-    syncRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: isDesktop ? 40 : 20,
-      paddingBottom: 6,
-      gap: 6,
+    fabText: {
+      fontSize: isDesktop ? 32 : 30,
+      color: '#FFFFFF',
+      fontFamily: 'Poppins_300Light',
+      marginTop: -2,
+      lineHeight: isDesktop ? 36 : 34,
     },
-    syncText: { fontFamily: 'Poppins_300Light', fontSize: 11, color: T.brandFgMuted },
-    syncTextMuted: { fontFamily: 'Poppins_300Light', fontSize: 11, color: T.brandFgMuted, opacity: 0.7 },
-    syncDot: { fontSize: 8, color: '#4CAF50' },
-    syncLink: { marginLeft: 4 },
-    syncLinkText: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.orange },
   });
 }
 
@@ -822,27 +947,43 @@ export default function DashboardScreen({ navigation }) {
         {/* SALDO CARD — Destaque central (hierarquia máxima) */}
         <View style={styles.mainTwoCol}>
           <View style={styles.leftCol}>
-            <View style={[styles.saldoCard, saldo < 0 && { borderWidth: 2, borderColor: T.burnt }]}>
-              <View style={styles.saldoCardGradient}>
-                <View style={styles.saldoCardGradientOverlay} pointerEvents="none" />
+            <View style={[styles.saldoCard, saldo < 0 && { shadowColor: T.burnt }]}>
+              <View style={styles.saldoCardBase}>
+                {/* Camadas de gradiente simulado: amber no topo, escuro na base */}
+                <View style={styles.saldoCardOverlayTop} pointerEvents="none" />
+                <View style={styles.saldoCardOverlayBot} pointerEvents="none" />
+
+                {/* Cabeçalho: label + olho */}
                 <View style={styles.saldoHeader}>
                   <Text style={styles.saldoLabel}>{saldoLabel}</Text>
                   <TouchableOpacity onPress={() => setHidden(!hidden)} hitSlop={12} style={styles.eyeBtn}>
                     <Text style={styles.eyeIcon}>{hidden ? '👁' : '🙈'}</Text>
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.saldoValue}>{hidden ? mask : fmt(saldo)}</Text>
+
+                {/* Valor principal — tipografia thin sofisticada */}
+                <Text style={styles.saldoValue} numberOfLines={1} adjustsFontSizeToFit>
+                  {hidden ? mask : fmt(saldo)}
+                </Text>
+
+                {/* Blocos de entradas/saídas */}
                 <View style={styles.miniSection}>
-                  <View>
+                  <View style={styles.miniBlock}>
                     <Text style={styles.miniLabel}>{selectedCard ? 'Créditos' : 'Entradas'}</Text>
-                    <Text style={[styles.miniValue, { color: T.gold }]}>{hidden ? mask : `+${fmt(totalIn)}`}</Text>
+                    <Text style={[styles.miniValue, { color: '#FEB506' }]}>
+                      {hidden ? mask : `+${fmt(totalIn)}`}
+                    </Text>
                   </View>
-                  <Text style={styles.miniSeparator}>|</Text>
-                  <View>
+                  <View style={styles.miniBlockSep} />
+                  <View style={styles.miniBlock}>
                     <Text style={styles.miniLabel}>{selectedCard ? 'Compras' : 'Saídas'}</Text>
-                    <Text style={[styles.miniValue, { color: T.warmWhite }]}>{hidden ? mask : `-${fmt(totalOut)}`}</Text>
+                    <Text style={[styles.miniValue, { color: 'rgba(255,255,255,0.92)' }]}>
+                      {hidden ? mask : `-${fmt(totalOut)}`}
+                    </Text>
                   </View>
                 </View>
+
+                {/* Navegação de mês */}
                 <View style={styles.monthMiniNav}>
                   <TouchableOpacity onPress={() => goInOut(prevInOut)} hitSlop={12} style={styles.monthMiniArrowBtn}>
                     <Text style={styles.monthMiniArrow}>‹</Text>
