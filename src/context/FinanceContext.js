@@ -2,6 +2,13 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { secureGet, secureSet, secureRemove } from '../services/secureStorage';
 import { addPeriod, fmtDate } from '../utils/recurrence';
 import { parseBrDate } from '../utils/chart';
+import {
+  upsertAccount, deleteAccount as syncDeleteAccount, fetchAccounts,
+  upsertCreditCard, deleteCreditCard as syncDeleteCreditCard, fetchCreditCards,
+  upsertTransaction, deleteTransaction as syncDeleteTransaction, fetchTransactions,
+  migrateLocalToSupabase,
+} from '../services/supabaseSync';
+import { supabase } from '../services/supabaseClient';
 
 const STORAGE_KEY = '@gastoo_finance_v2';
 
@@ -378,7 +385,6 @@ export function FinanceProvider({ children }) {
     (async () => {
       let raw = null;
       try {
-        // secureGet já tenta migrar automaticamente dados legados do AsyncStorage
         raw = await secureGet(STORAGE_KEY);
         if (!raw) raw = await secureGet('@gastoo_finance_v1');
       } catch (e) {
@@ -394,17 +400,48 @@ export function FinanceProvider({ children }) {
           setCreditCards(m.creditCards);
         } catch (e) {
           console.warn('[FinanceContext] Dado corrompido detectado. Chave:', STORAGE_KEY, '— Erro:', e?.message ?? e);
-          // Tenta salvar backup do dado bruto antes de apagar
           try {
             await secureSet('@gastoo_corrupted_backup', raw);
-            console.warn('[FinanceContext] Backup do dado corrompido salvo em @gastoo_corrupted_backup');
             await secureRemove(STORAGE_KEY);
             await secureRemove('@gastoo_finance_v1');
           } catch (backupErr) {
-            console.error('[FinanceContext] Falha ao salvar backup — dado corrompido NÃO foi apagado:', backupErr);
+            console.error('[FinanceContext] Falha ao salvar backup:', backupErr);
           }
         }
       }
+
+      // Sync com Supabase em background (só se autenticado)
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const userId = session.user.id;
+          const [remoteAccounts, remoteTx, remoteCards] = await Promise.all([
+            fetchAccounts(userId),
+            fetchTransactions(userId),
+            fetchCreditCards(userId),
+          ]);
+
+          if (remoteAccounts.length || remoteTx.length || remoteCards.length) {
+            // Dados remotos existem: usar como fonte da verdade
+            const merged = migrateLoaded({
+              accounts: remoteAccounts.length ? remoteAccounts : undefined,
+              transactions: remoteTx.length ? remoteTx : undefined,
+              creditCards: remoteCards.length ? remoteCards : undefined,
+            });
+            if (remoteAccounts.length) setAccounts(merged.accounts);
+            if (remoteTx.length) setTransactions(merged.transactions);
+            if (remoteCards.length) setCreditCards(merged.creditCards);
+          } else if (raw) {
+            // Primeiro login com dados locais: migrar para nuvem
+            const p = JSON.parse(raw);
+            const m = migrateLoaded(p);
+            await migrateLocalToSupabase(m, userId);
+          }
+        }
+      } catch (e) {
+        console.warn('[FinanceContext] Sync Supabase falhou (modo offline):', e?.message);
+      }
+
       setReady(true);
     })();
   }, []);
@@ -417,6 +454,17 @@ export function FinanceProvider({ children }) {
   }, [accounts, transactions, creditCards, ready]);
 
   const toastTimerRef = useRef(null);
+  const userIdRef = useRef(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      userIdRef.current = data.session?.user?.id ?? null;
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => {
+      userIdRef.current = session?.user?.id ?? null;
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   const showToast = useCallback((msg) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -437,6 +485,7 @@ export function FinanceProvider({ children }) {
       archived: false,
     };
     setAccounts((prev) => [...prev, ac]);
+    if (userIdRef.current) upsertAccount(ac, userIdRef.current);
     return id;
   }, []);
 
@@ -444,22 +493,34 @@ export function FinanceProvider({ children }) {
     setAccounts((prev) =>
       prev.map((a) => {
         if (a.id !== accountId) return a;
-        return {
+        const next = {
           ...a,
           ...(name != null && { name: String(name).trim() }),
           ...(icon != null && { icon }),
           ...(saldoInicial !== undefined && { saldoInicial: Number(saldoInicial) || 0 }),
         };
+        if (userIdRef.current) upsertAccount(next, userIdRef.current);
+        return next;
       })
     );
   }, []);
 
   const archiveAccount = useCallback((accountId) => {
-    setAccounts((prev) => prev.map((a) => (a.id === accountId ? { ...a, archived: true } : a)));
+    setAccounts((prev) => prev.map((a) => {
+      if (a.id !== accountId) return a;
+      const next = { ...a, archived: true };
+      if (userIdRef.current) upsertAccount(next, userIdRef.current);
+      return next;
+    }));
   }, []);
 
   const unarchiveAccount = useCallback((accountId) => {
-    setAccounts((prev) => prev.map((a) => (a.id === accountId ? { ...a, archived: false } : a)));
+    setAccounts((prev) => prev.map((a) => {
+      if (a.id !== accountId) return a;
+      const next = { ...a, archived: false };
+      if (userIdRef.current) upsertAccount(next, userIdRef.current);
+      return next;
+    }));
   }, []);
 
   const addCreditCard = useCallback(({ name, icon, limite, diaFechamento, diaVencimento, accountId }) => {
@@ -475,6 +536,7 @@ export function FinanceProvider({ children }) {
       archived: false,
     };
     setCreditCards((prev) => [...prev, card]);
+    if (userIdRef.current) upsertCreditCard(card, userIdRef.current);
     return id;
   }, []);
 
@@ -493,6 +555,7 @@ export function FinanceProvider({ children }) {
         }
         if (updates.accountId != null) next.accountId = updates.accountId;
         if (updates.icon != null) next.icon = updates.icon;
+        if (userIdRef.current) upsertCreditCard(next, userIdRef.current);
         return next;
       })
     );
@@ -504,17 +567,28 @@ export function FinanceProvider({ children }) {
         return { ok: false, error: 'Existem transações neste cartão. Ajuste ou exclua-as antes.' };
       }
       setCreditCards((prev) => prev.filter((c) => c.id !== cardId));
+      syncDeleteCreditCard(cardId);
       return { ok: true };
     },
     [transactions]
   );
 
   const archiveCreditCard = useCallback((cardId) => {
-    setCreditCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, archived: true } : c)));
+    setCreditCards((prev) => prev.map((c) => {
+      if (c.id !== cardId) return c;
+      const next = { ...c, archived: true };
+      if (userIdRef.current) upsertCreditCard(next, userIdRef.current);
+      return next;
+    }));
   }, []);
 
   const unarchiveCreditCard = useCallback((cardId) => {
-    setCreditCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, archived: false } : c)));
+    setCreditCards((prev) => prev.map((c) => {
+      if (c.id !== cardId) return c;
+      const next = { ...c, archived: false };
+      if (userIdRef.current) upsertCreditCard(next, userIdRef.current);
+      return next;
+    }));
   }, []);
 
   const deleteAccount = useCallback(
@@ -545,6 +619,7 @@ export function FinanceProvider({ children }) {
       }
 
       setAccounts((prev) => prev.filter((a) => a.id !== accountId));
+      syncDeleteAccount(accountId);
       return { ok: true };
     },
     [accounts, transactions]
@@ -583,10 +658,12 @@ export function FinanceProvider({ children }) {
         });
 
         setTransactions((prev) => [...installments, ...prev]);
+        if (userIdRef.current) installments.forEach((t) => upsertTransaction(t, userIdRef.current));
         return;
       }
 
       setTransactions((prev) => [next, ...prev]);
+      if (userIdRef.current) upsertTransaction(next, userIdRef.current);
     },
     [creditCards]
   );
@@ -644,6 +721,7 @@ export function FinanceProvider({ children }) {
         rows.push(ensureInvoiceFieldsForTx(row, creditCards));
       }
       setTransactions((prev) => [...rows.reverse(), ...prev]);
+      if (userIdRef.current) rows.forEach((t) => upsertTransaction(t, userIdRef.current));
     },
     [creditCards]
   );
@@ -667,6 +745,10 @@ export function FinanceProvider({ children }) {
       ...base,
     };
     setTransactions((prev) => [outTx, inTx, ...prev]);
+    if (userIdRef.current) {
+      upsertTransaction(outTx, userIdRef.current);
+      upsertTransaction(inTx, userIdRef.current);
+    }
   }, []);
 
   const updateTransaction = useCallback((updated) => {
@@ -698,7 +780,9 @@ export function FinanceProvider({ children }) {
           delete next.invoiceKey;
           delete next.invoiceKeyManual;
         }
-        return ensureInvoiceFieldsForTx(next, creditCards);
+        const final = ensureInvoiceFieldsForTx(next, creditCards);
+        if (userIdRef.current) upsertTransaction(final, userIdRef.current);
+        return final;
       })
     );
   }, [creditCards]);
@@ -707,16 +791,22 @@ export function FinanceProvider({ children }) {
     const { withFutureParcels = false } = options;
     setTransactions((prev) => {
       if (tx?.transferGroupId) {
+        const removed = prev.filter((t) => t.transferGroupId === tx.transferGroupId);
+        removed.forEach((t) => syncDeleteTransaction(t.id));
         return prev.filter((t) => t.transferGroupId !== tx.transferGroupId);
       }
       if (withFutureParcels && tx?.parcelaGrupoId && tx.parcelaIndice != null) {
         const cutFrom = Number(tx.parcelaIndice) || 0;
-        return prev.filter((t) => {
+        const next = prev.filter((t) => {
           if (String(t.parcelaGrupoId || '') !== String(tx.parcelaGrupoId)) return true;
           const ix = Number(t.parcelaIndice) || 0;
           return ix > 0 && ix < cutFrom;
         });
+        const removed = prev.filter((t) => !next.includes(t));
+        removed.forEach((t) => syncDeleteTransaction(t.id));
+        return next;
       }
+      syncDeleteTransaction(tx.id);
       return prev.filter((t) => String(t.id) !== String(tx.id));
     });
   }, []);

@@ -1,7 +1,9 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_CATEGORIES } from '../theme';
 import { lightPalette, darkPalette } from '../theme/palettes';
+import { supabase } from '../services/supabaseClient';
+import { upsertPreferences, fetchPreferences } from '../services/supabaseSync';
 
 const PREFS_KEY = '@gastoo_prefs_v2';
 const PREFS_KEY_LEGACY = '@gastoo_prefs_v1';
@@ -39,6 +41,17 @@ export function AppPreferencesProvider({ children }) {
   const [transactionListOrder, setTransactionListOrderState] = useState('desc');
   const [categories, setCategoriesState] = useState(() => cloneCategories(DEFAULT_CATEGORIES));
   const [spendingGoals, setSpendingGoalsState] = useState({});
+  const userIdRef = useRef(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      userIdRef.current = data.session?.user?.id ?? null;
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => {
+      userIdRef.current = session?.user?.id ?? null;
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -56,16 +69,34 @@ export function AppPreferencesProvider({ children }) {
       } catch (e) {
         console.warn('[AppPreferencesContext] Erro ao carregar preferências:', e);
       }
+
+      // Sync remoto em background
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const remote = await fetchPreferences(session.user.id);
+          if (remote) {
+            const m = migratePrefs(remote);
+            setProfileState(m.profile);
+            setThemeModeState(m.themeMode);
+            setTransactionListOrderState(m.transactionListOrder);
+            setCategoriesState(m.categories);
+            setSpendingGoalsState(m.spendingGoals || {});
+          }
+        }
+      } catch (e) {
+        console.warn('[AppPreferencesContext] Sync Supabase falhou:', e?.message);
+      }
+
       setReady(true);
     })();
   }, []);
 
   useEffect(() => {
     if (!ready) return;
-    AsyncStorage.setItem(
-      PREFS_KEY,
-      JSON.stringify({ profile, themeMode, transactionListOrder, categories, spendingGoals })
-    ).catch(() => {});
+    const prefs = { profile, themeMode, transactionListOrder, categories, spendingGoals };
+    AsyncStorage.setItem(PREFS_KEY, JSON.stringify(prefs)).catch(() => {});
+    if (userIdRef.current) upsertPreferences(prefs, userIdRef.current);
   }, [profile, themeMode, transactionListOrder, categories, spendingGoals, ready]);
 
   const colors = useMemo(() => (themeMode === 'dark' ? darkPalette : lightPalette), [themeMode]);

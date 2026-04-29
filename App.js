@@ -10,10 +10,12 @@ import { useFonts, Poppins_100Thin, Poppins_300Light, Poppins_400Regular, Poppin
 import * as SplashScreenExpo from 'expo-splash-screen';
 import { FinanceProvider, useFinance } from './src/context/FinanceContext';
 import { AppPreferencesProvider, useAppPreferences, useThemeColors } from './src/context/AppPreferencesContext';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { Toast } from './src/components/Shared';
 
 import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import SignUpScreen from './src/screens/SignUpScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 import DetailScreen from './src/screens/DetailScreen';
@@ -49,7 +51,8 @@ function ThemedStatusBar() {
 function AppNavigation() {
   const { ready: financeReady } = useFinance();
   const { ready: prefsReady } = useAppPreferences();
-  const ready = financeReady && prefsReady;
+  const { user, loading: authLoading } = useAuth();
+  const ready = financeReady && prefsReady && !authLoading;
   const [fontsLoaded] = useFonts({
     Poppins_100Thin,
     Poppins_300Light,
@@ -65,7 +68,8 @@ function AppNavigation() {
 
   if (!fontsLoaded || !ready) return null;
 
-  // Sem backend de usuários: abre direto no app. Com auth: trocar para initialRouteName="Splash" no Stack abaixo.
+  const initialRoute = user ? 'Main' : 'Login';
+
   return (
     <View
       style={{
@@ -77,10 +81,11 @@ function AppNavigation() {
         <ThemedStatusBar />
         <Stack.Navigator
           screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
-          initialRouteName="Main"
+          initialRouteName={initialRoute}
         >
           <Stack.Screen name="Splash" component={SplashScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="SignUp" component={SignUpScreen} />
           <Stack.Screen name="Main" options={{ animation: 'fade' }}>
             {() => <MainTabs />}
           </Stack.Screen>
@@ -109,11 +114,13 @@ function AppNavigation() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <FinanceProvider>
-        <AppPreferencesProvider>
-          <AppNavigation />
-        </AppPreferencesProvider>
-      </FinanceProvider>
+      <AuthProvider>
+        <FinanceProvider>
+          <AppPreferencesProvider>
+            <AppNavigation />
+          </AppPreferencesProvider>
+        </FinanceProvider>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }

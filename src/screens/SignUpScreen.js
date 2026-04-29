@@ -3,11 +3,11 @@ import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, Alert, Keyb
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/Shared';
 import { useThemeColors } from '../context/AppPreferencesContext';
-import { signIn } from '../services/authService';
+import { signUp } from '../services/authService';
 
 const logo = require('../../assets/logo2.png');
 
-function createLoginStyles(T) {
+function createStyles(T) {
   return StyleSheet.create({
     container: { flexGrow: 1, padding: 28 },
     logo: { width: 180, height: 54 },
@@ -29,35 +29,33 @@ function createLoginStyles(T) {
     inputError: { borderColor: T.burnt },
     errorText: { fontFamily: 'Poppins_400Regular', fontSize: 11, color: T.burnt, marginTop: 4 },
     eyeBtn: { position: 'absolute', right: 14, top: 14 },
-    forgotBtn: { alignSelf: 'flex-end', marginBottom: 24 },
-    forgotText: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.orange },
-    signupText: {
+    loginText: {
       fontFamily: 'Poppins_400Regular',
       fontSize: 13,
       color: T.grayMed,
       textAlign: 'center',
       marginTop: 20,
     },
-    signupLink: { color: T.orange, fontFamily: 'Poppins_600SemiBold' },
+    loginLink: { color: T.orange, fontFamily: 'Poppins_600SemiBold' },
   });
 }
 
-export default function LoginScreen({ navigation }) {
+export default function SignUpScreen({ navigation }) {
   const T = useThemeColors();
-  const styles = useMemo(() => createLoginStyles(T), [T]);
+  const styles = useMemo(() => createStyles(T), [T]);
   const insets = useSafeAreaInsets();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  const showToastLocal = (msg) => Alert.alert('Gastoo', msg);
-
   const validate = () => {
     const e = {};
-    if (!email.includes('@')) e.email = 'E-mail inválido';
-    if (pass.length < 4) e.pass = 'Mínimo 4 caracteres';
+    if (!name.trim()) e.name = 'Informe seu nome.';
+    if (!email.includes('@')) e.email = 'E-mail inválido.';
+    if (pass.length < 6) e.pass = 'Mínimo 6 caracteres.';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -66,10 +64,14 @@ export default function LoginScreen({ navigation }) {
     if (!validate()) return;
     setLoading(true);
     try {
-      await signIn(email.trim(), pass);
-      navigation.replace('Main');
+      await signUp(email.trim(), pass, name.trim());
+      Alert.alert('GA$TOO', 'Conta criada! Verifique seu e-mail se necessário e faça login.', [
+        { text: 'OK', onPress: () => navigation.replace('Login') },
+      ]);
     } catch (err) {
-      const msg = err?.message?.includes('Invalid login') ? 'E-mail ou senha incorretos.' : (err?.message || 'Erro ao entrar. Tente novamente.');
+      const msg = err?.message?.includes('already registered')
+        ? 'Este e-mail já está cadastrado.'
+        : (err?.message || 'Erro ao cadastrar. Tente novamente.');
       Alert.alert('GA$TOO', msg);
     } finally {
       setLoading(false);
@@ -90,10 +92,17 @@ export default function LoginScreen({ navigation }) {
           <Image source={logo} style={styles.logo} resizeMode="contain" />
         </View>
 
-        <Text style={styles.title}>Bem-vindo de volta</Text>
-        <Text style={styles.subtitle}>Entre para gerenciar suas finanças</Text>
+        <Text style={styles.title}>Criar conta</Text>
+        <Text style={styles.subtitle}>Comece a gerenciar suas finanças</Text>
 
-        {/* Email */}
+        <View style={styles.field}>
+          <Text style={styles.label}>Nome</Text>
+          <TextInput value={name} onChangeText={setName} placeholder="Seu nome"
+            placeholderTextColor={T.grayNeutral} autoCapitalize="words"
+            style={[styles.input, errors.name && styles.inputError]} />
+          {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+        </View>
+
         <View style={styles.field}>
           <Text style={styles.label}>E-mail</Text>
           <TextInput value={email} onChangeText={setEmail} placeholder="seu@email.com"
@@ -102,7 +111,6 @@ export default function LoginScreen({ navigation }) {
           {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
         </View>
 
-        {/* Password */}
         <View style={styles.field}>
           <Text style={styles.label}>Senha</Text>
           <View>
@@ -121,24 +129,16 @@ export default function LoginScreen({ navigation }) {
           {errors.pass && <Text style={styles.errorText}>{errors.pass}</Text>}
         </View>
 
-        <TouchableOpacity
-          style={styles.forgotBtn}
-          onPress={() => showToastLocal('Em breve: recuperação de senha.')}
-          accessibilityLabel="Recuperar senha"
-        >
-          <Text style={styles.forgotText}>Esqueci minha senha</Text>
-        </TouchableOpacity>
+        <PrimaryButton label={loading ? 'Criando...' : 'Criar conta'} onPress={submit} disabled={loading} />
 
-        <PrimaryButton label={loading ? 'Entrando...' : 'Entrar'} onPress={submit} disabled={loading} />
-
-        <Text style={styles.signupText}>
-          Não tem conta?{' '}
+        <Text style={styles.loginText}>
+          Já tem conta?{' '}
           <Text
-            style={styles.signupLink}
-            onPress={() => navigation.navigate('SignUp')}
+            style={styles.loginLink}
+            onPress={() => navigation.replace('Login')}
             accessibilityRole="button"
           >
-            Cadastre-se
+            Entrar
           </Text>
         </Text>
       </ScrollView>
