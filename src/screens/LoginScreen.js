@@ -51,6 +51,7 @@ export default function LoginScreen({ navigation }) {
   const [showPass, setShowPass] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState(null);
 
   const showToastLocal = (msg) => Alert.alert('Gastoo', msg);
 
@@ -64,13 +65,17 @@ export default function LoginScreen({ navigation }) {
 
   const submit = async () => {
     if (!validate()) return;
+    setLoginError(null);
     setLoading(true);
     try {
       await signIn(email.trim(), pass);
       navigation.replace('Main');
     } catch (err) {
-      const msg = err?.message?.includes('Invalid login') ? 'E-mail ou senha incorretos.' : (err?.message || 'Erro ao entrar. Tente novamente.');
-      Alert.alert('GA$TOO', msg);
+      if (err?.message?.includes('Invalid login')) {
+        setLoginError('Conta não encontrada. Cadastre-se para começar!');
+      } else {
+        Alert.alert('GA$TOO', err?.message || 'Erro ao entrar. Tente novamente.');
+      }
     } finally {
       setLoading(false);
     }
@@ -130,6 +135,19 @@ export default function LoginScreen({ navigation }) {
         </TouchableOpacity>
 
         <PrimaryButton label={loading ? 'Entrando...' : 'Entrar'} onPress={submit} disabled={loading} />
+
+        {loginError && (
+          <Text style={[styles.errorText, { fontSize: 13, textAlign: 'center', marginTop: 12 }]}>
+            {loginError}{' '}
+            <Text
+              style={[styles.signupLink]}
+              onPress={() => navigation.navigate('SignUp')}
+              accessibilityRole="button"
+            >
+              Cadastre-se
+            </Text>
+          </Text>
+        )}
 
         <Text style={styles.signupText}>
           Não tem conta?{' '}
