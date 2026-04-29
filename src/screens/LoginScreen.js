@@ -69,13 +69,8 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       await signIn(email.trim(), pass);
-      navigation.replace('Main');
     } catch (err) {
-      if (err?.message?.includes('Invalid login')) {
-        setLoginError('Conta não encontrada. Cadastre-se para começar!');
-      } else {
-        Alert.alert('GA$TOO', err?.message || 'Erro ao entrar. Tente novamente.');
-      }
+      setLoginError('E-mail ou senha incorretos. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -138,14 +133,7 @@ export default function LoginScreen({ navigation }) {
 
         {loginError && (
           <Text style={[styles.errorText, { fontSize: 13, textAlign: 'center', marginTop: 12 }]}>
-            {loginError}{' '}
-            <Text
-              style={[styles.signupLink]}
-              onPress={() => navigation.navigate('SignUp')}
-              accessibilityRole="button"
-            >
-              Cadastre-se
-            </Text>
+            {loginError}
           </Text>
         )}
 

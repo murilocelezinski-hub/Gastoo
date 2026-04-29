@@ -65,9 +65,7 @@ export default function SignUpScreen({ navigation }) {
     setLoading(true);
     try {
       await signUp(email.trim(), pass, name.trim());
-      Alert.alert('GA$TOO', 'Conta criada! Verifique seu e-mail se necessário e faça login.', [
-        { text: 'OK', onPress: () => navigation.replace('Login') },
-      ]);
+      navigation.replace('Login');
     } catch (err) {
       const msg = err?.message?.includes('already registered')
         ? 'Este e-mail já está cadastrado.'

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Platform, Text, View } from 'react-native';
 import Svg, { Path, Rect, Circle, Polyline, Line } from 'react-native-svg';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -53,6 +53,7 @@ function AppNavigation() {
   const { ready: prefsReady } = useAppPreferences();
   const { user, loading: authLoading } = useAuth();
   const ready = financeReady && prefsReady && !authLoading;
+  const navigationRef = useRef(null);
   const [fontsLoaded] = useFonts({
     Poppins_100Thin,
     Poppins_300Light,
@@ -66,6 +67,17 @@ function AppNavigation() {
     }
   }, [fontsLoaded, ready]);
 
+  useEffect(() => {
+    if (!ready || !fontsLoaded) return;
+    if (navigationRef.current) {
+      if (user) {
+        navigationRef.current.reset({ index: 0, routes: [{ name: 'Main' }] });
+      } else {
+        navigationRef.current.reset({ index: 0, routes: [{ name: 'Login' }] });
+      }
+    }
+  }, [user, ready, fontsLoaded]);
+
   if (!fontsLoaded || !ready) return null;
 
   const initialRoute = user ? 'Main' : 'Login';
@@ -77,7 +89,7 @@ function AppNavigation() {
         ...(Platform.OS === 'web' ? { minHeight: '100vh', backgroundColor: '#000' } : null),
       }}
     >
-      <NavigationContainer onReady={onLayoutReady}>
+      <NavigationContainer ref={navigationRef} onReady={onLayoutReady}>
         <ThemedStatusBar />
         <Stack.Navigator
           screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
