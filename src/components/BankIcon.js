@@ -76,14 +76,23 @@ function XPLogo({ size }) {
   );
 }
 
+function BancoDoBrasilLogo({ size }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M0 0H24V24H0V0Z" fill="#FFD700" />
+      <Path d="M12 3C7.03 3 3 7.03 3 12C3 16.97 7.03 21 12 21C16.97 21 21 16.97 21 12C21 7.03 16.97 3 12 3ZM12 19.5C7.86 19.5 4.5 16.14 4.5 12C4.5 7.86 7.86 4.5 12 4.5C16.14 4.5 19.5 7.86 19.5 12C19.5 16.14 16.14 19.5 12 19.5ZM12 6C8.69 6 6 8.69 6 12C6 15.31 8.69 18 12 18C15.31 18 18 15.31 18 12C18 8.69 15.31 6 12 6Z" fill="#003DA5" />
+    </Svg>
+  );
+}
+
 const BANK_LOGO_MAP = {
   'Nubank': NubankLogo,
   'Itaú': ItauLogo,
   'Bradesco': BradescLogo,
-  'Inter': InterLogo,
   'C6 Bank': C6Logo,
   'Santander': SantanderLogo,
   'XP': XPLogo,
+  'Banco do Brasil': BancoDoBrasilLogo,
 };
 
 function BankFallback({ bankColor, bankInitial, size }) {

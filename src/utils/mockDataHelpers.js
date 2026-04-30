@@ -1,13 +1,13 @@
 // Utilitário de dados mock — simula importação de banco (Open Finance) e parsing de notificações
 
 export const BANKS = [
-  { name: 'Nubank',    color: '#820AD1', initial: 'N'  },
-  { name: 'Itaú',     color: '#EC7000', initial: 'I'  },
-  { name: 'Bradesco', color: '#CC092F', initial: 'B'  },
-  { name: 'Inter',    color: '#FF7A00', initial: 'In' },
-  { name: 'C6 Bank',  color: '#242424', initial: 'C6' },
-  { name: 'Santander',color: '#EC0000', initial: 'S'  },
-  { name: 'XP',       color: '#000000', initial: 'XP' },
+  { name: 'Itaú',           color: '#EC7000', initial: 'I'  },
+  { name: 'Bradesco',       color: '#CC092F', initial: 'B'  },
+  { name: 'Santander',      color: '#EC0000', initial: 'S'  },
+  { name: 'Banco do Brasil',color: '#FFD700', initial: 'BB' },
+  { name: 'Nubank',         color: '#820AD1', initial: 'N'  },
+  { name: 'C6 Bank',        color: '#242424', initial: 'C6' },
+  { name: 'XP',             color: '#000000', initial: 'XP' },
 ];
 
 export const ESTABLISHMENTS = [
