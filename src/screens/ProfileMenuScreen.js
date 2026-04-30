@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Switch, StyleSheet, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { User } from 'phosphor-react';
-import { Header } from '../components/Shared';
 import { ChevronRightIcon } from '../components/ActionIcons';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 
@@ -24,7 +23,9 @@ export default function ProfileMenuScreen({ navigation }) {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.offWhite }]}>
-      <Header title="Perfil" onBack={() => navigation.goBack()} />
+      <View style={[styles.tabHeader, { paddingTop: Math.max(insets.top, 16), backgroundColor: theme.offWhite }]}>
+        <Text style={[styles.tabHeaderTitle, { color: theme.graphite }]}>Perfil</Text>
+      </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 + insets.bottom, gap: 16 }}>
         <View style={[styles.card, { backgroundColor: theme.white, borderColor: theme.grayVLight }]}>
@@ -111,7 +112,10 @@ export default function ProfileMenuScreen({ navigation }) {
           <View style={[styles.sep, { backgroundColor: theme.grayVLight }]} />
           <Row palette={theme} label="Cartões de crédito" onPress={() => navigation.navigate('CreditCards')} />
           <View style={[styles.sep, { backgroundColor: theme.grayVLight }]} />
+          <View style={[styles.sep, { backgroundColor: theme.grayVLight }]} />
           <Row palette={theme} label="Categorias" onPress={() => navigation.navigate('CategoriesSettings')} />
+          <View style={[styles.sep, { backgroundColor: theme.grayVLight }]} />
+          <Row palette={theme} label="Conexões Bancárias" onPress={() => navigation.navigate('OpenFinanceOnboarding')} />
         </View>
 
         <Text style={[styles.hint, { color: theme.grayMed }]}>Ajustes salvos neste aparelho</Text>
@@ -122,6 +126,8 @@ export default function ProfileMenuScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  tabHeader: { paddingHorizontal: 16, paddingBottom: 12 },
+  tabHeaderTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 22 },
   card: { borderRadius: 16, padding: 4, borderWidth: 1 },
   sectionTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 4 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 12, gap: 12 },

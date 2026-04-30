@@ -6,7 +6,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useFonts, Poppins_100Thin, Poppins_300Light, Poppins_400Regular, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
-import { House, Clock, Sparkle, Target } from 'phosphor-react';
+import { House, Clock, Sparkle, UserCircle } from 'phosphor-react';
 import * as SplashScreenExpo from 'expo-splash-screen';
 import { FinanceProvider, useFinance } from './src/context/FinanceContext';
 import { AppPreferencesProvider, useAppPreferences, useThemeColors } from './src/context/AppPreferencesContext';
@@ -30,7 +30,6 @@ import RecurringScreen from './src/screens/RecurringScreen';
 import ProfileMenuScreen from './src/screens/ProfileMenuScreen';
 import UserProfileScreen from './src/screens/UserProfileScreen';
 import CategoriesSettingsScreen from './src/screens/CategoriesSettingsScreen';
-import SpendingGoalsScreen from './src/screens/SpendingGoalsScreen';
 import InvoiceDetailScreen from './src/screens/InvoiceDetailScreen';
 import OpenFinanceOnboardingScreen from './src/screens/OpenFinanceOnboardingScreen';
 
@@ -111,7 +110,6 @@ function AppNavigation() {
           <Stack.Screen name="Accounts" component={AccountsScreen} />
           <Stack.Screen name="CreditCards" component={CreditCardsScreen} />
           <Stack.Screen name="Recurring" component={RecurringScreen} />
-          <Stack.Screen name="ProfileMenu" component={ProfileMenuScreen} />
           <Stack.Screen name="UserProfile" component={UserProfileScreen} />
           <Stack.Screen name="CategoriesSettings" component={CategoriesSettingsScreen} />
           <Stack.Screen name="InvoiceDetail" component={InvoiceDetailScreen} />
@@ -193,12 +191,12 @@ function MainTabs() {
         }}
       />
       <Tab.Screen
-        name="SpendingGoalsTab"
-        component={SpendingGoalsScreen}
+        name="ProfileTab"
+        component={ProfileMenuScreen}
         options={{
-          tabBarLabel: 'Metas',
+          tabBarLabel: 'Perfil',
           tabBarIcon: ({ color }) => (
-            <Target size={22} weight="fill" color={color} />
+            <UserCircle size={22} weight="fill" color={color} />
           ),
         }}
       />

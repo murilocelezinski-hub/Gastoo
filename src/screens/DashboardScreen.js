@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polyline, Polygon, Line, Circle, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
-import { CreditCard, User, Bell, Eye, EyeSlash, LinkSimple } from 'phosphor-react';
+import { CreditCard, Bell, Eye, EyeSlash, LinkSimple } from 'phosphor-react';
 import { fmt, T } from '../theme';
 import {
   useFinance,
@@ -260,20 +260,6 @@ function createStyles(T, isDesktop, isMobile) {
       alignItems: 'center',
       paddingHorizontal: isDesktop ? 40 : 20,
       paddingBottom: 10,
-    },
-    avatar: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: T.homeGlass,
-      alignItems: 'center',
-      justifyContent: 'center',
-      overflow: 'hidden',
-      shadowColor: '#000',
-      shadowOpacity: 0.18,
-      shadowRadius: 6,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 3,
     },
 
     /* ── Sync row ── */
@@ -1110,17 +1096,6 @@ export default function DashboardScreen({ navigation }) {
     <View style={styles.container}>
       <View style={[styles.headerRow, { paddingTop: Math.max(insets.top, 8) }]}>
         <Image source={logo} style={styles.logo} resizeMode="contain" />
-        <TouchableOpacity
-          style={styles.avatar}
-          onPress={() => navigation.navigate('ProfileMenu')}
-          activeOpacity={0.7}
-        >
-          {profile.avatarUri ? (
-            <Image source={{ uri: profile.avatarUri }} style={{ width: 36, height: 36 }} resizeMode="cover" />
-          ) : (
-            <User size={32} weight="fill" color={T.brandFgMuted} />
-          )}
-        </TouchableOpacity>
       </View>
 
       {/* Status Open Finance e Para Revisar */}
