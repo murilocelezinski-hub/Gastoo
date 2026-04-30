@@ -949,12 +949,30 @@ export default function DashboardScreen({ navigation }) {
   const [reviewPage, setReviewPage] = useState(0);
 
   const confirmNotification = useCallback((tx) => {
-    if (tx.id?.startsWith('__mock_')) return;
-    updateTransaction({ ...tx, origin: { ...tx.origin, type: 'confirmed' } });
-  }, [updateTransaction]);
+    if (tx.id?.startsWith('__mock_')) {
+      // Mock: não persiste, apenas remove do balão
+      setReviewPage(0);
+      return;
+    }
+    // Real: marca como confirmada e adiciona ao saldo (conta corrente padrão)
+    const firstAccount = accounts.find(a => a.ativo);
+    if (firstAccount) {
+      addTransaction({
+        ...tx,
+        accountId: firstAccount.id,
+        origin: { type: 'confirmed' }
+      });
+    }
+    deleteTransaction(tx);
+  }, [updateTransaction, addTransaction, deleteTransaction, accounts]);
 
   const dismissNotification = useCallback((tx) => {
-    if (tx.id?.startsWith('__mock_')) return;
+    if (tx.id?.startsWith('__mock_')) {
+      // Mock: apenas remove do balão
+      setReviewPage(0);
+      return;
+    }
+    // Real: remove sem adicionar ao saldo
     deleteTransaction(tx);
   }, [deleteTransaction]);
 
@@ -1124,11 +1142,11 @@ export default function DashboardScreen({ navigation }) {
           <Text style={styles.openFinanceCTA}>Conectar</Text>
         </TouchableOpacity>
 
-        {/* Para Revisar */}
+        {/* Notificações para Revisar */}
         {notificationCount > 0 && (
           <View style={styles.reviewSection}>
             <View style={styles.reviewHeader}>
-              <Text style={styles.pillTitle}>Para Revisar</Text>
+              <Text style={styles.pillTitle}>Notificações para revisar</Text>
               <View style={styles.reviewBadge}>
                 <Text style={styles.reviewBadgeText}>
                   {String(notificationCount).padStart(2, '0')}
