@@ -718,7 +718,6 @@ function createStyles(T, isDesktop, isMobile) {
     reviewCardValue: {
       fontFamily: 'Poppins_600SemiBold',
       fontSize: 16,
-      color: '#FCA5A5',
       marginTop: 4,
     },
     reviewActionsRow: {
@@ -1179,7 +1178,7 @@ export default function DashboardScreen({ navigation }) {
                     <Text style={styles.reviewCardCategory} numberOfLines={1}>
                       {tx.categoria ?? '—'}
                     </Text>
-                    <Text style={styles.reviewCardValue}>
+                    <Text style={[styles.reviewCardValue, { color: tx.tipo === 'entrada' ? T.positive : T.negative }]}>
                       {isSaida ? '-' : '+'}{fmt(tx.valor)}
                     </Text>
                     <View style={styles.reviewActionsRow}>
