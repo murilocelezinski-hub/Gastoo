@@ -251,7 +251,7 @@ const logo = require('../../assets/logo2.png');
 function createStyles(T, isDesktop, isMobile) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: T.chocolate },
-    logo: { width: 120, height: 36 },
+    logo: { width: 160, height: 48 },
 
     /* ── Header ── */
     headerRow: {
@@ -508,7 +508,7 @@ function createStyles(T, isDesktop, isMobile) {
       shadowRadius: 12,
       elevation: 6,
     },
-    accountCardIcon: { fontSize: isDesktop ? 24 : 22 },
+    accountCardIcon: { fontSize: isDesktop ? 32 : 28, color: T.orange },
     accountCardName: {
       fontFamily: 'Poppins_400Regular',
       fontSize: isDesktop ? 12 : 11,
@@ -711,7 +711,7 @@ function RecentTransactions({ transactions, creditCards, selectedAccount, select
               activeOpacity={0.7}
               onPress={() => navigation.navigate('InvoiceDetail', { invoiceKey: tx.invoiceKey, cardName: tx.cardLabel })}
             >
-              <Text style={{ fontSize: 28 }}>💳</Text>
+              <Text style={{ fontSize: 28, color: T.orange }}>💳</Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.recentTxDesc} numberOfLines={1}>{tx.descricao}</Text>
                 <Text style={styles.recentTxMeta}>
