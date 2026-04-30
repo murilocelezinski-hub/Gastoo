@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Switch, StyleSheet, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { User } from 'phosphor-react';
 import { Header } from '../components/Shared';
 import { ChevronRightIcon } from '../components/ActionIcons';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
@@ -36,8 +37,8 @@ export default function ProfileMenuScreen({ navigation }) {
             {profile.avatarUri ? (
               <Image source={{ uri: profile.avatarUri }} style={styles.miniAvatar} resizeMode="cover" />
             ) : (
-              <View style={[styles.miniAvatarPlaceholder, { backgroundColor: theme.grayVLight }]}>
-                <Text style={{ fontSize: 18 }}>👤</Text>
+              <View style={[styles.miniAvatarPlaceholder, { backgroundColor: theme.grayVLight, alignItems: 'center', justifyContent: 'center' }]}>
+                <User size={24} weight="fill" color={theme.grayMed} />
               </View>
             )}
             <View style={{ flex: 1 }}>

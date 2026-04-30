@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { User } from 'phosphor-react';
 import { Header, PrimaryButton } from '../components/Shared';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { useFinance } from '../context/FinanceContext';
@@ -81,7 +82,7 @@ export default function UserProfileScreen({ navigation }) {
               {avatarUri ? (
                 <Image source={{ uri: avatarUri }} style={styles.avatarImg} resizeMode="cover" />
               ) : (
-                <Text style={{ fontSize: 40 }}>👤</Text>
+                <User size={56} weight="fill" color={theme.grayMed} />
               )}
             </TouchableOpacity>
             <View style={{ flex: 1, gap: 8 }}>

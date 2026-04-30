@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polyline, Polygon, Line, Circle, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
-import { CreditCard } from 'phosphor-react';
+import { CreditCard, User } from 'phosphor-react';
 import { ChevronRightIcon } from '../components/ActionIcons';
 import { fmt, T } from '../theme';
 import {
@@ -924,7 +924,7 @@ export default function DashboardScreen({ navigation }) {
           {profile.avatarUri ? (
             <Image source={{ uri: profile.avatarUri }} style={{ width: 36, height: 36 }} resizeMode="cover" />
           ) : (
-            <Text style={{ fontSize: 18 }}>👤</Text>
+            <User size={32} weight="fill" color={T.brandFgMuted} />
           )}
         </TouchableOpacity>
       </View>

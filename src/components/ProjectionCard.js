@@ -8,6 +8,7 @@ import {
   ScrollView,
   Platform,
 } from 'react-native';
+import { Info, Lightbulb } from 'phosphor-react';
 import { useThemeColors } from '../context/AppPreferencesContext';
 import { classificarStatusProjecao } from '../utils/projection';
 import { T } from '../theme';
@@ -71,7 +72,7 @@ export default function ProjectionCard({
           Projeção de Fim de Mês
         </Text>
         <TouchableOpacity onPress={handleInfoPress} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Text style={styles.iconInfo}>ℹ️</Text>
+          <Info size={20} weight="fill" color={theme.orange} />
         </TouchableOpacity>
       </View>
 
@@ -104,9 +105,12 @@ export default function ProjectionCard({
 
       {/* Recomendação da IA (apenas amarelo/vermelho) */}
       {recomendacaoIA && status !== 'verde' && (
-        <Text style={[styles.recomendacao, { color: theme.graphite ?? '#333333' }]}>
-          💡 {recomendacaoIA}
-        </Text>
+        <View style={[styles.recomendacao, { flexDirection: 'row', alignItems: 'flex-start', gap: 8 }]}>
+          <Lightbulb size={18} weight="fill" color={theme.graphite ?? '#333333'} style={{ marginTop: 2 }} />
+          <Text style={[{ color: theme.graphite ?? '#333333', flex: 1 }]}>
+            {recomendacaoIA}
+          </Text>
+        </View>
       )}
 
       {/* Modal de detalhes */}
@@ -179,9 +183,6 @@ const styles = StyleSheet.create({
   titulo: {
     fontFamily: 'Poppins_600SemiBold',
     fontSize: 13,
-  },
-  iconInfo: {
-    fontSize: 16,
   },
   valorProjetado: {
     fontFamily: 'Poppins_600SemiBold',
