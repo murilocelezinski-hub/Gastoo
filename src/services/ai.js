@@ -183,15 +183,28 @@ export async function gerarResumoGastos(transactions, periodoLabel = 'período s
   const numTransacoes = saidas.length;
   const ticketMedio = (totalGasto / numTransacoes).toFixed(2);
 
-  const fallback = `No ${periodoLabel}, você gastou R$ ${totalGasto.toFixed(2)} em ${numTransacoes} transações. Principais categorias: ${topCats}.`;
+  // Fallback estruturado (sem API key)
+  const topCatsArr = Object.entries(porCategoria)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
+  const fallback = {
+    diagnostico: `No ${periodoLabel}, você gastou R$ ${totalGasto.toFixed(2)} em ${numTransacoes} transações.`,
+    destaques: [
+      topCatsArr[0] ? `${topCatsArr[0][0]}: R$ ${topCatsArr[0][1].toFixed(2)} (${((topCatsArr[0][1] / totalGasto) * 100).toFixed(1)}%)` : null,
+      topCatsArr[1] ? `${topCatsArr[1][0]}: R$ ${topCatsArr[1][1].toFixed(2)} (${((topCatsArr[1][1] / totalGasto) * 100).toFixed(1)}%)` : null,
+      top3tx ? `Maior despesa: ${[...saidas].sort((a, b) => b.valor - a.valor)[0]?.descricao || ''} R$ ${[...saidas].sort((a, b) => b.valor - a.valor)[0]?.valor?.toFixed(2) || '0'}` : null,
+    ].filter(Boolean),
+    sugestao: topCatsArr[0] ? `Considere reduzir gastos em ${topCatsArr[0][0]} para equilibrar o orçamento.` : 'Revise seus gastos para identificar oportunidades de economia.',
+  };
 
   if (!GEMINI_API_KEY) return fallback;
 
-  // Cache por hash dos dados
-  const cacheKey = `resumo|${periodoLabel}|${Math.round(totalGasto * 100)}|${numTransacoes}|${topCats}`;
+  // Cache por hash dos dados (prefixo v2 para invalidar cache antigo)
+  const cacheKey = `resumov2|${periodoLabel}|${Math.round(totalGasto * 100)}|${numTransacoes}|${topCats}`;
   if (_cache.has(cacheKey)) return _cache.get(cacheKey);
 
-  const prompt = `Você é um assistente de finanças pessoais. Analise os gastos do usuário e escreva um resumo claro e útil em português brasileiro.
+  const prompt = `Você é um assistente de finanças pessoais. Analise os gastos do usuário e retorne APENAS um JSON válido, sem markdown, sem explicações.
 
 Período: ${periodoLabel}
 Total gasto: R$ ${totalGasto.toFixed(2)}
@@ -200,11 +213,13 @@ Ticket médio: R$ ${ticketMedio}
 Top categorias: ${topCats}
 Maiores despesas: ${top3tx}
 
-Escreva um parágrafo único de 3 a 5 frases que:
-1. Destaque os principais padrões de gasto
-2. Aponte o que mais pesou no orçamento
-3. Dê 1 ou 2 insights práticos e personalizados para o usuário economizar
-Seja direto, use linguagem simples e não use emojis.`;
+Retorne estritamente neste formato JSON:
+{
+  "diagnostico": "1 a 2 frases descrevendo o padrão de gastos do período",
+  "destaques": ["bullet com insight 1", "bullet com insight 2", "bullet com insight 3"],
+  "sugestao": "1 frase acionável e prática para o usuário economizar"
+}
+Use português brasileiro, linguagem simples, sem emojis.`;
 
   try {
     const response = await fetch(GEMINI_URL, {
@@ -212,7 +227,11 @@ Seja direto, use linguagem simples e não use emojis.`;
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 200, temperature: 0.5 },
+        generationConfig: {
+          maxOutputTokens: 300,
+          temperature: 0.5,
+          response_mime_type: 'application/json',
+        },
       }),
       signal,
     });
@@ -220,8 +239,16 @@ Seja direto, use linguagem simples e não use emojis.`;
     if (!response.ok) throw new Error(`Gemini error: ${response.status}`);
 
     const data = await response.json();
-    const texto = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-    const out = texto || fallback;
+    const textoCru = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+
+    let out;
+    try {
+      out = JSON.parse(textoCru);
+      if (!out.diagnostico || !Array.isArray(out.destaques) || !out.sugestao) throw new Error('shape inválido');
+    } catch {
+      out = { diagnostico: textoCru || fallback.diagnostico, destaques: [], sugestao: '' };
+    }
+
     _cache.set(cacheKey, out);
     return out;
   } catch (err) {

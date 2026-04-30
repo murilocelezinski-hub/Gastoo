@@ -6,7 +6,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useFonts, Poppins_100Thin, Poppins_300Light, Poppins_400Regular, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
-import { House, Clock, ChartLine as ChartLineIcon, Target } from 'phosphor-react';
+import { House, Clock, Sparkle, Target } from 'phosphor-react';
 import * as SplashScreenExpo from 'expo-splash-screen';
 import { FinanceProvider, useFinance } from './src/context/FinanceContext';
 import { AppPreferencesProvider, useAppPreferences, useThemeColors } from './src/context/AppPreferencesContext';
@@ -186,9 +186,9 @@ function MainTabs() {
         name="ReportsTab"
         component={ProjectionScreen}
         options={{
-          tabBarLabel: 'Relatórios',
+          tabBarLabel: 'Insights',
           tabBarIcon: ({ color }) => (
-            <ChartLineIcon size={22} weight="fill" color={color} />
+            <Sparkle size={22} weight="fill" color={color} />
           ),
         }}
       />

@@ -19,18 +19,20 @@ import { useAppPreferences, useThemeColors } from '../context/AppPreferencesCont
 import { parseTxDate } from '../utils/chart';
 import { gerarResumoGastos } from '../services/ai';
 
-const FALLBACK_SLICE_COLORS = [
-  '#E67E22',
-  '#2980B9',
-  '#27AE60',
-  '#8E44AD',
-  '#C0392B',
-  '#16A085',
-  '#D35400',
-  '#2C3E50',
-  '#E74C3C',
-  '#3498DB',
+const CATEGORY_PALETTE = [
+  '#FE5E03', '#2E86DE', '#27AE60', '#8E44AD', '#F1C40F', '#E91E63',
+  '#16A085', '#34495E', '#D35400', '#1ABC9C', '#C0392B', '#7F8C8D',
 ];
+
+const FIXED_CATEGORY_COLORS = {
+  'Alimentação': '#FE5E03',
+  'Transporte': '#2E86DE',
+  'Lazer': '#8E44AD',
+  'Saúde': '#27AE60',
+  'Moradia': '#16A085',
+};
+
+const hashStr = (s) => [...s].reduce((acc, c) => acc + c.charCodeAt(0), 0);
 
 function formatBrDate(d) {
   const p = (n) => String(n).padStart(2, '0');
@@ -91,7 +93,7 @@ function aggregateByCategory(rows, tipo, categories) {
   const entries = Object.entries(map)
     .map(([label, value]) => {
       const cat = categories.find((c) => c.name === label);
-      const color = cat?.color || FALLBACK_SLICE_COLORS[label.length % FALLBACK_SLICE_COLORS.length];
+      const color = cat?.color || FIXED_CATEGORY_COLORS[label] || CATEGORY_PALETTE[hashStr(label) % CATEGORY_PALETTE.length];
       return { label, value, color };
     })
     .filter((x) => x.value > 0)
@@ -255,6 +257,13 @@ function createStyles(T) {
       fontSize: 12,
       color: T.orange,
     },
+    aiSectionLabel: { textTransform: 'uppercase', fontSize: 11, letterSpacing: 1, color: T.grayMed, marginBottom: 4, fontFamily: 'Poppins_600SemiBold' },
+    aiSectionText: { fontSize: 14, lineHeight: 22, color: T.graphite, fontFamily: 'Poppins_400Regular' },
+    aiBulletRow: { flexDirection: 'row', gap: 10, marginBottom: 8 },
+    aiBulletDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: T.orange, marginTop: 7 },
+    aiSuggestionBox: { padding: 12, borderRadius: 10, borderLeftWidth: 3, borderLeftColor: T.orange, backgroundColor: T.offWhite },
+    aiHighlight: { fontFamily: 'Poppins_600SemiBold', color: T.orange },
+    aiDivider: { height: 1, backgroundColor: T.grayVLight, marginVertical: 12 },
     // Alerta de gasto acima da receita (#FEB506 conforme Design System)
     alertBanner: {
       backgroundColor: T.amber,
@@ -269,6 +278,57 @@ function createStyles(T) {
       lineHeight: 20,
     },
   });
+}
+
+function highlightValues(text) {
+  const regex = /(R\$\s*[\d.,]+|\d+([.,]\d+)?%)/g;
+  const parts = [];
+  let last = 0;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > last) parts.push(<Text key={last}>{text.slice(last, match.index)}</Text>);
+    parts.push(<Text key={match.index} style={_aiHighlightStyle}>{match[0]}</Text>);
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) parts.push(<Text key={last}>{text.slice(last)}</Text>);
+  return parts;
+}
+
+// Estilos inline para highlightValues (antes do contexto de tema estar disponível)
+const _aiHighlightStyle = { fontFamily: 'Poppins_600SemiBold', color: '#FE5E03' };
+
+function AiInsightCard({ data, styles }) {
+  if (!data) return null;
+  const { diagnostico, destaques = [], sugestao } = data;
+  return (
+    <View>
+      {!!diagnostico && (
+        <>
+          <Text style={styles.aiSectionLabel}>DIAGNÓSTICO</Text>
+          <Text style={styles.aiSectionText}>{highlightValues(diagnostico)}</Text>
+          <View style={styles.aiDivider} />
+        </>
+      )}
+      {destaques.length > 0 && (
+        <>
+          <Text style={styles.aiSectionLabel}>DESTAQUES</Text>
+          {destaques.map((item, i) => (
+            <View key={i} style={styles.aiBulletRow} accessibilityLabel={item}>
+              <View style={styles.aiBulletDot} />
+              <Text style={[styles.aiSectionText, { flex: 1 }]}>{highlightValues(item)}</Text>
+            </View>
+          ))}
+          <View style={styles.aiDivider} />
+        </>
+      )}
+      {!!sugestao && (
+        <View style={styles.aiSuggestionBox}>
+          <Text style={styles.aiSectionLabel}>SUGESTÃO</Text>
+          <Text style={styles.aiSectionText}>{highlightValues(sugestao)}</Text>
+        </View>
+      )}
+    </View>
+  );
 }
 
 export default function ProjectionScreen({ navigation }) {
@@ -421,7 +481,7 @@ export default function ProjectionScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <Header
-        title="Relatórios"
+        title="Insights"
         right={
           <TouchableOpacity
             onPress={() => setPeriodFilterOpen(true)}
@@ -489,7 +549,7 @@ export default function ProjectionScreen({ navigation }) {
               </TouchableOpacity>
             </View>
           ) : aiResumo ? (
-            <Text style={styles.aiCardText}>{aiResumo}</Text>
+            <AiInsightCard data={aiResumo} styles={styles} />
           ) : null}
         </View>
       </ScrollView>
