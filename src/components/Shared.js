@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal as RNModal } from 'reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { getCategoryIcon } from './CategoryIcons';
+import { ChevronLeftIcon } from './ActionIcons';
 import { T as THEME } from '../theme';
 
 // ─── LOGO ────────────────────────────────────────────────
@@ -154,7 +155,7 @@ export function Header({ title, onBack, right }) {
     <View style={[styles.header, { paddingTop: Math.max(16, 8 + insets.top), backgroundColor: T.chocolate }]}>
       {onBack ? (
         <TouchableOpacity onPress={onBack} hitSlop={12} style={{ padding: 4 }}>
-          <Text style={{ color: T.brandFg, fontSize: 22 }}>←</Text>
+          <ChevronLeftIcon size={20} color={T.brandFg} />
         </TouchableOpacity>
       ) : null}
       <Text style={[styles.headerTitle, { color: T.brandFg }]}>{title}</Text>

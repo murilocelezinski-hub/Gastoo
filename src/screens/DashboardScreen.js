@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polyline, Polygon, Line, Circle, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faCreditCard } from '@fortawesome/free-solid-svg-icons';
+import { ChevronRightIcon } from '../components/ActionIcons';
 import { fmt, T } from '../theme';
 import {
   useFinance,
@@ -944,8 +945,9 @@ export default function DashboardScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       ) : (
-        <TouchableOpacity style={styles.syncRow} onPress={() => navigation.navigate('OpenFinanceOnboarding')}>
-          <Text style={styles.syncTextMuted}>Conectar banco →</Text>
+        <TouchableOpacity style={[styles.syncRow, { flexDirection: 'row', alignItems: 'center', gap: 8 }]} onPress={() => navigation.navigate('OpenFinanceOnboarding')}>
+          <Text style={styles.syncTextMuted}>Conectar banco</Text>
+          <ChevronRightIcon size={14} color={T.brandFgMuted} />
         </TouchableOpacity>
       )}
 

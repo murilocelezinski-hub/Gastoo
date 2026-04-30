@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, PrimaryButton, ConfirmModal } from '../components/Shared';
+import { TrashIcon } from '../components/ActionIcons';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { useFinance } from '../context/FinanceContext';
 
@@ -236,7 +237,7 @@ export default function CategoriesSettingsScreen({ navigation }) {
               </View>
               {!locked ? (
                 <TouchableOpacity onPress={() => tryDelete(item)} hitSlop={12}>
-                  <Text style={{ fontSize: 18 }}>🗑</Text>
+                  <TrashIcon size={16} color={theme.orange} />
                 </TouchableOpacity>
               ) : null}
             </TouchableOpacity>

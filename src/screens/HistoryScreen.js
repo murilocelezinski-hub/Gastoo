@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, FlatList, SectionList, StyleS
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fmt } from '../theme';
 import { Header, CatIcon } from '../components/Shared';
+import { CardIcon } from '../components/ActionIcons';
 import { useFinance, invoiceLabelPtBr, creditCardName } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { sortTransactionsByDate } from '../utils/txSort';
@@ -300,7 +301,7 @@ export default function HistoryScreen({ navigation }) {
                 }
               >
                 <View style={styles.invoiceIcon}>
-                  <Text style={styles.invoiceIconText}>💳</Text>
+                  <CardIcon size={20} color={T.white} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.txDesc, isDesktop && styles.txDescDesktop]} numberOfLines={1}>

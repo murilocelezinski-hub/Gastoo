@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, PrimaryButton } from '../components/Shared';
+import { CheckIcon } from '../components/ActionIcons';
 import { getCategoryIcon } from '../components/CategoryIcons';
 import { useFinance } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
@@ -107,7 +108,7 @@ export default function ManualCategoryScreen({ navigation, route }) {
           >
             {selected === cat.name && (
               <View style={styles.check}>
-                <Text style={{ color: T.white, fontSize: 12 }}>✓</Text>
+                <CheckIcon size={14} color={T.white} />
               </View>
             )}
             <View style={[styles.catIconBox, { backgroundColor: cat.color }]}>

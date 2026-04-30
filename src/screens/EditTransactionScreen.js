@@ -13,6 +13,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../context/AppPreferencesContext';
 import { Header, PrimaryButton, CatIcon } from '../components/Shared';
+import { ChevronRightIcon } from '../components/ActionIcons';
 import { useFinance, activeAccounts, activeCreditCards, invoiceKeyFromDateAndCloseDay, invoiceLabelPtBr } from '../context/FinanceContext';
 import { PERIOD_LABEL } from '../utils/recurrence';
 import { parseBrDate } from '../utils/chart';
@@ -593,7 +594,10 @@ export default function EditTransactionScreen({ navigation, route }) {
             >
               <CatIcon category={categoria} size={36} />
               <Text style={styles.catName}>{categoria}</Text>
-              <Text style={styles.catChange}>Alterar →</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={styles.catChange}>Alterar</Text>
+                <ChevronRightIcon size={12} color="#9CA3AF" />
+              </View>
             </TouchableOpacity>
           </View>
 

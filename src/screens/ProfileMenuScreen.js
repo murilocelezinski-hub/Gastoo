@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Switch, StyleSheet, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header } from '../components/Shared';
+import { ChevronRightIcon } from '../components/ActionIcons';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 
 const Row = ({ label, sub, onPress, right, palette }) => (
@@ -10,7 +11,7 @@ const Row = ({ label, sub, onPress, right, palette }) => (
       <Text style={[styles.rowLabel, { color: palette.graphite }]}>{label}</Text>
       {sub ? <Text style={[styles.rowSub, { color: palette.grayMed }]}>{sub}</Text> : null}
     </View>
-    {right ?? <Text style={[styles.chev, { color: palette.orange }]}>→</Text>}
+    {right ?? <ChevronRightIcon size={18} color={palette.orange} />}
   </TouchableOpacity>
 );
 
@@ -42,7 +43,7 @@ export default function ProfileMenuScreen({ navigation }) {
             <View style={{ flex: 1 }}>
               <Text style={[styles.rowLabel, { color: theme.graphite }]}>Dados do usuário</Text>
             </View>
-            <Text style={[styles.chev, { color: theme.orange }]}>→</Text>
+            <ChevronRightIcon size={18} color={theme.orange} />
           </TouchableOpacity>
         </View>
 

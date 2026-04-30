@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { fmt, ACCOUNTS, T } from '../theme';
 import { Header, PrimaryButton, ConfirmModal } from '../components/Shared';
+import { TrashIcon } from '../components/ActionIcons';
 import { useFinance, balanceForAccount, activeAccounts } from '../context/FinanceContext';
 import { useThemeColors } from '../context/AppPreferencesContext';
 import { useResponsiveLayout } from '../utils/responsiveLayout';
@@ -382,7 +383,7 @@ export default function AccountsScreen({ navigation }) {
                   </View>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => openDelete(ac)} hitSlop={12} style={styles.trash}>
-                  <Text style={styles.trashText}>🗑</Text>
+                  <TrashIcon size={18} color={T.graphite} />
                 </TouchableOpacity>
               </View>
             );
@@ -539,7 +540,7 @@ export default function AccountsScreen({ navigation }) {
                         <Text style={styles.smallBtnText}>Restaurar</Text>
                       </TouchableOpacity>
                       <TouchableOpacity onPress={() => openDelete(ac)} hitSlop={12} style={styles.trash}>
-                        <Text style={styles.trashText}>🗑</Text>
+                        <TrashIcon size={18} color={T.graphite} />
                       </TouchableOpacity>
                     </View>
                   );

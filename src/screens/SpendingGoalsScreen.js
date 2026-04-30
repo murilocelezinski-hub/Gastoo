@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, CatIcon } from '../components/Shared';
+import { ChevronLeftIcon, ChevronRightIcon } from '../components/ActionIcons';
 import { useFinance, totalBalance } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { fmt } from '../theme';
@@ -214,11 +215,11 @@ export default function SpendingGoalsScreen() {
 
         <View style={styles.monthRow}>
           <TouchableOpacity style={styles.monthBtn} onPress={() => setMonthKey(shiftMonthKey(monthKey, -1))} activeOpacity={0.75}>
-            <Text style={styles.monthBtnText}>←</Text>
+            <ChevronLeftIcon size={16} color={theme.white} />
           </TouchableOpacity>
           <Text style={styles.monthLabel}>{monthKeyLabel(monthKey)}</Text>
           <TouchableOpacity style={styles.monthBtn} onPress={() => setMonthKey(shiftMonthKey(monthKey, 1))} activeOpacity={0.75}>
-            <Text style={styles.monthBtnText}>→</Text>
+            <ChevronRightIcon size={16} color={theme.white} />
           </TouchableOpacity>
         </View>
 
