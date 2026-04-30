@@ -12,8 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polyline, Polygon, Line, Circle, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCreditCard } from '@fortawesome/free-solid-svg-icons';
+import { CreditCard } from 'phosphor-react';
 import { ChevronRightIcon } from '../components/ActionIcons';
 import { fmt, T } from '../theme';
 import {
@@ -720,7 +719,7 @@ function RecentTransactions({ transactions, creditCards, selectedAccount, select
               onPress={() => navigation.navigate('InvoiceDetail', { invoiceKey: tx.invoiceKey, cardName: tx.cardLabel })}
             >
               <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: T.orange, alignItems: 'center', justifyContent: 'center' }}>
-                <FontAwesomeIcon icon={faCreditCard} size={22} color={T.white} />
+                <CreditCard size={22} weight="fill" color={T.white} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.recentTxDesc} numberOfLines={1}>{tx.descricao}</Text>

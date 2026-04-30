@@ -6,8 +6,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useFonts, Poppins_100Thin, Poppins_300Light, Poppins_400Regular, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faHome, faHistory, faChartBar, faBullseye } from '@fortawesome/free-solid-svg-icons';
+import { House, Clock, ChartLine as ChartLineIcon, Target } from 'phosphor-react';
 import * as SplashScreenExpo from 'expo-splash-screen';
 import { FinanceProvider, useFinance } from './src/context/FinanceContext';
 import { AppPreferencesProvider, useAppPreferences, useThemeColors } from './src/context/AppPreferencesContext';
@@ -169,7 +168,7 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Início',
           tabBarIcon: ({ color }) => (
-            <FontAwesomeIcon icon={faHome} size={22} color={color} />
+            <House size={22} weight="fill" color={color} />
           ),
         }}
       />
@@ -179,7 +178,7 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Histórico',
           tabBarIcon: ({ color }) => (
-            <FontAwesomeIcon icon={faHistory} size={22} color={color} />
+            <Clock size={22} weight="fill" color={color} />
           ),
         }}
       />
@@ -189,7 +188,7 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Relatórios',
           tabBarIcon: ({ color }) => (
-            <FontAwesomeIcon icon={faChartBar} size={22} color={color} />
+            <ChartLineIcon size={22} weight="fill" color={color} />
           ),
         }}
       />
@@ -199,7 +198,7 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Metas',
           tabBarIcon: ({ color }) => (
-            <FontAwesomeIcon icon={faBullseye} size={22} color={color} />
+            <Target size={22} weight="fill" color={color} />
           ),
         }}
       />

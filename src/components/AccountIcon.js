@@ -1,32 +1,31 @@
 import React from 'react';
 import { View } from 'react-native';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
-  faUniversity,
-  faPiggyBank,
-  faWallet,
-  faCreditCard,
-  faChartLine,
-} from '@fortawesome/free-solid-svg-icons';
+  Bank,
+  PiggyBank,
+  Wallet,
+  CreditCard,
+  ChartLine,
+} from 'phosphor-react';
 import { T as THEME } from '../theme';
 
 const ACCOUNT_ICONS = {
-  'Conta Corrente': faUniversity,
-  'Poupança': faPiggyBank,
-  'Carteira': faWallet,
-  'Cartão Crédito': faCreditCard,
-  'Investimentos': faChartLine,
+  'Conta Corrente': Bank,
+  'Poupança': PiggyBank,
+  'Carteira': Wallet,
+  'Cartão Crédito': CreditCard,
+  'Investimentos': ChartLine,
 };
 
 export function AccountIcon({ accountName, size = 28, color = THEME.orange }) {
-  const icon = ACCOUNT_ICONS[accountName] || faWallet;
+  const IconComponent = ACCOUNT_ICONS[accountName] || Wallet;
   return (
-    <FontAwesomeIcon icon={icon} size={size} color={color} />
+    <IconComponent size={size} weight="fill" color={color} />
   );
 }
 
 export function AccountIconCard({ accountName, size = 32, bgColor = THEME.orange }) {
-  const icon = ACCOUNT_ICONS[accountName] || faWallet;
+  const IconComponent = ACCOUNT_ICONS[accountName] || Wallet;
   return (
     <View
       style={{
@@ -38,7 +37,7 @@ export function AccountIconCard({ accountName, size = 32, bgColor = THEME.orange
         justifyContent: 'center',
       }}
     >
-      <FontAwesomeIcon icon={icon} size={size * 0.7} color={THEME.white} />
+      <IconComponent size={size * 0.7} weight="fill" color={THEME.white} />
     </View>
   );
 }

@@ -1,34 +1,33 @@
 import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
-  faTrash,
-  faFolder,
-  faCreditCard,
-  faChevronRight,
-  faChevronLeft,
-  faCheck,
-} from '@fortawesome/free-solid-svg-icons';
+  Trash,
+  Folder,
+  CreditCard,
+  CaretRight,
+  CaretLeft,
+  Check,
+} from 'phosphor-react';
 
 export function TrashIcon({ size = 20, color = '#EF4444' }) {
-  return <FontAwesomeIcon icon={faTrash} size={size} color={color} />;
+  return <Trash size={size} weight="fill" color={color} />;
 }
 
 export function FolderIcon({ size = 20, color = '#FE5E03' }) {
-  return <FontAwesomeIcon icon={faFolder} size={size} color={color} />;
+  return <Folder size={size} weight="fill" color={color} />;
 }
 
 export function CardIcon({ size = 20, color = '#FE5E03' }) {
-  return <FontAwesomeIcon icon={faCreditCard} size={size} color={color} />;
+  return <CreditCard size={size} weight="fill" color={color} />;
 }
 
 export function ChevronRightIcon({ size = 20, color = '#FE5E03' }) {
-  return <FontAwesomeIcon icon={faChevronRight} size={size} color={color} />;
+  return <CaretRight size={size} weight="fill" color={color} />;
 }
 
 export function ChevronLeftIcon({ size = 20, color = '#FFFFFF' }) {
-  return <FontAwesomeIcon icon={faChevronLeft} size={size} color={color} />;
+  return <CaretLeft size={size} weight="fill" color={color} />;
 }
 
 export function CheckIcon({ size = 16, color = '#FFFFFF' }) {
-  return <FontAwesomeIcon icon={faCheck} size={size} color={color} />;
+  return <Check size={size} weight="fill" color={color} />;
 }

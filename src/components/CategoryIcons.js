@@ -1,61 +1,60 @@
 import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
-  faUtensils,
-  faCar,
-  faHome,
-  faCapsules,
-  faGamepad,
-  faGraduationCap,
-  faTshirt,
-  faBell,
-  faChartLine,
-  faExchangeAlt,
-  faEllipsisH,
-} from '@fortawesome/free-solid-svg-icons';
+  ForkKnife,
+  Car,
+  House,
+  Pill,
+  GameController,
+  GraduationCap,
+  Tote,
+  Bell,
+  ChartLine,
+  ArrowsLeftRight,
+  DotsThree,
+} from 'phosphor-react';
 
 export function IconAlimentacao({ size = 24, color = '#fff' }) {
-  return <FontAwesomeIcon icon={faUtensils} size={size} color={color} />;
+  return <ForkKnife size={size} weight="fill" color={color} />;
 }
 
 export function IconTransporte({ size = 24, color = '#fff' }) {
-  return <FontAwesomeIcon icon={faCar} size={size} color={color} />;
+  return <Car size={size} weight="fill" color={color} />;
 }
 
 export function IconMoradia({ size = 24, color = '#fff' }) {
-  return <FontAwesomeIcon icon={faHome} size={size} color={color} />;
+  return <House size={size} weight="fill" color={color} />;
 }
 
 export function IconSaude({ size = 24, color = '#fff' }) {
-  return <FontAwesomeIcon icon={faCapsules} size={size} color={color} />;
+  return <Pill size={size} weight="fill" color={color} />;
 }
 
 export function IconLazer({ size = 24, color = '#fff' }) {
-  return <FontAwesomeIcon icon={faGamepad} size={size} color={color} />;
+  return <GameController size={size} weight="fill" color={color} />;
 }
 
 export function IconEducacao({ size = 24, color = '#fff' }) {
-  return <FontAwesomeIcon icon={faGraduationCap} size={size} color={color} />;
+  return <GraduationCap size={size} weight="fill" color={color} />;
 }
 
 export function IconVestuario({ size = 24, color = '#fff' }) {
-  return <FontAwesomeIcon icon={faTshirt} size={size} color={color} />;
+  return <Tote size={size} weight="fill" color={color} />;
 }
 
 export function IconAssinaturas({ size = 24, color = '#fff' }) {
-  return <FontAwesomeIcon icon={faBell} size={size} color={color} />;
+  return <Bell size={size} weight="fill" color={color} />;
 }
 
 export function IconInvestimentos({ size = 24, color = '#fff' }) {
-  return <FontAwesomeIcon icon={faChartLine} size={size} color={color} />;
+  return <ChartLine size={size} weight="fill" color={color} />;
 }
 
 export function IconTransferencia({ size = 24, color = '#fff' }) {
-  return <FontAwesomeIcon icon={faExchangeAlt} size={size} color={color} />;
+  return <ArrowsLeftRight size={size} weight="fill" color={color} />;
 }
 
 export function IconOutros({ size = 24, color = '#fff' }) {
-  return <FontAwesomeIcon icon={faEllipsisH} size={size} color={color} />;
+  return <DotsThree size={size} weight="fill" color={color} />;
 }
 
 // Mapa: nome da categoria → componente de ícone
