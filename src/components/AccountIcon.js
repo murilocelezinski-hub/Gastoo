@@ -1,31 +1,32 @@
 import React from 'react';
 import { View } from 'react-native';
+import FontAwesome5Icon from '@fortawesome/react-native-fontawesome';
 import {
-  BanknotesIcon,
-  CreditCardIcon,
-  WalletIcon,
-  SparklesIcon,
-  TrendingUpIcon,
-} from 'react-native-heroicons/solid';
+  faUniversity,
+  faPiggyBank,
+  faWallet,
+  faCreditCard,
+  faChartLine,
+} from '@fortawesome/free-solid-svg-icons';
 import { T as THEME } from '../theme';
 
 const ACCOUNT_ICONS = {
-  'Conta Corrente': BanknotesIcon,
-  'Poupança': SparklesIcon,
-  'Carteira': WalletIcon,
-  'Cartão Crédito': CreditCardIcon,
-  'Investimentos': TrendingUpIcon,
+  'Conta Corrente': faUniversity,
+  'Poupança': faPiggyBank,
+  'Carteira': faWallet,
+  'Cartão Crédito': faCreditCard,
+  'Investimentos': faChartLine,
 };
 
 export function AccountIcon({ accountName, size = 28, color = THEME.orange }) {
-  const IconComponent = ACCOUNT_ICONS[accountName] || WalletIcon;
+  const icon = ACCOUNT_ICONS[accountName] || faWallet;
   return (
-    <IconComponent size={size} color={color} strokeWidth={2} />
+    <FontAwesome5Icon icon={icon} size={size / 6} color={color} />
   );
 }
 
 export function AccountIconCard({ accountName, size = 32, bgColor = THEME.orange }) {
-  const IconComponent = ACCOUNT_ICONS[accountName] || WalletIcon;
+  const icon = ACCOUNT_ICONS[accountName] || faWallet;
   return (
     <View
       style={{
@@ -37,7 +38,7 @@ export function AccountIconCard({ accountName, size = 32, bgColor = THEME.orange
         justifyContent: 'center',
       }}
     >
-      <IconComponent size={size * 0.7} color={THEME.white} strokeWidth={2.5} />
+      <FontAwesome5Icon icon={icon} size={size * 0.5 / 6} color={THEME.white} />
     </View>
   );
 }
