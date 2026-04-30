@@ -719,7 +719,7 @@ function RecentTransactions({ transactions, creditCards, selectedAccount, select
                 </Text>
               </View>
               <View style={{ alignItems: 'flex-end', gap: 2 }}>
-                <Text style={[styles.recentTxValue, { color: T.burnt }]}>{hidden ? mask : `-${fmt(tx.valor)}`}</Text>
+                <Text style={[styles.recentTxValue, { color: '#EF4444' }]}>{hidden ? mask : `-${fmt(tx.valor)}`}</Text>
                 <Text style={[styles.recentInvoiceChevron, { opacity: 0.5 }]}>›</Text>
               </View>
             </TouchableOpacity>
@@ -735,10 +735,10 @@ function RecentTransactions({ transactions, creditCards, selectedAccount, select
             <CatIcon category={tx.categoria} size={40} />
             <View style={{ flex: 1 }}>
               <Text style={styles.recentTxDesc} numberOfLines={1}>{tx.descricao}</Text>
-              <Text style={styles.recentTxMeta}>{tx.categoria}{tx.data ? ` · ${tx.data.slice(0, 5)}` : ''}</Text>
+              <Text style={styles.recentTxMeta}>{tx.categoria}{tx.data ? ` · ${tx.data}` : ''}</Text>
             </View>
             <View style={{ alignItems: 'flex-end', flexDirection: 'row', flexShrink: 0 }}>
-              <Text style={[styles.recentTxValue, { color: tx.tipo === 'entrada' ? T.gold : T.burnt }]}>
+              <Text style={[styles.recentTxValue, { color: tx.tipo === 'entrada' ? '#22C55E' : '#EF4444' }]}>
                 {tx.tipo === 'entrada' ? '+' : '-'}{hidden ? mask : fmt(tx.valor)}
               </Text>
               {tx.origin?.type === 'openFinance' ? (
@@ -970,14 +970,14 @@ export default function DashboardScreen({ navigation }) {
                 <View style={styles.miniSection}>
                   <View style={styles.miniBlock}>
                     <Text style={styles.miniLabel}>{selectedCard ? 'Créditos' : 'Entradas'}</Text>
-                    <Text style={[styles.miniValue, { color: '#FEB506' }]}>
+                    <Text style={[styles.miniValue, { color: '#86EFAC' }]}>
                       {hidden ? mask : `+${fmt(totalIn)}`}
                     </Text>
                   </View>
                   <View style={styles.miniBlockSep} />
                   <View style={styles.miniBlock}>
                     <Text style={styles.miniLabel}>{selectedCard ? 'Compras' : 'Saídas'}</Text>
-                    <Text style={[styles.miniValue, { color: 'rgba(255,255,255,0.92)' }]}>
+                    <Text style={[styles.miniValue, { color: '#FCA5A5' }]}>
                       {hidden ? mask : `-${fmt(totalOut)}`}
                     </Text>
                   </View>
@@ -1054,30 +1054,6 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.sectionLabel}>Contas</Text>
             {isDesktop ? (
               <View style={styles.accountsRow}>
-                <TouchableOpacity
-                  style={[styles.accountCard, !selectedAccount && !selectedCard && styles.accountCardActive]}
-                  onPress={() => {
-                    setSelectedAccount(null);
-                    setSelectedCard(null);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.accountCardIcon}>🌐</Text>
-                  <View>
-                    <Text style={[styles.accountCardName, !selectedAccount && !selectedCard && styles.accountCardNameActive]}>
-                      Geral
-                    </Text>
-                    <Text
-                      style={[
-                        styles.accountCardBalance,
-                        !selectedAccount && !selectedCard && styles.accountCardBalanceActive,
-                      ]}
-                    >
-                      {hidden ? mask : fmt(totalBalance(accounts, transactions))}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-
                 {act.map((ac) => {
                   const isActive = !selectedCard && selectedAccount === ac.id;
                   const bal = balanceForAccount(accounts, transactions, ac.id);
@@ -1101,30 +1077,6 @@ export default function DashboardScreen({ navigation }) {
               </View>
             ) : (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountsRow}>
-                <TouchableOpacity
-                  style={[styles.accountCard, !selectedAccount && !selectedCard && styles.accountCardActive]}
-                  onPress={() => {
-                    setSelectedAccount(null);
-                    setSelectedCard(null);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.accountCardIcon}>🌐</Text>
-                  <View>
-                    <Text style={[styles.accountCardName, !selectedAccount && !selectedCard && styles.accountCardNameActive]}>
-                      Geral
-                    </Text>
-                    <Text
-                      style={[
-                        styles.accountCardBalance,
-                        !selectedAccount && !selectedCard && styles.accountCardBalanceActive,
-                      ]}
-                    >
-                      {hidden ? mask : fmt(totalBalance(accounts, transactions))}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-
                 {act.map((ac) => {
                   const isActive = !selectedCard && selectedAccount === ac.id;
                   const bal = balanceForAccount(accounts, transactions, ac.id);
