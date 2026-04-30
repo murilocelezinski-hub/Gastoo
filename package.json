@@ -13,7 +13,6 @@
     "test": "jest"
   },
   "dependencies": {
-    "@arcanishq/react-bank-icons": "^0.1.15",
     "@expo-google-fonts/poppins": "^0.4.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "^8.4.4",
@@ -30,6 +29,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-native": "0.81.5",
+    "react-native-brazil-bank-icons": "^1.0.2",
     "react-native-heroicons": "^4.0.0",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",

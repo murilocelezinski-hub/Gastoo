@@ -1,16 +1,16 @@
 import React from 'react';
 import { View } from 'react-native';
-import * as BankIcons from '@arcanishq/react-bank-icons';
-import Svg, { Circle, Rect, Text as SvgText } from 'react-native-svg';
+import BankIcon from 'react-native-brazil-bank-icons';
+import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 
-const BANK_LOGO_MAP = {
-  'Nubank': 'Nubank',
-  'Itaú': 'Itau',
-  'Bradesco': 'Bradesco',
-  'Inter': 'Inter',
-  'C6 Bank': 'C6',
-  'Santander': 'Santander',
-  'XP': 'Xp',
+const BANK_COMPE_MAP = {
+  'Nubank': '260',
+  'Itaú': '341',
+  'Bradesco': '237',
+  'Inter': '077',
+  'C6 Bank': '336',
+  'Santander': '033',
+  'XP': '348',
 };
 
 function BankFallback({ bankColor, bankInitial, size }) {
@@ -33,14 +33,13 @@ function BankFallback({ bankColor, bankInitial, size }) {
   );
 }
 
-export default function BankIcon({ bankName, bankColor, bankInitial, size = 32 }) {
-  const bankKey = BANK_LOGO_MAP[bankName];
+export default function BankIconComponent({ bankName, bankColor, bankInitial, size = 32 }) {
+  const compeCode = BANK_COMPE_MAP[bankName];
 
-  if (bankKey && BankIcons[bankKey]) {
-    const BankComponent = BankIcons[bankKey];
+  if (compeCode) {
     return (
       <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
-        <BankComponent width={size} height={size} />
+        <BankIcon COMPE={compeCode} size={size} quality="high" />
       </View>
     );
   }
