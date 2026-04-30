@@ -122,7 +122,7 @@ export function AppPreferencesProvider({ children }) {
         error = 'Já existe uma categoria com esse nome.';
         return prev;
       }
-      return [...prev, { name: n, color: color || '#BCBCB8', icon: icon || '📁' }];
+      return [...prev, { name: n, color: color || '#BCBCB8', icon: icon || 'Folder' }];
     });
     return error ? { ok: false, error } : { ok: true };
   }, []);

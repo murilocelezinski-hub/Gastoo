@@ -16,6 +16,7 @@ import { Header, PrimaryButton, ConfirmModal } from '../components/Shared';
 import { TrashIcon } from '../components/ActionIcons';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { useFinance } from '../context/FinanceContext';
+import PhosphorIconByName from '../components/PhosphorIconByName';
 
 const PRESET_COLORS = [
   '#FE5E03',
@@ -51,58 +52,57 @@ const PRESET_COLORS = [
 ];
 
 const PRESET_ICONS = [
-  '🍽',
-  '🚗',
-  '🏠',
-  '💊',
-  '🎮',
-  '📚',
-  '👕',
-  '📱',
-  '📈',
-  '📦',
-  '🎁',
-  '⚡',
-  '🏥',
-  '✈️',
-  '🐕',
-  '🐱',
-  '☕',
-  '🍕',
-  '🎬',
-  '🎵',
-  '⚽',
-  '🧾',
-  '💡',
-  '🔧',
-  '🧹',
-  '👶',
-  '💼',
-  '🛒',
-  '🚲',
-  '🏋️',
-  '🎨',
-  '📝',
-  '💻',
-  '🌐',
-  '🎯',
-  '🍔',
-  '🥗',
-  '🍺',
-  '☂️',
-  '🎓',
-  '🔑',
-  '🛠',
-  '🧴',
-  '🪴',
-  '🎸',
-  '📷',
-  '🚕',
-  '⛽',
-  '🏖',
-  '🎂',
-  '💳',
-  '🧸',
+  'ForkKnife',
+  'Car',
+  'House',
+  'Pill',
+  'GameController',
+  'Books',
+  'TShirt',
+  'DeviceMobile',
+  'ChartLine',
+  'Package',
+  'Gift',
+  'Lightning',
+  'Hospital',
+  'Airplane',
+  'Dog',
+  'Cat',
+  'Coffee',
+  'Pizza',
+  'FilmSlate',
+  'MusicNote',
+  'SoccerBall',
+  'Receipt',
+  'Lightbulb',
+  'Wrench',
+  'Broom',
+  'Baby',
+  'Briefcase',
+  'ShoppingCart',
+  'Bicycle',
+  'Barbell',
+  'PaintBrush',
+  'NotePencil',
+  'Laptop',
+  'Globe',
+  'Target',
+  'Hamburger',
+  'BowlFood',
+  'Beer',
+  'Umbrella',
+  'GraduationCap',
+  'Key',
+  'Toolbox',
+  'Sparkle',
+  'Guitar',
+  'Camera',
+  'Taxi',
+  'GasPump',
+  'Beach',
+  'Cake',
+  'CreditCard',
+  'TrendUp',
 ];
 
 const PROTECTED = new Set(['Transferência', 'Outros']);
@@ -116,7 +116,7 @@ export default function CategoriesSettingsScreen({ navigation }) {
   const [modalMode, setModalMode] = useState('add');
   const [editingOriginalName, setEditingOriginalName] = useState(null);
   const [name, setName] = useState('');
-  const [icon, setIcon] = useState('📁');
+  const [icon, setIcon] = useState('Folder');
   const [color, setColor] = useState(PRESET_COLORS[0]);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [err, setErr] = useState('');
@@ -133,7 +133,7 @@ export default function CategoriesSettingsScreen({ navigation }) {
     setModalMode('add');
     setEditingOriginalName(null);
     setName('');
-    setIcon('📁');
+    setIcon('Folder');
     setColor(PRESET_COLORS[0]);
     setErr('');
     setModalVisible(true);
@@ -143,7 +143,7 @@ export default function CategoriesSettingsScreen({ navigation }) {
     setModalMode('edit');
     setEditingOriginalName(cat.name);
     setName(cat.name);
-    setIcon(cat.icon || '📁');
+    setIcon(cat.icon || 'Folder');
     setColor(cat.color || PRESET_COLORS[0]);
     setErr('');
     setModalVisible(true);
@@ -227,7 +227,7 @@ export default function CategoriesSettingsScreen({ navigation }) {
               activeOpacity={0.75}
             >
               <View style={[styles.iconBox, { backgroundColor: item.color }]}>
-                <Text style={{ fontSize: 22 }}>{item.icon}</Text>
+                <PhosphorIconByName name={item.icon || 'Folder'} size={22} color="#fff" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowName, { color: theme.graphite }]}>{item.name}</Text>
@@ -274,7 +274,7 @@ export default function CategoriesSettingsScreen({ navigation }) {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
                 {PRESET_ICONS.map((ic) => (
                   <TouchableOpacity key={ic} onPress={() => setIcon(ic)} style={[styles.iconPill, icon === ic && { borderColor: theme.orange }]}>
-                    <Text style={{ fontSize: 22 }}>{ic}</Text>
+                    <PhosphorIconByName name={ic} size={22} color={theme.graphite} />
                   </TouchableOpacity>
                 ))}
               </ScrollView>

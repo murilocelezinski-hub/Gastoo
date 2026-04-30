@@ -149,8 +149,8 @@ function ensureInvoiceFieldsForTx(tx, creditCards) {
 
 function seedAccounts() {
   return [
-    { id: DEFAULT_ACCOUNT_ID, name: 'Conta Corrente', icon: '🏦', saldoInicial: 4100, archived: false },
-    { id: ACC_SEED_POUP, name: 'Poupança', icon: '💰', saldoInicial: 1200, archived: false },
+    { id: DEFAULT_ACCOUNT_ID, name: 'Conta Corrente', icon: 'Bank', saldoInicial: 4100, archived: false },
+    { id: ACC_SEED_POUP, name: 'Poupança', icon: 'PiggyBank', saldoInicial: 1200, archived: false },
   ];
 }
 
@@ -291,7 +291,7 @@ function seedCreditCards() {
     {
       id: CARD_SEED_DEMO,
       name: 'Cartão 1',
-      icon: '💳',
+      icon: 'CreditCard',
       limite: 10000,
       diaFechamento: 5,
       diaVencimento: 10,
@@ -480,7 +480,7 @@ export function FinanceProvider({ children }) {
     const ac = {
       id,
       name: name.trim(),
-      icon: icon || '🏦',
+      icon: icon || 'Bank',
       saldoInicial: Number(saldoInicial) || 0,
       archived: false,
     };
@@ -528,7 +528,7 @@ export function FinanceProvider({ children }) {
     const card = {
       id,
       name: name.trim(),
-      icon: icon || '💳',
+      icon: icon || 'CreditCard',
       limite: Number(limite) || 0,
       diaFechamento: Math.min(31, Math.max(1, parseInt(diaFechamento, 10) || 10)),
       diaVencimento: Math.min(31, Math.max(1, parseInt(diaVencimento, 10) || 15)),

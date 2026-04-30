@@ -17,6 +17,8 @@ import { TrashIcon } from '../components/ActionIcons';
 import { useFinance, activeAccounts, accountName } from '../context/FinanceContext';
 import { useThemeColors } from '../context/AppPreferencesContext';
 import { useResponsiveLayout } from '../utils/responsiveLayout';
+import PhosphorIconByName from '../components/PhosphorIconByName';
+import { Archive } from 'phosphor-react-native';
 
 function createCreditCardsStyles(T, isDesktop) {
   return StyleSheet.create({
@@ -159,7 +161,7 @@ export default function CreditCardsScreen({ navigation }) {
   const act = useMemo(() => activeAccounts(accounts), [accounts]);
 
   const [name, setName] = useState('');
-  const [icon, setIcon] = useState('💳');
+  const [icon, setIcon] = useState('CreditCard');
   const [limiteRaw, setLimiteRaw] = useState('');
   const [diaFech, setDiaFech] = useState('10');
   const [diaVen, setDiaVen] = useState('15');
@@ -172,7 +174,7 @@ export default function CreditCardsScreen({ navigation }) {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [editTarget, setEditTarget] = useState(null);
   const [editName, setEditName] = useState('');
-  const [editIcon, setEditIcon] = useState('💳');
+  const [editIcon, setEditIcon] = useState('CreditCard');
   const [editLimiteRaw, setEditLimiteRaw] = useState('');
   const [editDiaFech, setEditDiaFech] = useState('10');
   const [editDiaVen, setEditDiaVen] = useState('15');
@@ -208,7 +210,7 @@ export default function CreditCardsScreen({ navigation }) {
     setError('');
     setEditTarget(c);
     setEditName(c.name);
-    setEditIcon(c.icon || '💳');
+    setEditIcon(c.icon || 'CreditCard');
     setEditLimiteRaw(c.limite ? Number(c.limite).toFixed(2) : '');
     setEditDiaFech(String(c.diaFechamento ?? 10));
     setEditDiaVen(String(c.diaVencimento ?? 15));
@@ -271,7 +273,7 @@ export default function CreditCardsScreen({ navigation }) {
   const openAdd = () => {
     setError('');
     setName('');
-    setIcon('💳');
+    setIcon('CreditCard');
     setLimiteRaw('');
     setDiaFech('10');
     setDiaVen('15');
@@ -303,7 +305,7 @@ export default function CreditCardsScreen({ navigation }) {
       style={styles.headerArchiveBtn}
       accessibilityLabel="Ver cartões arquivados"
     >
-      <Text style={{ fontSize: 22, color: T.brandFg }}>🗃️</Text>
+      <Archive size={22} color={T.brandFg} />
       {cardsArchived.length > 0 ? (
         <View style={styles.archiveBadge}>
           <Text style={styles.archiveBadgeText}>{cardsArchived.length > 9 ? '9+' : cardsArchived.length}</Text>
@@ -350,7 +352,7 @@ export default function CreditCardsScreen({ navigation }) {
                 onPress={() => openEdit(c)}
                 activeOpacity={0.65}
               >
-                <Text style={styles.rowIcon}>{c.icon}</Text>
+                <PhosphorIconByName name={c.icon || 'CreditCard'} size={22} color={T.graphite} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.rowName}>{c.name}</Text>
                   <Text style={styles.rowMeta}>
@@ -442,7 +444,7 @@ export default function CreditCardsScreen({ navigation }) {
                       onPress={() => setIcon(p.icon)}
                       style={[styles.iconPill, icon === p.icon && styles.iconPillActive, { backgroundColor: T.white }]}
                     >
-                      <Text style={styles.iconEmoji}>{p.icon}</Text>
+                      <PhosphorIconByName name={p.icon} size={22} color={T.graphite} />
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -456,7 +458,7 @@ export default function CreditCardsScreen({ navigation }) {
                       onPress={() => setLinkAccountId(ac.id)}
                       style={[styles.accountPill, linkAccountId === ac.id && styles.accountPillActive, { backgroundColor: T.white }]}
                     >
-                      <Text style={styles.accountIcon}>{ac.icon}</Text>
+                      <PhosphorIconByName name={ac.icon || 'Bank'} size={20} color={T.graphite} />
                       <Text style={[styles.accountText, linkAccountId === ac.id && styles.accountTextActive]}>{ac.name}</Text>
                     </TouchableOpacity>
                   ))}
@@ -542,7 +544,7 @@ export default function CreditCardsScreen({ navigation }) {
                     onPress={() => setEditIcon(p.icon)}
                     style={[styles.iconPill, editIcon === p.icon && styles.iconPillActive]}
                   >
-                    <Text style={styles.iconEmoji}>{p.icon}</Text>
+                    <PhosphorIconByName name={p.icon} size={22} color={T.graphite} />
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -556,7 +558,7 @@ export default function CreditCardsScreen({ navigation }) {
                     onPress={() => setEditLinkAccountId(ac.id)}
                     style={[styles.accountPill, editLinkAccountId === ac.id && styles.accountPillActive]}
                   >
-                    <Text style={styles.accountIcon}>{ac.icon}</Text>
+                    <PhosphorIconByName name={ac.icon || 'Bank'} size={20} color={T.graphite} />
                     <Text style={[styles.accountText, editLinkAccountId === ac.id && styles.accountTextActive]}>{ac.name}</Text>
                   </TouchableOpacity>
                 ))}
@@ -605,7 +607,7 @@ export default function CreditCardsScreen({ navigation }) {
               ) : (
                 cardsArchived.map((c) => (
                   <View key={c.id} style={[styles.row, { marginBottom: 10 }]}>
-                    <Text style={styles.rowIcon}>{c.icon}</Text>
+                    <PhosphorIconByName name={c.icon || 'CreditCard'} size={22} color={T.graphite} />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.rowName}>{c.name}</Text>
                       <Text style={styles.rowMeta}>Conta: {accountName(accounts, c.accountId)}</Text>

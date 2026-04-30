@@ -36,11 +36,11 @@ export const DEFAULT_CATEGORIES = [
 export const CATEGORIES = DEFAULT_CATEGORIES;
 
 export const ACCOUNTS = [
-  { name: 'Conta Corrente', icon: '🏦' },
-  { name: 'Poupança',       icon: '💰' },
-  { name: 'Carteira',       icon: '👛' },
-  { name: 'Cartão Crédito', icon: '💳' },
-  { name: 'Investimentos',  icon: '📈' },
+  { name: 'Conta Corrente', icon: 'Bank' },
+  { name: 'Poupança',       icon: 'PiggyBank' },
+  { name: 'Carteira',       icon: 'Wallet' },
+  { name: 'Cartão Crédito', icon: 'CreditCard' },
+  { name: 'Investimentos',  icon: 'TrendUp' },
 ];
 
 export const fmt = (v) =>

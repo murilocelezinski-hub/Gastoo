@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import PhosphorIconByName from '../components/PhosphorIconByName';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../context/AppPreferencesContext';
@@ -354,7 +355,7 @@ export default function NewTransactionScreen({ navigation, route }) {
                           style={[styles.accountPill, accountId === ac.id && styles.accountPillActive]}
                           activeOpacity={0.7}
                         >
-                          <Text style={styles.accountIcon}>{ac.icon}</Text>
+                          <PhosphorIconByName name={ac.icon || 'Bank'} size={18} color="#333" />
                           <Text style={[styles.accountText, accountId === ac.id && styles.accountTextActive]}>{ac.name}</Text>
                         </TouchableOpacity>
                       ))}
@@ -372,7 +373,7 @@ export default function NewTransactionScreen({ navigation, route }) {
                             style={[styles.accountPill, creditCardId === c.id && styles.accountPillActive]}
                             activeOpacity={0.7}
                           >
-                            <Text style={styles.accountIcon}>{c.icon}</Text>
+                            <PhosphorIconByName name={c.icon || 'CreditCard'} size={18} color="#333" />
                             <Text style={[styles.accountText, creditCardId === c.id && styles.accountTextActive]}>{c.name}</Text>
                           </TouchableOpacity>
                         ))}
@@ -561,7 +562,7 @@ export default function NewTransactionScreen({ navigation, route }) {
                       style={[styles.accountPill, origem === ac.id && styles.accountPillActive]}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.accountIcon}>{ac.icon}</Text>
+                      <PhosphorIconByName name={ac.icon || 'Bank'} size={18} color="#333" />
                       <Text style={[styles.accountText, origem === ac.id && styles.accountTextActive]}>{ac.name}</Text>
                     </TouchableOpacity>
                   ))}
@@ -578,7 +579,7 @@ export default function NewTransactionScreen({ navigation, route }) {
                       style={[styles.accountPill, destino === ac.id && styles.accountPillActive]}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.accountIcon}>{ac.icon}</Text>
+                      <PhosphorIconByName name={ac.icon || 'Bank'} size={18} color="#333" />
                       <Text style={[styles.accountText, destino === ac.id && styles.accountTextActive]}>{ac.name}</Text>
                     </TouchableOpacity>
                   ))}

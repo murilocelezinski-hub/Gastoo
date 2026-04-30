@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polyline, Polygon, Line, Circle, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
-import { CreditCard, User } from 'phosphor-react';
+import { CreditCard, User, Bell, Eye, EyeSlash } from 'phosphor-react-native';
 import { ChevronRightIcon } from '../components/ActionIcons';
 import { fmt, T } from '../theme';
 import {
@@ -753,7 +753,7 @@ function RecentTransactions({ transactions, creditCards, selectedAccount, select
               {tx.origin?.type === 'openFinance' ? (
                 <BankIcon bankName={tx.origin.bankName} bankColor={tx.origin.bankColor} bankInitial={tx.origin.bankInitial} size={16} />
               ) : tx.origin?.type === 'notification' ? (
-                <Text style={{ fontSize: 10, marginLeft: 4 }}>🔔</Text>
+                <Bell size={12} color={T.grayMed} style={{ marginLeft: 4 }} />
               ) : null}
             </View>
           </TouchableOpacity>
@@ -967,7 +967,7 @@ export default function DashboardScreen({ navigation }) {
                 <View style={styles.saldoHeader}>
                   <Text style={styles.saldoLabel}>{saldoLabel}</Text>
                   <TouchableOpacity onPress={() => setHidden(!hidden)} hitSlop={12} style={styles.eyeBtn}>
-                    <Text style={styles.eyeIcon}>{hidden ? '👁' : '🙈'}</Text>
+                    {hidden ? <Eye size={20} color={T.white} /> : <EyeSlash size={20} color={T.white} />}
                   </TouchableOpacity>
                 </View>
 

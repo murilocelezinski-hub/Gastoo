@@ -17,6 +17,8 @@ import { TrashIcon } from '../components/ActionIcons';
 import { useFinance, balanceForAccount, activeAccounts } from '../context/FinanceContext';
 import { useThemeColors } from '../context/AppPreferencesContext';
 import { useResponsiveLayout } from '../utils/responsiveLayout';
+import PhosphorIconByName from '../components/PhosphorIconByName';
+import { Archive } from 'phosphor-react-native';
 
 function createAccountsStyles(T, isDesktop) {
   return StyleSheet.create({
@@ -323,7 +325,7 @@ export default function AccountsScreen({ navigation }) {
       style={styles.headerArchiveBtn}
       accessibilityLabel="Ver contas arquivadas"
     >
-      <Text style={{ fontSize: 22, color: T.brandFg }}>🗃️</Text>
+      <Archive size={22} color={T.brandFg} />
       {archived.length > 0 ? (
         <View style={styles.archiveBadge}>
           <Text style={styles.archiveBadgeText}>{archived.length > 9 ? '9+' : archived.length}</Text>
@@ -373,7 +375,7 @@ export default function AccountsScreen({ navigation }) {
                   onPress={() => openEdit(ac)}
                   activeOpacity={0.65}
                 >
-                  <Text style={styles.rowIcon}>{ac.icon}</Text>
+                  <PhosphorIconByName name={ac.icon || 'Bank'} size={22} color={T.graphite} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.rowName}>{ac.name}</Text>
                     <Text style={styles.rowMeta}>
@@ -430,7 +432,7 @@ export default function AccountsScreen({ navigation }) {
                       onPress={() => setIcon(p.icon)}
                       style={[styles.iconPill, icon === p.icon && styles.iconPillActive]}
                     >
-                      <Text style={styles.iconEmoji}>{p.icon}</Text>
+                      <PhosphorIconByName name={p.icon} size={22} color={T.graphite} />
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -531,7 +533,7 @@ export default function AccountsScreen({ navigation }) {
                   const bal = balanceForAccount(accounts, transactions, ac.id);
                   return (
                     <View key={ac.id} style={[styles.row, { marginBottom: 10 }]}>
-                      <Text style={styles.rowIcon}>{ac.icon}</Text>
+                      <PhosphorIconByName name={ac.icon || 'Bank'} size={22} color={T.graphite} />
                       <View style={{ flex: 1 }}>
                         <Text style={styles.rowName}>{ac.name}</Text>
                         <Text style={styles.rowMeta}>Atual {fmt(bal)}</Text>
