@@ -16,8 +16,8 @@ export const T = {
   grayLight: '#CBCBC7',
   grayVLight: '#DEDEDC',
   offWhite: '#F5F5F3',
-  positive: '#22C55E',
-  negative: '#EF4444',
+  positive: '#166534',
+  negative: '#B91C1C',
 };
 
 export const DEFAULT_CATEGORIES = [

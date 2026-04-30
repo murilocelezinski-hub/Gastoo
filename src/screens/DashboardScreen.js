@@ -736,12 +736,12 @@ function createStyles(T, isDesktop, isMobile) {
     },
     reviewBtnDismiss: {
       flex: 1,
-      backgroundColor: 'rgba(255,255,255,0.06)',
+      backgroundColor: 'rgba(252,165,165,0.15)',
       borderRadius: 8,
       paddingVertical: 8,
       alignItems: 'center',
       borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.1)',
+      borderColor: 'rgba(252,165,165,0.3)',
     },
     reviewBtnText: {
       fontFamily: 'Poppins_600SemiBold',
