@@ -8,12 +8,11 @@ import {
   StyleSheet,
   useWindowDimensions,
   PanResponder,
-  ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polyline, Polygon, Line, Circle, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
-import { CreditCard, User, Bell, Eye, EyeSlash } from 'phosphor-react';
-import { ChevronRightIcon } from '../components/ActionIcons';
+import { CreditCard, User, Bell, Eye, EyeSlash, LinkSimple } from 'phosphor-react';
 import { fmt, T } from '../theme';
 import {
   useFinance,
@@ -31,7 +30,6 @@ import BankIcon from '../components/BankIcon';
 import { AccountIcon } from '../components/AccountIcon';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { buildBalanceEvolutionSeries, parseBrDate } from '../utils/chart';
-import { formatLastSync } from '../services/openFinanceService';
 import { sortTransactionsByDate } from '../utils/txSort';
 import { useResponsiveLayout, useMainLayoutDimensions } from '../utils/responsiveLayout';
 
@@ -616,6 +614,142 @@ function createStyles(T, isDesktop, isMobile) {
       marginTop: -2,
       lineHeight: isDesktop ? 36 : 34,
     },
+
+    /* ── Open Finance Section ── */
+    openFinanceSection: {
+      paddingHorizontal: isDesktop ? 40 : 20,
+      paddingBottom: 12,
+      gap: 8,
+    },
+    openFinancePill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      backgroundColor: T.homeGlass,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: 'rgba(254,94,3,0.1)',
+    },
+    pillIconAndTitle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      flex: 1,
+    },
+    pillTextContainer: {
+      flex: 1,
+    },
+    pillTitle: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 12,
+      color: T.brandFg,
+    },
+    pillSubtitle: {
+      fontFamily: 'Poppins_300Light',
+      fontSize: 10,
+      color: T.brandFgMuted,
+      marginTop: 2,
+    },
+    notifBadge: {
+      backgroundColor: T.orange,
+      borderRadius: 10,
+      width: 20,
+      height: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    notifBadgeText: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 10,
+      color: '#FFFFFF',
+    },
+
+    /* ── Notification Modal ── */
+    notifModalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'flex-end',
+    },
+    notifModalContent: {
+      backgroundColor: T.chocolate,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      maxHeight: '80%',
+      paddingTop: 12,
+    },
+    notifModalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: 'rgba(255,255,255,0.1)',
+    },
+    notifModalTitle: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 14,
+      color: T.brandFg,
+    },
+    notifModalCloseBtn: {
+      width: 32,
+      height: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    notifModalCloseText: {
+      fontSize: 20,
+      color: T.brandFgMuted,
+    },
+    notifModalList: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+    },
+    notifItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      marginBottom: 8,
+      backgroundColor: 'rgba(255,255,255,0.04)',
+      borderRadius: 6,
+    },
+    notifItemLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      flex: 1,
+    },
+    notifItemIcon: {
+      marginRight: 2,
+    },
+    notifItemDesc: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 11,
+      color: T.brandFg,
+      maxWidth: '90%',
+    },
+    notifItemDate: {
+      fontFamily: 'Poppins_300Light',
+      fontSize: 9,
+      color: T.brandFgMuted,
+      marginTop: 2,
+    },
+    notifItemValue: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 11,
+      marginLeft: 8,
+    },
+    notifEmptyText: {
+      fontFamily: 'Poppins_300Light',
+      fontSize: 11,
+      color: T.brandFgMuted,
+      textAlign: 'center',
+      paddingVertical: 20,
+    },
   });
 }
 
@@ -781,7 +915,18 @@ export default function DashboardScreen({ navigation }) {
   const [balanceMode, setBalanceMode] = useState('current_month');
   const [inOutMonth, setInOutMonth] = useState(() => new Date().getMonth() + 1);
   const [inOutYear, setInOutYear] = useState(() => new Date().getFullYear());
+  const [showNotifModal, setShowNotifModal] = useState(false);
   const mask = '••••••';
+
+  const notificationCount = useMemo(
+    () => transactions.filter(t => t.origin?.type === 'notification').length,
+    [transactions]
+  );
+
+  const notificationTransactions = useMemo(
+    () => transactions.filter(t => t.origin?.type === 'notification'),
+    [transactions]
+  );
 
   const prevInOut = offsetMonth(inOutMonth, inOutYear, -1);
   const nextInOut = offsetMonth(inOutMonth, inOutYear, +1);
@@ -929,26 +1074,48 @@ export default function DashboardScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Indicador de sincronização Open Finance */}
-      {isSyncing ? (
-        <View style={styles.syncRow}>
-          <ActivityIndicator size="small" color={T.orange} />
-          <Text style={styles.syncText}>Sincronizando...</Text>
-        </View>
-      ) : lastSync ? (
-        <View style={styles.syncRow}>
-          <Text style={styles.syncDot}>●</Text>
-          <Text style={styles.syncText}>{formatLastSync(lastSync)}</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('OpenFinanceOnboarding')} style={styles.syncLink}>
-            <Text style={styles.syncLinkText}>Gerenciar</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <TouchableOpacity style={[styles.syncRow, { flexDirection: 'row', alignItems: 'center', gap: 8 }]} onPress={() => navigation.navigate('OpenFinanceOnboarding')}>
-          <Text style={styles.syncTextMuted}>Conectar banco</Text>
-          <ChevronRightIcon size={14} color={T.brandFgMuted} />
+      {/* Status Open Finance e Revisar Notificações */}
+      <View style={styles.openFinanceSection}>
+        {/* Status Open Finance */}
+        <TouchableOpacity
+          style={styles.openFinancePill}
+          onPress={() => navigation.navigate('OpenFinanceOnboarding')}
+          activeOpacity={0.75}
+        >
+          <View style={styles.pillIconAndTitle}>
+            <LinkSimple size={16} color={T.orange} weight="fill" />
+            <View style={styles.pillTextContainer}>
+              <Text style={styles.pillTitle}>Status Open Finance</Text>
+              <Text style={styles.pillSubtitle}>
+                {isSyncing ? 'Sincronizando...' : lastSync ? 'Conectado' : 'Habilitar'}
+              </Text>
+            </View>
+          </View>
+          {lastSync && <Text style={styles.syncDot}>●</Text>}
         </TouchableOpacity>
-      )}
+
+        {/* Revisar Notificações */}
+        {notificationCount > 0 && (
+          <TouchableOpacity
+            style={styles.openFinancePill}
+            onPress={() => setShowNotifModal(true)}
+            activeOpacity={0.75}
+          >
+            <View style={styles.pillIconAndTitle}>
+              <Bell size={16} color={T.orange} weight="fill" />
+              <View style={styles.pillTextContainer}>
+                <Text style={styles.pillTitle}>Revisar Notificações</Text>
+                <Text style={styles.pillSubtitle}>
+                  {notificationCount} {notificationCount === 1 ? 'transação' : 'transações'}
+                </Text>
+              </View>
+            </View>
+            <View style={[styles.notifBadge]}>
+              <Text style={styles.notifBadgeText}>{notificationCount}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -1190,6 +1357,68 @@ export default function DashboardScreen({ navigation }) {
           navigation={navigation}
         />
       </ScrollView>
+
+      {/* Modal de Notificações */}
+      <Modal
+        visible={showNotifModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowNotifModal(false)}
+      >
+        <View style={styles.notifModalOverlay}>
+          <View style={styles.notifModalContent}>
+            <View style={styles.notifModalHeader}>
+              <Text style={styles.notifModalTitle}>Notificações Importadas</Text>
+              <TouchableOpacity
+                onPress={() => setShowNotifModal(false)}
+                style={styles.notifModalCloseBtn}
+              >
+                <Text style={styles.notifModalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={styles.notifModalList}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 20 }}
+            >
+              {notificationTransactions.length > 0 ? (
+                notificationTransactions.map((tx, idx) => {
+                  const isSaida = tx.tipo === 'saída';
+                  return (
+                    <View key={idx} style={styles.notifItem}>
+                      <View style={styles.notifItemLeft}>
+                        <Bell
+                          size={16}
+                          color={T.orange}
+                          weight="fill"
+                          style={styles.notifItemIcon}
+                        />
+                        <View>
+                          <Text style={styles.notifItemDesc} numberOfLines={1}>
+                            {tx.descricao}
+                          </Text>
+                          <Text style={styles.notifItemDate}>{tx.data}</Text>
+                        </View>
+                      </View>
+                      <Text
+                        style={[
+                          styles.notifItemValue,
+                          { color: isSaida ? '#FCA5A5' : '#86EFAC' },
+                        ]}
+                      >
+                        {isSaida ? '-' : '+'}{fmt(tx.valor)}
+                      </Text>
+                    </View>
+                  );
+                })
+              ) : (
+                <Text style={styles.notifEmptyText}>Nenhuma notificação importada</Text>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       <TouchableOpacity
         style={styles.fab}
