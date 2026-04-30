@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import FontAwesome5Icon from '@fortawesome/react-native-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
   faUniversity,
   faPiggyBank,
@@ -21,7 +21,7 @@ const ACCOUNT_ICONS = {
 export function AccountIcon({ accountName, size = 28, color = THEME.orange }) {
   const icon = ACCOUNT_ICONS[accountName] || faWallet;
   return (
-    <FontAwesome5Icon icon={icon} size={size / 6} color={color} />
+    <FontAwesomeIcon icon={icon} size={size} color={color} />
   );
 }
 
@@ -38,7 +38,7 @@ export function AccountIconCard({ accountName, size = 32, bgColor = THEME.orange
         justifyContent: 'center',
       }}
     >
-      <FontAwesome5Icon icon={icon} size={size * 0.5 / 6} color={THEME.white} />
+      <FontAwesomeIcon icon={icon} size={size * 0.7} color={THEME.white} />
     </View>
   );
 }
