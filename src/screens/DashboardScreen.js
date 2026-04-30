@@ -877,7 +877,7 @@ function RecentTransactions({ transactions, creditCards, selectedAccount, select
                 </Text>
               </View>
               <View style={{ alignItems: 'flex-end', gap: 2 }}>
-                <Text style={[styles.recentTxValue, { color: '#EF4444' }]}>{hidden ? mask : `-${fmt(tx.valor)}`}</Text>
+                <Text style={[styles.recentTxValue, { color: T.negative }]}>{hidden ? mask : `-${fmt(tx.valor)}`}</Text>
                 <Text style={[styles.recentInvoiceChevron, { opacity: 0.5 }]}>›</Text>
               </View>
             </TouchableOpacity>
@@ -896,7 +896,7 @@ function RecentTransactions({ transactions, creditCards, selectedAccount, select
               <Text style={styles.recentTxMeta}>{tx.categoria}{tx.data ? ` · ${tx.data}` : ''}</Text>
             </View>
             <View style={{ alignItems: 'flex-end', flexDirection: 'row', flexShrink: 0 }}>
-              <Text style={[styles.recentTxValue, { color: tx.tipo === 'entrada' ? '#22C55E' : '#EF4444' }]}>
+              <Text style={[styles.recentTxValue, { color: tx.tipo === 'entrada' ? T.positive : T.negative }]}>
                 {tx.tipo === 'entrada' ? '+' : '-'}{hidden ? mask : fmt(tx.valor)}
               </Text>
               {tx.origin?.type === 'openFinance' ? (
@@ -1243,14 +1243,14 @@ export default function DashboardScreen({ navigation }) {
                 <View style={styles.miniSection}>
                   <View style={styles.miniBlock}>
                     <Text style={styles.miniLabel}>{selectedCard ? 'Créditos' : 'Entradas'}</Text>
-                    <Text style={[styles.miniValue, { color: '#86EFAC' }]}>
+                    <Text style={[styles.miniValue, { color: T.positive }]}>
                       {hidden ? mask : `+${fmt(totalIn)}`}
                     </Text>
                   </View>
                   <View style={styles.miniBlockSep} />
                   <View style={styles.miniBlock}>
                     <Text style={styles.miniLabel}>{selectedCard ? 'Compras' : 'Saídas'}</Text>
-                    <Text style={[styles.miniValue, { color: '#FCA5A5' }]}>
+                    <Text style={[styles.miniValue, { color: T.negative }]}>
                       {hidden ? mask : `-${fmt(totalOut)}`}
                     </Text>
                   </View>

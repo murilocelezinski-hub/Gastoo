@@ -26,8 +26,8 @@ export const lightPalette = {
   homeGlass: 'rgba(42, 24, 0, 0.07)',
   homeGlassStrong: 'rgba(42, 24, 0, 0.1)',
   homeHairline: 'rgba(42, 24, 0, 0.1)',
-  positive: '#16A34A',
-  negative: '#C53030',
+  positive: '#22C55E',
+  negative: '#EF4444',
 };
 
 /** Tema escuro: visual marrom atual do app (início e marca). */
@@ -54,6 +54,6 @@ export const darkPalette = {
   homeGlass: 'rgba(255,255,255,0.06)',
   homeGlassStrong: 'rgba(255,255,255,0.1)',
   homeHairline: 'rgba(255,255,255,0.08)',
-  positive: '#34D399',
+  positive: '#4ADE80',
   negative: '#F87171',
 };
