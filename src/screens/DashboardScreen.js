@@ -919,7 +919,7 @@ export default function DashboardScreen({ navigation }) {
   const styles = useMemo(() => createStyles(T, isDesktop, isMobile), [T, isDesktop, isMobile]);
   const insets = useSafeAreaInsets();
   const { width: winW } = useWindowDimensions();
-  const { accounts, creditCards, transactions, isSyncing, updateTransaction, deleteTransaction } = useFinance();
+  const { accounts, creditCards, transactions, isSyncing, updateTransaction, deleteTransaction, addTransaction } = useFinance();
   const [lastSync, setLastSync] = useState(null);
   const act = activeAccounts(accounts);
   const activeIds = useMemo(() => new Set(act.map((a) => a.id)), [act]);
@@ -937,14 +937,24 @@ export default function DashboardScreen({ navigation }) {
     [transactions]
   );
 
-  const notificationCount = notificationTransactions.length;
+  const MOCK_NOTIFICATIONS = useMemo(() => [
+    { id: '__mock_1', descricao: 'iFood', categoria: 'Alimentação', valor: 47.90, tipo: 'saída', data: '30/04/2025', origin: { type: 'notification', bank: 'Nubank' } },
+    { id: '__mock_2', descricao: 'Mercado Extra', categoria: 'Mercado', valor: 213.50, tipo: 'saída', data: '29/04/2025', origin: { type: 'notification', bank: 'Inter' } },
+    { id: '__mock_3', descricao: 'Salário', categoria: 'Renda', valor: 5800.00, tipo: 'entrada', data: '28/04/2025', origin: { type: 'notification', bank: 'Itaú' } },
+  ], []);
+
+  const realNotifications = notificationTransactions;
+  const displayNotifications = realNotifications.length > 0 ? realNotifications : MOCK_NOTIFICATIONS;
+  const notificationCount = displayNotifications.length;
   const [reviewPage, setReviewPage] = useState(0);
 
   const confirmNotification = useCallback((tx) => {
+    if (tx.id?.startsWith('__mock_')) return;
     updateTransaction({ ...tx, origin: { ...tx.origin, type: 'confirmed' } });
   }, [updateTransaction]);
 
   const dismissNotification = useCallback((tx) => {
+    if (tx.id?.startsWith('__mock_')) return;
     deleteTransaction(tx);
   }, [deleteTransaction]);
 
@@ -1105,9 +1115,9 @@ export default function DashboardScreen({ navigation }) {
           <View style={styles.pillIconAndTitle}>
             <LinkSimple size={16} color={T.orange} weight="fill" />
             <View style={styles.pillTextContainer}>
-              <Text style={styles.pillTitle}>Status Open Finance</Text>
+              <Text style={styles.pillTitle}>Open Finance</Text>
               <Text style={styles.pillSubtitle}>
-                {isSyncing ? 'Sincronizando...' : lastSync ? 'Conectado' : 'Cansado de lançar na mão? Sincronize seu Nubank.'}
+                {isSyncing ? 'Sincronizando...' : lastSync ? 'Conectado' : 'Importe seus extratos automaticamente.'}
               </Text>
             </View>
           </View>
@@ -1136,7 +1146,7 @@ export default function DashboardScreen({ navigation }) {
               }}
               scrollEventThrottle={16}
             >
-              {notificationTransactions.map((tx) => {
+              {displayNotifications.map((tx) => {
                 const isSaida = tx.tipo === 'saída';
                 return (
                   <View key={tx.id} style={[styles.reviewCard, { width: winW - (isDesktop ? 80 : 40) }]}>
@@ -1174,7 +1184,7 @@ export default function DashboardScreen({ navigation }) {
             </ScrollView>
             {notificationCount > 1 && (
               <View style={styles.reviewDots}>
-                {notificationTransactions.map((_, i) => (
+                {displayNotifications.map((_, i) => (
                   <View key={i} style={[styles.reviewDot, i === reviewPage && styles.reviewDotActive]} />
                 ))}
               </View>
