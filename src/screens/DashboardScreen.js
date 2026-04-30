@@ -939,7 +939,7 @@ export default function DashboardScreen({ navigation }) {
 
   const MOCK_NOTIFICATIONS = useMemo(() => [
     { id: '__mock_1', descricao: 'iFood', categoria: 'Alimentação', valor: 47.90, tipo: 'saída', data: '30/04/2025', origin: { type: 'notification', bank: 'Nubank' } },
-    { id: '__mock_2', descricao: 'Mercado Extra', categoria: 'Mercado', valor: 213.50, tipo: 'saída', data: '29/04/2025', origin: { type: 'notification', bank: 'Inter' } },
+    { id: '__mock_2', descricao: 'Mercado Extra', categoria: 'Mercado', valor: 213.50, tipo: 'saída', data: '29/04/2025', origin: { type: 'notification', bank: 'Bradesco' } },
     { id: '__mock_3', descricao: 'Salário', categoria: 'Renda', valor: 5800.00, tipo: 'entrada', data: '28/04/2025', origin: { type: 'notification', bank: 'Itaú' } },
   ], []);
 
