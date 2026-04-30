@@ -1109,7 +1109,7 @@ export default function DashboardScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.headerRow, { paddingTop: Math.max(52, 12 + insets.top) }]}>
+      <View style={[styles.headerRow, { paddingTop: Math.max(insets.top, 8) }]}>
         <Image source={logo} style={styles.logo} resizeMode="contain" />
         <TouchableOpacity
           style={styles.avatar}

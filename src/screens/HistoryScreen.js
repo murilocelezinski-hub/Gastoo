@@ -1,15 +1,16 @@
 import { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, FlatList, SectionList, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SectionList, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fmt } from '../theme';
 import { Header, CatIcon } from '../components/Shared';
-import { CardIcon } from '../components/ActionIcons';
+import BankIcon from '../components/BankIcon';
 import { useFinance, invoiceLabelPtBr, creditCardName } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { sortTransactionsByDate } from '../utils/txSort';
 import { useResponsiveLayout } from '../utils/responsiveLayout';
 import { addPeriod, fmtDate } from '../utils/recurrence';
 import { parseBrDate } from '../utils/chart';
+import { getAccountBank } from '../utils/accountBank';
 
 const MONTHS_PT = [
   'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -41,7 +42,7 @@ export default function HistoryScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const T = useThemeColors();
   const styles = useMemo(() => createHistoryStyles(T), [T]);
-  const { transactions, creditCards } = useFinance();
+  const { transactions, creditCards, accounts } = useFinance();
   const { transactionListOrder, categories } = useAppPreferences();
   const { isDesktop } = useResponsiveLayout();
 
@@ -180,6 +181,16 @@ export default function HistoryScreen({ navigation }) {
       let label = rawDate;
       if (rawDate === todayStr) label = 'Hoje';
       else if (rawDate === yestStr) label = 'Ontem';
+      else {
+        const p = rawDate.split('/');
+        if (p.length === 3) {
+          const dd = p[0];
+          const mm = parseInt(p[1], 10);
+          const yyyy = parseInt(p[2], 10);
+          const monthName = MONTHS_PT[mm - 1] || '';
+          label = yyyy === CURRENT_YEAR ? `${dd} de ${monthName}` : `${dd} de ${monthName} ${yyyy}`;
+        }
+      }
       if (!map[label]) { map[label] = []; order.push(label); }
       map[label].push(tx);
     }
@@ -229,17 +240,17 @@ export default function HistoryScreen({ navigation }) {
       <View style={styles.summary}>
         <View style={styles.summaryItem}>
           <Text style={styles.summaryLabel}>Receitas</Text>
-          <Text style={[styles.summaryValue, { color: T.gold }]}>+{fmt(totalEntradas)}</Text>
+          <Text style={[styles.summaryValue, { color: T.positive }]}>+{fmt(totalEntradas)}</Text>
         </View>
         <View style={styles.summaryDivider} />
         <View style={styles.summaryItem}>
           <Text style={styles.summaryLabel}>Despesas</Text>
-          <Text style={[styles.summaryValue, { color: T.burnt }]}>-{fmt(totalSaidas)}</Text>
+          <Text style={[styles.summaryValue, { color: T.negative }]}>-{fmt(totalSaidas)}</Text>
         </View>
         <View style={styles.summaryDivider} />
         <View style={styles.summaryItem}>
           <Text style={styles.summaryLabel}>Saldo</Text>
-          <Text style={[styles.summaryValue, { color: saldo >= 0 ? T.gold : T.burnt }]}>
+          <Text style={[styles.summaryValue, { color: saldo >= 0 ? T.positive : T.negative }]}>
             {saldo >= 0 ? '+' : ''}{fmt(saldo)}
           </Text>
         </View>
@@ -289,6 +300,8 @@ export default function HistoryScreen({ navigation }) {
         )}
         renderItem={({ item: tx }) => {
           if (tx.__invoiceGroup) {
+            const card = creditCards.find((c) => c.id === tx.creditCardId);
+            const bank = getAccountBank(accounts, card?.accountId);
             return (
               <TouchableOpacity
                 style={[styles.txRow, isDesktop && styles.txRowDesktop]}
@@ -301,7 +314,11 @@ export default function HistoryScreen({ navigation }) {
                 }
               >
                 <View style={styles.invoiceIcon}>
-                  <CardIcon size={20} color={T.white} />
+                  {bank ? (
+                    <BankIcon bankName={bank.bankName} bankColor={bank.bankColor} bankInitial={bank.bankInitial} size={20} />
+                  ) : (
+                    <BankIcon bankInitial="C" size={20} />
+                  )}
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.txDesc, isDesktop && styles.txDescDesktop]} numberOfLines={1}>
@@ -312,7 +329,7 @@ export default function HistoryScreen({ navigation }) {
                   </Text>
                 </View>
                 <View style={{ alignItems: 'flex-end', gap: 2 }}>
-                  <Text style={[styles.txValue, isDesktop && styles.txValueDesktop, { color: T.burnt }]}>
+                  <Text style={[styles.txValue, isDesktop && styles.txValueDesktop, { color: T.negative }]}>
                     -{fmt(tx.valor)}
                   </Text>
                   <Text style={styles.invoiceChevron}>{'>'}</Text>
@@ -320,6 +337,7 @@ export default function HistoryScreen({ navigation }) {
               </TouchableOpacity>
             );
           }
+          const bank = getAccountBank(accounts, tx.accountId);
           return (
             <TouchableOpacity
               style={[styles.txRow, isDesktop && styles.txRowDesktop]}
@@ -329,9 +347,11 @@ export default function HistoryScreen({ navigation }) {
               <CatIcon category={tx.categoria} size={isDesktop ? 48 : 40} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.txDesc, isDesktop && styles.txDescDesktop]} numberOfLines={1}>{tx.descricao}</Text>
-                <Text style={[styles.txMeta, isDesktop && styles.txMetaDesktop]}>{tx.categoria}</Text>
+                <Text style={[styles.txMeta, isDesktop && styles.txMetaDesktop]}>
+                  {tx.categoria}{bank?.bankName ? ` · ${bank.bankName}` : ''}
+                </Text>
               </View>
-              <Text style={[styles.txValue, isDesktop && styles.txValueDesktop, { color: tx.tipo === 'entrada' ? T.gold : T.burnt }]}>
+              <Text style={[styles.txValue, isDesktop && styles.txValueDesktop, { color: tx.tipo === 'entrada' ? T.positive : T.negative }]}>
                 {tx.tipo === 'entrada' ? '+' : '-'}{fmt(tx.valor)}
               </Text>
             </TouchableOpacity>
@@ -453,10 +473,13 @@ function createHistoryStyles(T) {
     // Rótulo de agrupamento por data (Hoje, Ontem, dd/mm/yyyy)
     sectionDateLabel: {
       fontFamily: 'Poppins_600SemiBold',
-      fontSize: 12,
-      color: T.grayMed,
-      marginTop: 18,
-      marginBottom: 6,
+      fontSize: 14,
+      color: T.graphite,
+      marginTop: 20,
+      marginBottom: 4,
+      paddingBottom: 6,
+      borderBottomWidth: 1,
+      borderBottomColor: T.grayVLight,
       letterSpacing: 0.3,
     },
   });
