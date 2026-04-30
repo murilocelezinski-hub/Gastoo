@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { Platform, Text, View } from 'react-native';
-import Svg, { Path, Rect, Circle, Polyline, Line } from 'react-native-svg';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useFonts, Poppins_100Thin, Poppins_300Light, Poppins_400Regular, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faHome, faHistory, faChartBar, faBullseye } from '@fortawesome/free-solid-svg-icons';
 import * as SplashScreenExpo from 'expo-splash-screen';
 import { FinanceProvider, useFinance } from './src/context/FinanceContext';
 import { AppPreferencesProvider, useAppPreferences, useThemeColors } from './src/context/AppPreferencesContext';
@@ -168,11 +169,7 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Início',
           tabBarIcon: ({ color }) => (
-            // Ícone casa — linha fina minimalista
-            <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-              <Path d="M3 9.5L12 3l9 6.5V21a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke={color} strokeWidth={1.6} strokeLinejoin="round" />
-              <Path d="M9 22V12h6v10" stroke={color} strokeWidth={1.6} strokeLinejoin="round" />
-            </Svg>
+            <FontAwesomeIcon icon={faHome} size={22} color={color} />
           ),
         }}
       />
@@ -182,12 +179,7 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Histórico',
           tabBarIcon: ({ color }) => (
-            // Ícone lista — linha fina minimalista
-            <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-              <Rect x="3" y="4" width="18" height="16" rx="2" stroke={color} strokeWidth={1.6} />
-              <Line x1="7" y1="9" x2="17" y2="9" stroke={color} strokeWidth={1.6} strokeLinecap="round" />
-              <Line x1="7" y1="13" x2="14" y2="13" stroke={color} strokeWidth={1.6} strokeLinecap="round" />
-            </Svg>
+            <FontAwesomeIcon icon={faHistory} size={22} color={color} />
           ),
         }}
       />
@@ -197,12 +189,7 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Relatórios',
           tabBarIcon: ({ color }) => (
-            // Ícone barras empilhadas — linha fina minimalista
-            <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-              <Rect x="3" y="13" width="4" height="8" rx="1" stroke={color} strokeWidth={1.6} />
-              <Rect x="10" y="8" width="4" height="13" rx="1" stroke={color} strokeWidth={1.6} />
-              <Rect x="17" y="4" width="4" height="17" rx="1" stroke={color} strokeWidth={1.6} />
-            </Svg>
+            <FontAwesomeIcon icon={faChartBar} size={22} color={color} />
           ),
         }}
       />
@@ -212,12 +199,7 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Metas',
           tabBarIcon: ({ color }) => (
-            // Ícone alvo/meta — linha fina minimalista
-            <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-              <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth={1.6} />
-              <Circle cx="12" cy="12" r="5" stroke={color} strokeWidth={1.6} />
-              <Circle cx="12" cy="12" r="1.5" fill={color} />
-            </Svg>
+            <FontAwesomeIcon icon={faBullseye} size={22} color={color} />
           ),
         }}
       />
