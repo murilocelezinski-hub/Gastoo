@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polyline, Polygon, Line, Circle, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
+import { CreditCardIcon } from 'react-native-heroicons/solid';
 import { fmt, T } from '../theme';
 import {
   useFinance,
@@ -26,6 +27,7 @@ import {
 } from '../context/FinanceContext';
 import { CatIcon } from '../components/Shared';
 import BankIcon from '../components/BankIcon';
+import { AccountIcon } from '../components/AccountIcon';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { buildBalanceEvolutionSeries, parseBrDate } from '../utils/chart';
 import { formatLastSync } from '../services/openFinanceService';
@@ -509,6 +511,7 @@ function createStyles(T, isDesktop, isMobile) {
       elevation: 6,
     },
     accountCardIcon: { fontSize: isDesktop ? 32 : 28, color: T.orange },
+    accountCardIconContainer: { marginBottom: 4 },
     accountCardName: {
       fontFamily: 'Poppins_400Regular',
       fontSize: isDesktop ? 12 : 11,
@@ -615,14 +618,17 @@ function createStyles(T, isDesktop, isMobile) {
   });
 }
 
-function AccountCardItem({ account, isActive, isDesktop, onPress, styles, hidden, balance, hidden: maskValue, mask }) {
+function AccountCardItem({ account, isActive, isDesktop, onPress, styles, hidden, balance, hidden: maskValue, mask, T }) {
+  const iconColor = isActive ? T.orange : T.brandFgMuted;
   return (
     <TouchableOpacity
       style={[styles.accountCard, isActive && styles.accountCardActive]}
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <Text style={styles.accountCardIcon}>{account.icon}</Text>
+      <View style={styles.accountCardIconContainer}>
+        <AccountIcon accountName={account.name} size={isDesktop ? 26 : 24} color={iconColor} />
+      </View>
       <View>
         <Text style={[styles.accountCardName, isActive && styles.accountCardNameActive]}>{account.name}</Text>
         <Text style={[styles.accountCardBalance, isActive && styles.accountCardBalanceActive]}>
@@ -711,7 +717,9 @@ function RecentTransactions({ transactions, creditCards, selectedAccount, select
               activeOpacity={0.7}
               onPress={() => navigation.navigate('InvoiceDetail', { invoiceKey: tx.invoiceKey, cardName: tx.cardLabel })}
             >
-              <Text style={{ fontSize: 28, color: T.orange }}>💳</Text>
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: T.orange, alignItems: 'center', justifyContent: 'center' }}>
+                <CreditCardIcon size={22} color={T.white} strokeWidth={2.5} />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.recentTxDesc} numberOfLines={1}>{tx.descricao}</Text>
                 <Text style={styles.recentTxMeta}>
@@ -1071,6 +1079,7 @@ export default function DashboardScreen({ navigation }) {
                       balance={fmt(bal)}
                       hidden={hidden}
                       mask={mask}
+                      T={T}
                     />
                   );
                 })}
@@ -1094,6 +1103,7 @@ export default function DashboardScreen({ navigation }) {
                       balance={fmt(bal)}
                       hidden={hidden}
                       mask={mask}
+                      T={T}
                     />
                   );
                 })}
