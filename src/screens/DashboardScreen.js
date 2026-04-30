@@ -1135,6 +1135,7 @@ export default function DashboardScreen({ navigation }) {
                       balance={fmt(total)}
                       hidden={hidden}
                       mask={mask}
+                      T={T}
                     />
                   );
                 })}
@@ -1158,6 +1159,7 @@ export default function DashboardScreen({ navigation }) {
                       balance={fmt(total)}
                       hidden={hidden}
                       mask={mask}
+                      T={T}
                     />
                   );
                 })}
