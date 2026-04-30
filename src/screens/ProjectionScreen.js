@@ -449,7 +449,7 @@ export default function ProjectionScreen({ navigation }) {
     };
   }, [filteredTx, periodoLabel]);
 
-  const chartSize = Math.max(180, Math.min(240, windowWidth - 72));
+  const chartSize = Math.max(200, Math.min(240, windowWidth - 72));
 
   const Pill = ({ active, label, onPress }) => (
     <TouchableOpacity onPress={onPress} style={[styles.pill, active && styles.pillActive]} activeOpacity={0.75}>
@@ -463,9 +463,14 @@ export default function ProjectionScreen({ navigation }) {
         {slices.map((s) => {
           const pct = total > 0 ? (s.value / total) * 100 : 0;
           return (
-            <View key={s.label} style={styles.legendRow}>
-              <View style={[styles.legendDot, { backgroundColor: s.color }]} />
-              <Text style={styles.legendText} numberOfLines={1}>
+            <View
+              key={s.label}
+              style={styles.legendRow}
+              accessibilityLabel={`${s.label}: ${pct.toFixed(1)}% equivalente a ${fmt(s.value)}`}
+              accessible={true}
+            >
+              <View style={[styles.legendDot, { backgroundColor: s.color, borderWidth: 1.5, borderColor: T.graphite }]} />
+              <Text style={styles.legendText} numberOfLines={2} ellipsizeMode="tail">
                 {s.label}
               </Text>
               <Text style={styles.legendPct}>

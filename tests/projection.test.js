@@ -3,6 +3,7 @@
  * Cobre calcularProjecaoFimMes e classificarStatusProjecao
  */
 
+
 // Mock do módulo chart para evitar problemas com ES modules
 jest.mock('../src/utils/chart', () => ({
   parseBrDate: (str) => {
