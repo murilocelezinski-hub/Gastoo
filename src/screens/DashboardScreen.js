@@ -919,7 +919,7 @@ export default function DashboardScreen({ navigation }) {
   const styles = useMemo(() => createStyles(T, isDesktop, isMobile), [T, isDesktop, isMobile]);
   const insets = useSafeAreaInsets();
   const { width: winW } = useWindowDimensions();
-  const { accounts, creditCards, transactions, isSyncing, updateTransaction, deleteTransaction, addTransaction } = useFinance();
+  const { accounts, creditCards, transactions, isSyncing, deleteTransaction, addTransaction } = useFinance();
   const [lastSync, setLastSync] = useState(null);
   const act = activeAccounts(accounts);
   const activeIds = useMemo(() => new Set(act.map((a) => a.id)), [act]);
@@ -957,14 +957,16 @@ export default function DashboardScreen({ navigation }) {
     // Real: marca como confirmada e adiciona ao saldo (conta corrente padrão)
     const firstAccount = accounts.find(a => a.ativo);
     if (firstAccount) {
-      addTransaction({
+      const newTx = {
         ...tx,
         accountId: firstAccount.id,
         origin: { type: 'confirmed' }
-      });
+      };
+      addTransaction(newTx);
     }
+    // Remove notificação original
     deleteTransaction(tx);
-  }, [updateTransaction, addTransaction, deleteTransaction, accounts]);
+  }, [addTransaction, deleteTransaction, accounts]);
 
   const dismissNotification = useCallback((tx) => {
     if (tx.id?.startsWith('__mock_')) {
