@@ -18,7 +18,7 @@ import { useFinance, activeAccounts, accountName } from '../context/FinanceConte
 import { useThemeColors } from '../context/AppPreferencesContext';
 import { useResponsiveLayout } from '../utils/responsiveLayout';
 import PhosphorIconByName from '../components/PhosphorIconByName';
-import { Archive } from 'phosphor-react-native';
+import { Archive } from 'phosphor-react';
 
 function createCreditCardsStyles(T, isDesktop) {
   return StyleSheet.create({

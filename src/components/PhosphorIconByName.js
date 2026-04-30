@@ -59,7 +59,7 @@ import {
   Bell,
   Eye,
   EyeSlash,
-} from 'phosphor-react-native';
+} from 'phosphor-react';
 
 const ICON_MAP = {
   Bank,

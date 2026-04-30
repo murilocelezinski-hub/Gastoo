@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polyline, Polygon, Line, Circle, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
-import { CreditCard, User, Bell, Eye, EyeSlash } from 'phosphor-react-native';
+import { CreditCard, User, Bell, Eye, EyeSlash } from 'phosphor-react';
 import { ChevronRightIcon } from '../components/ActionIcons';
 import { fmt, T } from '../theme';
 import {

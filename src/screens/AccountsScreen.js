@@ -18,7 +18,7 @@ import { useFinance, balanceForAccount, activeAccounts } from '../context/Financ
 import { useThemeColors } from '../context/AppPreferencesContext';
 import { useResponsiveLayout } from '../utils/responsiveLayout';
 import PhosphorIconByName from '../components/PhosphorIconByName';
-import { Archive } from 'phosphor-react-native';
+import { Archive } from 'phosphor-react';
 
 function createAccountsStyles(T, isDesktop) {
   return StyleSheet.create({
