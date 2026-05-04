@@ -149,12 +149,12 @@ function ensureInvoiceFieldsForTx(tx, creditCards) {
 
 function seedAccounts() {
   return [
-    { id: DEFAULT_ACCOUNT_ID, name: 'Conta Corrente', icon: 'Bank', saldoInicial: 4100, archived: false },
-    { id: ACC_SEED_POUP, name: 'Poupança', icon: 'PiggyBank', saldoInicial: 1200, archived: false },
+    { id: DEFAULT_ACCOUNT_ID, name: 'Conta Corrente', icon: 'Bank', saldoInicial: 2800, archived: false },
+    { id: ACC_SEED_POUP, name: 'Poupança', icon: 'PiggyBank', saldoInicial: 800, archived: false },
   ];
 }
 
-/** Lançamentos de demonstração (~3 meses): receitas, despesas, transferências e cartão. */
+/** Lançamentos de demonstração (5 meses: jan–mai/2026) — persona: CLT 30 anos, renda R$ 3.500, SP, casado, 1 filho. */
 function buildDemoSeedTransactions() {
   const a1 = DEFAULT_ACCOUNT_ID;
   const a2 = ACC_SEED_POUP;
@@ -163,88 +163,144 @@ function buildDemoSeedTransactions() {
   const t = (tx) => ({ ...tx, id: nid++, obs: tx.obs ?? '', creditCardId: tx.creditCardId ?? null });
   const out = [];
 
-  // Janeiro
+  // ── Janeiro ──────────────────────────────────────────────────────────────
   const trf1 = 'trf-seed-1';
-  out.push(t({ tipo: 'entrada', valor: 3800, descricao: 'Salário jan.', categoria: 'Outros', data: '05/01/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 1200, descricao: 'Aluguel', categoria: 'Moradia', data: '05/01/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 185, descricao: 'Conta de luz', categoria: 'Moradia', data: '07/01/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 340, descricao: 'Supermercado Extra', categoria: 'Alimentação', data: '08/01/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 128, descricao: 'Passagem de ônibus (mensal)', categoria: 'Transporte', data: '09/01/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 37.9, descricao: 'Netflix + Spotify', categoria: 'Assinaturas', data: '10/01/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 95, descricao: 'Farmácia Pague Menos', categoria: 'Saúde', data: '13/01/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 89, descricao: 'iFood — jantar', categoria: 'Alimentação', data: '15/01/2026', accountId: a1, creditCardId: card }));
-  out.push(t({ tipo: 'saída', valor: 210, descricao: 'Calça jeans e camisetas', categoria: 'Vestuário', data: '18/01/2026', accountId: a1, creditCardId: card }));
-  out.push(t({ tipo: 'saída', valor: 60, descricao: 'Cinema com namorada', categoria: 'Lazer', data: '20/01/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 199, descricao: 'Curso de Excel online', categoria: 'Educação', data: '22/01/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 200, descricao: 'Tesouro Direto', categoria: 'Investimentos', data: '23/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'entrada', valor: 3500,  descricao: 'Salário jan.',               categoria: 'Outros',        data: '05/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 1100,  descricao: 'Aluguel',                    categoria: 'Moradia',       data: '05/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 130,   descricao: 'Conta de luz',               categoria: 'Moradia',       data: '07/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 70,    descricao: 'Conta de água',              categoria: 'Moradia',       data: '08/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 95,    descricao: 'Internet Vivo Fibra',        categoria: 'Moradia',       data: '10/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 180,   descricao: 'IPTU 1ª parcela',            categoria: 'Moradia',       data: '10/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 550,   descricao: 'Supermercado Extra',         categoria: 'Alimentação',   data: '11/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 120,   descricao: 'Feira livre e padaria',      categoria: 'Alimentação',   data: '13/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 250,   descricao: 'Material escolar filho',     categoria: 'Educação',      data: '14/01/2026', accountId: a1, creditCardId: card }));
+  out.push(t({ tipo: 'saída',   valor: 128,   descricao: 'Passagem de ônibus (mensal)',categoria: 'Transporte',    data: '09/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 55,    descricao: 'Uber (semana)',              categoria: 'Transporte',    data: '16/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 280,   descricao: 'Plano de saúde familiar',   categoria: 'Saúde',         data: '15/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 60,    descricao: 'Farmácia — remédio',        categoria: 'Saúde',         data: '17/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 25,    descricao: 'Netflix',                   categoria: 'Assinaturas',   data: '10/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 22,    descricao: 'Spotify',                   categoria: 'Assinaturas',   data: '10/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 40,    descricao: 'Celular pré-pago Claro',    categoria: 'Assinaturas',   data: '12/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 90,    descricao: 'iFood — jantar em família', categoria: 'Alimentação',   data: '15/01/2026', accountId: a1, creditCardId: card }));
+  out.push(t({ tipo: 'saída',   valor: 60,    descricao: 'Cinema com filho',          categoria: 'Lazer',         data: '20/01/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 150,   descricao: 'Tesouro Direto',            categoria: 'Investimentos', data: '23/01/2026', accountId: a1 }));
+  // PIX entre amigos (vaquinha)
+  out.push(t({ tipo: 'saída',   valor: 50,    descricao: 'PIX — vaquinha aniversário colega', categoria: 'Lazer', data: '27/01/2026', accountId: a1 }));
   out.push(
-    t({ tipo: 'saída', valor: 400, descricao: '→ Poupança', categoria: 'Transferência', data: '25/01/2026', accountId: a1, isTransfer: true, transferGroupId: trf1 })
+    t({ tipo: 'saída',   valor: 200, descricao: '→ Poupança', categoria: 'Transferência', data: '28/01/2026', accountId: a1, isTransfer: true, transferGroupId: trf1 })
   );
   out.push(
-    t({ tipo: 'entrada', valor: 400, descricao: '← Conta Corrente', categoria: 'Transferência', data: '25/01/2026', accountId: a2, isTransfer: true, transferGroupId: trf1 })
+    t({ tipo: 'entrada', valor: 200, descricao: '← Conta Corrente', categoria: 'Transferência', data: '28/01/2026', accountId: a2, isTransfer: true, transferGroupId: trf1 })
   );
-  out.push(t({ tipo: 'entrada', valor: 300, descricao: 'Bico fim de semana', categoria: 'Outros', data: '29/01/2026', accountId: a1 }));
 
-  // Fevereiro
+  // ── Fevereiro ─────────────────────────────────────────────────────────────
   const trf2 = 'trf-seed-2';
-  out.push(t({ tipo: 'entrada', valor: 3800, descricao: 'Salário fev.', categoria: 'Outros', data: '05/02/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 1200, descricao: 'Aluguel', categoria: 'Moradia', data: '05/02/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 95, descricao: 'Conta de água', categoria: 'Moradia', data: '07/02/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 290, descricao: 'Mercado Livre — compras', categoria: 'Vestuário', data: '08/02/2026', accountId: a1, creditCardId: card }));
-  out.push(t({ tipo: 'saída', valor: 265, descricao: 'Feira livre e padaria', categoria: 'Alimentação', data: '10/02/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 80, descricao: 'Uber (semana)', categoria: 'Transporte', data: '12/02/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 150, descricao: 'Consulta médica particular', categoria: 'Saúde', data: '14/02/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 120, descricao: 'Churrasco carnaval', categoria: 'Alimentação', data: '16/02/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 85, descricao: 'Show de pagode', categoria: 'Lazer', data: '17/02/2026', accountId: a1, creditCardId: card }));
-  out.push(t({ tipo: 'saída', valor: 37.9, descricao: 'Netflix + Spotify', categoria: 'Assinaturas', data: '10/02/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 200, descricao: 'Tesouro Direto', categoria: 'Investimentos', data: '20/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'entrada', valor: 3500,  descricao: 'Salário fev.',               categoria: 'Outros',        data: '05/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 1100,  descricao: 'Aluguel',                    categoria: 'Moradia',       data: '05/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 125,   descricao: 'Conta de luz',               categoria: 'Moradia',       data: '07/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 68,    descricao: 'Conta de água',              categoria: 'Moradia',       data: '08/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 95,    descricao: 'Internet Vivo Fibra',        categoria: 'Moradia',       data: '10/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 120,   descricao: 'Gás de cozinha (botijão)',   categoria: 'Moradia',       data: '06/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 540,   descricao: 'Atacadão — compras do mês', categoria: 'Alimentação',   data: '09/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 110,   descricao: 'Feira livre e padaria',      categoria: 'Alimentação',   data: '11/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 150,   descricao: 'Carnaval — gasto extra',     categoria: 'Alimentação',   data: '16/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 128,   descricao: 'Passagem de ônibus (mensal)',categoria: 'Transporte',    data: '09/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 60,    descricao: 'Uber (semana)',              categoria: 'Transporte',    data: '13/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 280,   descricao: 'Plano de saúde familiar',   categoria: 'Saúde',         data: '15/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 25,    descricao: 'Netflix',                   categoria: 'Assinaturas',   data: '10/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 22,    descricao: 'Spotify',                   categoria: 'Assinaturas',   data: '10/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 40,    descricao: 'Celular pré-pago Claro',    categoria: 'Assinaturas',   data: '12/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 80,    descricao: 'Show de carnaval',          categoria: 'Lazer',         data: '17/02/2026', accountId: a1, creditCardId: card }));
+  out.push(t({ tipo: 'saída',   valor: 150,   descricao: 'Tesouro Direto',            categoria: 'Investimentos', data: '20/02/2026', accountId: a1 }));
+  out.push(t({ tipo: 'entrada', valor: 380,   descricao: 'Freela — site de cliente',  categoria: 'Outros',        data: '24/02/2026', accountId: a1 }));
   out.push(
-    t({ tipo: 'saída', valor: 300, descricao: '→ Poupança', categoria: 'Transferência', data: '22/02/2026', accountId: a1, isTransfer: true, transferGroupId: trf2 })
+    t({ tipo: 'saída',   valor: 150, descricao: '→ Poupança', categoria: 'Transferência', data: '25/02/2026', accountId: a1, isTransfer: true, transferGroupId: trf2 })
   );
   out.push(
-    t({ tipo: 'entrada', valor: 300, descricao: '← Conta Corrente', categoria: 'Transferência', data: '22/02/2026', accountId: a2, isTransfer: true, transferGroupId: trf2 })
+    t({ tipo: 'entrada', valor: 150, descricao: '← Conta Corrente', categoria: 'Transferência', data: '25/02/2026', accountId: a2, isTransfer: true, transferGroupId: trf2 })
   );
-  out.push(t({ tipo: 'entrada', valor: 450, descricao: '13º proporcional', categoria: 'Outros', data: '27/02/2026', accountId: a1 }));
 
-  // Março
+  // ── Março ─────────────────────────────────────────────────────────────────
   const trf3 = 'trf-seed-3';
-  out.push(t({ tipo: 'entrada', valor: 3800, descricao: 'Salário mar.', categoria: 'Outros', data: '05/03/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 1200, descricao: 'Aluguel', categoria: 'Moradia', data: '05/03/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 210, descricao: 'Conta de luz', categoria: 'Moradia', data: '07/03/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 380, descricao: 'Atacadão — compras do mês', categoria: 'Alimentação', data: '08/03/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 128, descricao: 'Passagem de ônibus (mensal)', categoria: 'Transporte', data: '09/03/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 37.9, descricao: 'Netflix + Spotify', categoria: 'Assinaturas', data: '10/03/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 280, descricao: 'Material escolar filhos', categoria: 'Educação', data: '12/03/2026', accountId: a1, creditCardId: card }));
-  out.push(t({ tipo: 'saída', valor: 75, descricao: 'Remédio pressão (3 meses)', categoria: 'Saúde', data: '14/03/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 160, descricao: 'Tênis esportivo', categoria: 'Vestuário', data: '17/03/2026', accountId: a1, creditCardId: card }));
-  out.push(t({ tipo: 'saída', valor: 95, descricao: 'Passeio no parque + lanche', categoria: 'Lazer', data: '21/03/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 200, descricao: 'Tesouro Direto', categoria: 'Investimentos', data: '22/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'entrada', valor: 3500,  descricao: 'Salário mar.',               categoria: 'Outros',        data: '05/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 1100,  descricao: 'Aluguel',                    categoria: 'Moradia',       data: '05/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 135,   descricao: 'Conta de luz',               categoria: 'Moradia',       data: '07/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 72,    descricao: 'Conta de água',              categoria: 'Moradia',       data: '08/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 95,    descricao: 'Internet Vivo Fibra',        categoria: 'Moradia',       data: '10/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 560,   descricao: 'Supermercado Extra',         categoria: 'Alimentação',   data: '09/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 115,   descricao: 'Feira livre e padaria',      categoria: 'Alimentação',   data: '11/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 90,    descricao: 'iFood — semana',             categoria: 'Alimentação',   data: '14/03/2026', accountId: a1, creditCardId: card }));
+  out.push(t({ tipo: 'saída',   valor: 128,   descricao: 'Passagem de ônibus (mensal)',categoria: 'Transporte',    data: '09/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 70,    descricao: 'Uber (semana)',              categoria: 'Transporte',    data: '14/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 280,   descricao: 'Plano de saúde familiar',   categoria: 'Saúde',         data: '15/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 75,    descricao: 'Remédio pressão (3 meses)', categoria: 'Saúde',         data: '17/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 25,    descricao: 'Netflix',                   categoria: 'Assinaturas',   data: '10/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 22,    descricao: 'Spotify',                   categoria: 'Assinaturas',   data: '10/03/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 40,    descricao: 'Celular pré-pago Claro',    categoria: 'Assinaturas',   data: '12/03/2026', accountId: a1 }));
+  // Presente de aniversário (março)
+  out.push(t({ tipo: 'saída',   valor: 120,   descricao: 'Presente aniversário esposa',categoria: 'Lazer',        data: '22/03/2026', accountId: a1, creditCardId: card }));
+  out.push(t({ tipo: 'saída',   valor: 90,    descricao: 'Passeio no parque + lanche', categoria: 'Lazer',        data: '21/03/2026', accountId: a1 }));
+  // Compra parcelada: geladeira R$ 1.800 em 6x R$ 300 (parcela 1 de 6)
+  out.push(t({ tipo: 'saída',   valor: 300,   descricao: 'Geladeira Consul (1/6)',     categoria: 'Moradia',       data: '20/03/2026', accountId: a1, creditCardId: card,
+    gastoTipo: 'parcelado', installmentGroupId: 'inst-geladeira-2026', installmentIndex: 0, installmentTotal: 6 }));
+  out.push(t({ tipo: 'saída',   valor: 150,   descricao: 'Tesouro Direto',            categoria: 'Investimentos', data: '22/03/2026', accountId: a1 }));
+  // Restituição IR
+  out.push(t({ tipo: 'entrada', valor: 420,   descricao: 'Restituição IR',            categoria: 'Outros',        data: '28/03/2026', accountId: a1 }));
   out.push(
-    t({ tipo: 'saída', valor: 500, descricao: '→ Poupança', categoria: 'Transferência', data: '24/03/2026', accountId: a1, isTransfer: true, transferGroupId: trf3 })
+    t({ tipo: 'saída',   valor: 200, descricao: '→ Poupança', categoria: 'Transferência', data: '26/03/2026', accountId: a1, isTransfer: true, transferGroupId: trf3 })
   );
   out.push(
-    t({ tipo: 'entrada', valor: 500, descricao: '← Conta Corrente', categoria: 'Transferência', data: '24/03/2026', accountId: a2, isTransfer: true, transferGroupId: trf3 })
+    t({ tipo: 'entrada', valor: 200, descricao: '← Conta Corrente', categoria: 'Transferência', data: '26/03/2026', accountId: a2, isTransfer: true, transferGroupId: trf3 })
   );
-  out.push(t({ tipo: 'entrada', valor: 280, descricao: 'Venda de artesanato', categoria: 'Outros', data: '28/03/2026', accountId: a1 }));
 
-  // Abril (mês atual)
-  out.push(t({ tipo: 'entrada', valor: 3800, descricao: 'Salário abr.', categoria: 'Outros', data: '05/04/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 1200, descricao: 'Aluguel', categoria: 'Moradia', data: '05/04/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 320, descricao: 'Supermercado Pão de Açúcar', categoria: 'Alimentação', data: '06/04/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 128, descricao: 'Passagem de ônibus (mensal)', categoria: 'Transporte', data: '07/04/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 37.9, descricao: 'Netflix + Spotify', categoria: 'Assinaturas', data: '08/04/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 110, descricao: 'iFood — almoço semana', categoria: 'Alimentação', data: '10/04/2026', accountId: a1, creditCardId: card }));
-  out.push(t({ tipo: 'saída', valor: 45, descricao: 'Farmácia — vitaminas', categoria: 'Saúde', data: '12/04/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 240, descricao: 'Roupa de trabalho', categoria: 'Vestuário', data: '14/04/2026', accountId: a1, creditCardId: card }));
-  out.push(t({ tipo: 'saída', valor: 130, descricao: 'Aniversário — jantar família', categoria: 'Lazer', data: '17/04/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 59.9, descricao: 'Livro didático', categoria: 'Educação', data: '20/04/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída', valor: 200, descricao: 'Tesouro Direto', categoria: 'Investimentos', data: '22/04/2026', accountId: a1 }));
+  // ── Abril ─────────────────────────────────────────────────────────────────
+  const trf4 = 'trf-seed-4';
+  out.push(t({ tipo: 'entrada', valor: 3500,  descricao: 'Salário abr.',               categoria: 'Outros',        data: '05/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 1100,  descricao: 'Aluguel',                    categoria: 'Moradia',       data: '05/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 128,   descricao: 'Conta de luz',               categoria: 'Moradia',       data: '07/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 68,    descricao: 'Conta de água',              categoria: 'Moradia',       data: '08/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 95,    descricao: 'Internet Vivo Fibra',        categoria: 'Moradia',       data: '10/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 550,   descricao: 'Supermercado Pão de Açúcar', categoria: 'Alimentação',   data: '06/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 110,   descricao: 'iFood — almoço semana',      categoria: 'Alimentação',   data: '10/04/2026', accountId: a1, creditCardId: card }));
+  out.push(t({ tipo: 'saída',   valor: 50,    descricao: 'Chocolate de Páscoa filho',  categoria: 'Alimentação',   data: '03/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 128,   descricao: 'Passagem de ônibus (mensal)',categoria: 'Transporte',    data: '07/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 65,    descricao: 'Uber (semana)',              categoria: 'Transporte',    data: '11/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 280,   descricao: 'Plano de saúde familiar',   categoria: 'Saúde',         data: '15/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 45,    descricao: 'Farmácia — vitaminas',      categoria: 'Saúde',         data: '12/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 25,    descricao: 'Netflix',                   categoria: 'Assinaturas',   data: '10/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 22,    descricao: 'Spotify',                   categoria: 'Assinaturas',   data: '10/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 40,    descricao: 'Celular pré-pago Claro',    categoria: 'Assinaturas',   data: '12/04/2026', accountId: a1 }));
+  // Geladeira parcela 2/6
+  out.push(t({ tipo: 'saída',   valor: 300,   descricao: 'Geladeira Consul (2/6)',     categoria: 'Moradia',       data: '20/04/2026', accountId: a1, creditCardId: card,
+    gastoTipo: 'parcelado', installmentGroupId: 'inst-geladeira-2026', installmentIndex: 1, installmentTotal: 6 }));
+  out.push(t({ tipo: 'saída',   valor: 130,   descricao: 'Jantar aniversário família', categoria: 'Lazer',         data: '17/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 59.9,  descricao: 'Livro didático',            categoria: 'Educação',      data: '20/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 150,   descricao: 'Tesouro Direto',            categoria: 'Investimentos', data: '22/04/2026', accountId: a1 }));
+  // PIX rachar conta no bar
+  out.push(t({ tipo: 'saída',   valor: 45,    descricao: 'PIX — rachar conta no bar', categoria: 'Lazer',         data: '25/04/2026', accountId: a1 }));
+  out.push(t({ tipo: 'entrada', valor: 180,   descricao: 'Rendimento poupança',        categoria: 'Investimentos', data: '01/04/2026', accountId: a2 }));
+  out.push(
+    t({ tipo: 'saída',   valor: 150, descricao: '→ Poupança', categoria: 'Transferência', data: '27/04/2026', accountId: a1, isTransfer: true, transferGroupId: trf4 })
+  );
+  out.push(
+    t({ tipo: 'entrada', valor: 150, descricao: '← Conta Corrente', categoria: 'Transferência', data: '27/04/2026', accountId: a2, isTransfer: true, transferGroupId: trf4 })
+  );
 
-  // Receitas extras abril (gráfico de relatórios)
-  out.push(t({ tipo: 'entrada', valor: 180, descricao: 'Rendimento poupança', categoria: 'Investimentos', data: '01/04/2026', accountId: a1 }));
-  out.push(t({ tipo: 'entrada', valor: 120, descricao: 'Reembolso plano de saúde', categoria: 'Saúde', data: '04/04/2026', accountId: a1 }));
-  out.push(t({ tipo: 'entrada', valor: 350, descricao: 'Freela — logo de amigo', categoria: 'Outros', data: '09/04/2026', accountId: a1 }));
-  out.push(t({ tipo: 'entrada', valor: 128, descricao: 'Reembolso VT empresa', categoria: 'Transporte', data: '10/04/2026', accountId: a1 }));
+  // ── Maio (mês corrente: 04/05/2026) ───────────────────────────────────────
+  out.push(t({ tipo: 'entrada', valor: 3500,  descricao: 'Salário mai.',               categoria: 'Outros',        data: '05/05/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 1100,  descricao: 'Aluguel',                    categoria: 'Moradia',       data: '05/05/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 95,    descricao: 'Internet Vivo Fibra',        categoria: 'Moradia',       data: '10/05/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 120,   descricao: 'Gás de cozinha (botijão)',   categoria: 'Moradia',       data: '03/05/2026', accountId: a1 }));
+  // Geladeira parcela 3/6
+  out.push(t({ tipo: 'saída',   valor: 300,   descricao: 'Geladeira Consul (3/6)',     categoria: 'Moradia',       data: '20/05/2026', accountId: a1, creditCardId: card,
+    gastoTipo: 'parcelado', installmentGroupId: 'inst-geladeira-2026', installmentIndex: 2, installmentTotal: 6 }));
+  out.push(t({ tipo: 'saída',   valor: 120,   descricao: 'Presente Dia das Mães',      categoria: 'Lazer',         data: '11/05/2026', accountId: a1, creditCardId: card }));
+  out.push(t({ tipo: 'saída',   valor: 25,    descricao: 'Netflix',                   categoria: 'Assinaturas',   data: '10/05/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 22,    descricao: 'Spotify',                   categoria: 'Assinaturas',   data: '10/05/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 40,    descricao: 'Celular pré-pago Claro',    categoria: 'Assinaturas',   data: '12/05/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 280,   descricao: 'Plano de saúde familiar',   categoria: 'Saúde',         data: '15/05/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 128,   descricao: 'Passagem de ônibus (mensal)',categoria: 'Transporte',    data: '02/05/2026', accountId: a1 }));
+  out.push(t({ tipo: 'saída',   valor: 150,   descricao: 'Tesouro Direto',            categoria: 'Investimentos', data: '05/05/2026', accountId: a1 }));
 
   return out;
 }
@@ -260,7 +316,7 @@ function seedCreditCards() {
       id: CARD_SEED_DEMO,
       name: 'Cartão 1',
       icon: 'CreditCard',
-      limite: 10000,
+      limite: 3500,
       diaFechamento: 5,
       diaVencimento: 10,
       accountId: DEFAULT_ACCOUNT_ID,
