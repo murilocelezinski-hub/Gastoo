@@ -149,13 +149,22 @@ function createStyles(T) {
     dateBtnValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.graphite },
     filterScroll: { flexGrow: 0, marginBottom: 14 },
     pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    chartTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.charcoal, marginBottom: 8, textAlign: 'center' },
+    chartTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: T.charcoal, marginBottom: 4, textAlign: 'center' },
+    chartSubtitle: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.graphite, textAlign: 'center', marginBottom: 6, opacity: 0.8 },
     chartWrap: { alignItems: 'center', marginVertical: 8 },
     legend: { marginTop: 12, gap: 8 },
     legendRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    legendDot: { width: 10, height: 10, borderRadius: 5 },
-    legendText: { flex: 1, fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.graphite },
-    legendPct: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.graphite },
+    legendDot: { width: 12, height: 12, borderRadius: 6 },
+    legendText: { flex: 1, fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.charcoal, lineHeight: 18 },
+    legendPct: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.charcoal },
+    incomeSimpleCard: { alignItems: 'center', paddingVertical: 8, gap: 10 },
+    incomeTotalLabel: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.graphite, opacity: 0.8 },
+    incomeSimpleTotal: { fontFamily: 'Poppins_600SemiBold', fontSize: 28, color: T.charcoal, marginBottom: 4 },
+    incomeRow: { flexDirection: 'row', alignItems: 'center', gap: 10, width: '100%', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)' },
+    incomeRowLast: { borderBottomWidth: 0 },
+    incomeRowLabel: { flex: 1, fontFamily: 'Poppins_400Regular', fontSize: 13, color: T.charcoal },
+    incomeRowValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: T.charcoal },
+    incomeRowPct: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.graphite, marginLeft: 6, minWidth: 44, textAlign: 'right' },
     filterBackdrop: {
       flex: 1,
       backgroundColor: 'rgba(0,0,0,0.45)',
@@ -415,6 +424,36 @@ export default function ProjectionScreen({ navigation }) {
   const expenseTotal = useMemo(() => expenseSlices.reduce((s, x) => s + x.value, 0), [expenseSlices]);
   const incomeTotal = useMemo(() => incomeSlices.reduce((s, x) => s + x.value, 0), [incomeSlices]);
 
+  // Agrupa fatias <3% em "Outros" para o donut (legenda mantém detalhes completos)
+  const expenseDonutSlices = useMemo(() => {
+    if (expenseTotal === 0) return expenseSlices;
+    const main = expenseSlices.filter((s) => s.value / expenseTotal >= 0.03);
+    const small = expenseSlices.filter((s) => s.value / expenseTotal < 0.03);
+    if (small.length === 0) return main;
+    const othersValue = small.reduce((acc, s) => acc + s.value, 0);
+    const existing = main.find((s) => s.label === 'Outros');
+    if (existing) {
+      return main.map((s) => s.label === 'Outros' ? { ...s, value: s.value + othersValue } : s);
+    }
+    return [...main, { label: 'Outros', value: othersValue, color: '#BCBCB8' }];
+  }, [expenseSlices, expenseTotal]);
+
+  // Texto contextual quando categoria top ≥40% das despesas
+  const expenseSubtitle = useMemo(() => {
+    if (expenseSlices.length === 0 || expenseTotal === 0) return null;
+    const top = expenseSlices.reduce((a, b) => (a.value > b.value ? a : b));
+    const pct = (top.value / expenseTotal) * 100;
+    if (pct >= 40) return `${top.label} representa ${Math.round(pct)}% dos seus gastos neste período.`;
+    return null;
+  }, [expenseSlices, expenseTotal]);
+
+  // Quando receitas são dominadas (≥85%) por uma categoria, substitui donut por card simples
+  const incomeDominated = useMemo(() => {
+    if (incomeSlices.length === 0 || incomeTotal === 0) return false;
+    const top = incomeSlices.reduce((a, b) => (a.value > b.value ? a : b));
+    return top.value / incomeTotal >= 0.85;
+  }, [incomeSlices, incomeTotal]);
+
   // Label legível do período ativo para contextualizar o resumo da IA
   const periodoLabel = useMemo(() => {
     const preset = PERIOD_PRESETS.find((p) => p.key === periodPreset);
@@ -514,18 +553,41 @@ export default function ProjectionScreen({ navigation }) {
 
         <View style={styles.card}>
           <Text style={styles.chartTitle}>Despesas por categoria</Text>
+          {expenseSubtitle ? (
+            <Text style={styles.chartSubtitle}>{expenseSubtitle}</Text>
+          ) : null}
           <View style={styles.chartWrap}>
-            <PieChart data={expenseSlices} size={chartSize} strokeColor={pieStroke} emptyLabel="Sem despesas" />
+            <PieChart data={expenseDonutSlices} size={chartSize} strokeColor={pieStroke} emptyLabel="Sem despesas" />
           </View>
           {expenseSlices.length > 0 ? <Legend slices={expenseSlices} total={expenseTotal} /> : null}
         </View>
 
         <View style={styles.card}>
           <Text style={styles.chartTitle}>Receitas por categoria</Text>
-          <View style={styles.chartWrap}>
-            <PieChart data={incomeSlices} size={chartSize} strokeColor={pieStroke} emptyLabel="Sem receitas" />
-          </View>
-          {incomeSlices.length > 0 ? <Legend slices={incomeSlices} total={incomeTotal} /> : null}
+          {incomeDominated ? (
+            <View style={styles.incomeSimpleCard}>
+              <Text style={styles.incomeTotalLabel}>Total recebido</Text>
+              <Text style={styles.incomeSimpleTotal}>{fmt(incomeTotal)}</Text>
+              {incomeSlices.map((s, i) => {
+                const pct = ((s.value / incomeTotal) * 100).toFixed(1);
+                return (
+                  <View key={s.label} style={[styles.incomeRow, i === incomeSlices.length - 1 && styles.incomeRowLast]}>
+                    <View style={[styles.legendDot, { backgroundColor: s.color }]} />
+                    <Text style={styles.incomeRowLabel}>{s.label}</Text>
+                    <Text style={styles.incomeRowValue}>{fmt(s.value)}</Text>
+                    <Text style={styles.incomeRowPct}>{pct}%</Text>
+                  </View>
+                );
+              })}
+            </View>
+          ) : (
+            <>
+              <View style={styles.chartWrap}>
+                <PieChart data={incomeSlices} size={chartSize} strokeColor={pieStroke} emptyLabel="Sem receitas" />
+              </View>
+              {incomeSlices.length > 0 ? <Legend slices={incomeSlices} total={incomeTotal} /> : null}
+            </>
+          )}
         </View>
 
         {/* Card de resumo IA */}
