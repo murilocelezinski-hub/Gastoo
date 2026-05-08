@@ -135,6 +135,22 @@ f3c6c4c test: Adiciona testes de casos reais de parcelas em cartão de crédito
 
 ---
 
+## 🔤 Ajuste de rótulos (Web/Abas)
+
+### 3️⃣ Título da aba do navegador (Web)
+**Solicitação:** "Alterar o nome da aba da tela principal de Main para Gastoo onde aparece na tab do browser"
+
+**Status:** ✅ **CONCLUÍDO**
+
+#### Mudanças Realizadas:
+- ✅ Ajustado o título do documento no `NavigationContainer` para usar `title` das rotas (fallback para o nome da rota)
+- ✅ Definido `title: 'Gastoo'` na rota `Main` para que a aba do navegador não mostre “Main”
+
+#### Arquivos Modificados:
+- `App.js` (modificado)
+
+---
+
 ## 🧪 Cobertura de Testes
 
 ### Responsividade

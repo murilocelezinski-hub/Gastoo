@@ -88,7 +88,13 @@ function AppNavigation() {
         ...(Platform.OS === 'web' ? { minHeight: '100vh', backgroundColor: '#000' } : null),
       }}
     >
-      <NavigationContainer ref={navigationRef} onReady={onLayoutReady}>
+      <NavigationContainer
+        ref={navigationRef}
+        onReady={onLayoutReady}
+        documentTitle={{
+          formatter: (options, route) => options?.title || route?.name || 'Gastoo',
+        }}
+      >
         <ThemedStatusBar />
         <Stack.Navigator
           screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
@@ -97,7 +103,7 @@ function AppNavigation() {
           <Stack.Screen name="Splash" component={SplashScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="SignUp" component={SignUpScreen} />
-          <Stack.Screen name="Main" options={{ animation: 'fade' }}>
+          <Stack.Screen name="Main" options={{ animation: 'fade', title: 'Gastoo' }}>
             {() => <MainTabs />}
           </Stack.Screen>
           <Stack.Screen name="History" component={HistoryScreen} />
