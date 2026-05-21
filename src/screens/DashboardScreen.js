@@ -104,6 +104,7 @@ function BalanceLineChart({
   tooltipDateStyle,
   tooltipValueStyle,
   defaultIndex,
+  xAxisLabelsNode,
 }) {
   const [activeIndex, setActiveIndex] = useState(null);
 
@@ -232,6 +233,8 @@ function BalanceLineChart({
           <Circle cx={activeCoord.x} cy={activeCoord.y} r={4} fill={lineColor} />
         </Svg>
       </View>
+
+      {xAxisLabelsNode || null}
 
       {/* Tooltip sempre visível */}
       <View style={tooltipStyle} accessibilityLiveRegion="polite">
@@ -436,7 +439,7 @@ function createStyles(T, isDesktop, isMobile) {
       textAlign: 'center',
     },
     chartScrubReadout: {
-      marginTop: 14,
+      marginTop: 6,
       paddingVertical: 12,
       paddingHorizontal: 16,
       borderRadius: 16,
@@ -453,6 +456,12 @@ function createStyles(T, isDesktop, isMobile) {
     },
     chartTooltipDate: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.brandFgMuted, flex: 1 },
     chartTooltipValue: { fontFamily: 'Poppins_600SemiBold', fontSize: 16, color: T.orange, flexShrink: 0 },
+    recentTxOriginIcon: {
+      width: 28, height: 28, borderRadius: 14,
+      backgroundColor: 'rgba(255,255,255,0.08)',
+      alignItems: 'center', justifyContent: 'center',
+      marginRight: 8,
+    },
 
     /* ── Seção de contas/cartões ── */
     sectionLabel: {
@@ -880,15 +889,19 @@ function RecentTransactions({ transactions, creditCards, selectedAccount, select
               <Text style={styles.recentTxDesc} numberOfLines={1}>{tx.descricao}</Text>
               <Text style={styles.recentTxMeta}>{tx.categoria}{tx.data ? ` · ${tx.data}` : ''}</Text>
             </View>
-            <View style={{ alignItems: 'flex-end', flexDirection: 'row', flexShrink: 0 }}>
+            <View style={{ alignItems: 'center', flexDirection: 'row', flexShrink: 0 }}>
+              {tx.origin?.type === 'openFinance' ? (
+                <View style={styles.recentTxOriginIcon}>
+                  <BankIcon bankName={tx.origin.bankName} bankColor={tx.origin.bankColor} bankInitial={tx.origin.bankInitial} size={16} />
+                </View>
+              ) : tx.origin?.type === 'notification' ? (
+                <View style={styles.recentTxOriginIcon}>
+                  <Bell size={16} color={T.grayMed} />
+                </View>
+              ) : null}
               <Text style={[styles.recentTxValue, { color: tx.tipo === 'entrada' ? T.positive : T.negative }]}>
                 {tx.tipo === 'entrada' ? '+' : '-'}{hidden ? mask : fmt(tx.valor)}
               </Text>
-              {tx.origin?.type === 'openFinance' ? (
-                <BankIcon bankName={tx.origin.bankName} bankColor={tx.origin.bankColor} bankInitial={tx.origin.bankInitial} size={16} />
-              ) : tx.origin?.type === 'notification' ? (
-                <Bell size={12} color={T.grayMed} style={{ marginLeft: 4 }} />
-              ) : null}
             </View>
           </TouchableOpacity>
         );
@@ -928,18 +941,24 @@ export default function DashboardScreen({ navigation }) {
     { id: '__mock_3', descricao: 'Salário', categoria: 'Renda', valor: 5800.00, tipo: 'entrada', data: '28/04/2025', origin: { type: 'notification', bank: 'Itaú' } },
   ], []);
 
+  const [dismissedMockIds, setDismissedMockIds] = useState([]);
   const realNotifications = notificationTransactions;
-  const displayNotifications = realNotifications.length > 0 ? realNotifications : MOCK_NOTIFICATIONS;
+  const displayNotifications = realNotifications.length > 0
+    ? realNotifications
+    : MOCK_NOTIFICATIONS.filter(m => !dismissedMockIds.includes(m.id));
   const notificationCount = displayNotifications.length;
   const [reviewPage, setReviewPage] = useState(0);
 
   const confirmNotification = useCallback((tx) => {
     if (tx.id?.startsWith('__mock_')) {
-      // Mock: não persiste, apenas remove do balão
-      setReviewPage(0);
+      const firstAccount = accounts.find(a => a.ativo);
+      if (firstAccount) {
+        addTransaction({ ...tx, id: undefined, accountId: firstAccount.id, origin: { type: 'confirmed' } });
+      }
+      setDismissedMockIds(prev => [...prev, tx.id]);
+      setReviewPage(prev => Math.max(0, prev - 1));
       return;
     }
-    // Real: marca como confirmada e adiciona ao saldo (conta corrente padrão)
     const firstAccount = accounts.find(a => a.ativo);
     if (firstAccount) {
       const newTx = {
@@ -949,17 +968,15 @@ export default function DashboardScreen({ navigation }) {
       };
       addTransaction(newTx);
     }
-    // Remove notificação original
     deleteTransaction(tx);
   }, [addTransaction, deleteTransaction, accounts]);
 
   const dismissNotification = useCallback((tx) => {
     if (tx.id?.startsWith('__mock_')) {
-      // Mock: apenas remove do balão
-      setReviewPage(0);
+      setDismissedMockIds(prev => [...prev, tx.id]);
+      setReviewPage(prev => Math.max(0, prev - 1));
       return;
     }
-    // Real: remove sem adicionar ao saldo
     deleteTransaction(tx);
   }, [deleteTransaction]);
 
@@ -1275,22 +1292,22 @@ export default function DashboardScreen({ navigation }) {
                 tooltipDateStyle={styles.chartTooltipDate}
                 tooltipValueStyle={styles.chartTooltipValue}
                 defaultIndex={chartDefaultIndex}
+                xAxisLabelsNode={balanceSeries.length > 0 ? (
+                  <View style={styles.chartLabels}>
+                    {labelIndexes.map((i) => (
+                      <Text
+                        key={i}
+                        style={[styles.chartLabelMini, { fontSize: xAxisFontSize }]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.85}
+                      >
+                        {balanceSeries[i]?.label}
+                      </Text>
+                    ))}
+                  </View>
+                ) : null}
               />
-              {balanceSeries.length > 0 ? (
-                <View style={styles.chartLabels}>
-                  {labelIndexes.map((i) => (
-                    <Text
-                      key={i}
-                      style={[styles.chartLabelMini, { fontSize: xAxisFontSize }]}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.85}
-                    >
-                      {balanceSeries[i]?.label}
-                    </Text>
-                  ))}
-                </View>
-              ) : null}
             </View>
           </View>
         </View>
