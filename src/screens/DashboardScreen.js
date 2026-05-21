@@ -951,7 +951,7 @@ export default function DashboardScreen({ navigation }) {
 
   const confirmNotification = useCallback((tx) => {
     if (tx.id?.startsWith('__mock_')) {
-      const firstAccount = accounts.find(a => a.ativo);
+      const firstAccount = accounts.find(a => !a.archived);
       if (firstAccount) {
         addTransaction({ ...tx, id: undefined, accountId: firstAccount.id, origin: { type: 'confirmed' } });
       }
@@ -959,7 +959,7 @@ export default function DashboardScreen({ navigation }) {
       setReviewPage(prev => Math.max(0, prev - 1));
       return;
     }
-    const firstAccount = accounts.find(a => a.ativo);
+    const firstAccount = accounts.find(a => !a.archived);
     if (firstAccount) {
       const newTx = {
         ...tx,

@@ -41,7 +41,7 @@ function totalBalance(accounts, transactions, asOf = new Date()) {
 
 // ── fixtures ────────────────────────────────────────────────────────────────
 
-const ACCOUNT = { id: 'acc1', ativo: true, archived: false, saldoInicial: 1000 };
+const ACCOUNT = { id: 'acc1', archived: false, saldoInicial: 1000 };
 const ACCOUNTS = [ACCOUNT];
 
 const MOCK_SAIDA = {
@@ -71,7 +71,7 @@ const MOCK_ENTRADA = {
  * cria nova transação com origin: confirmed e accountId da conta ativa.
  */
 function simulateConfirm(tx, accounts) {
-  const firstAccount = accounts.find(a => a.ativo);
+  const firstAccount = accounts.find(a => !a.archived);
   if (!firstAccount) return [];
   return [{ ...tx, id: `confirmed_${tx.id}`, accountId: firstAccount.id, origin: { type: 'confirmed' } }];
 }
@@ -140,7 +140,7 @@ describe('Notificação mock — impacto no saldo', () => {
   });
 
   test('sem conta ativa, confirmar mock não gera transação', () => {
-    const semConta = [{ ...ACCOUNT, ativo: false }];
+    const semConta = [{ ...ACCOUNT, archived: true }];
     const txs = simulateConfirm(MOCK_SAIDA, semConta);
     expect(txs).toHaveLength(0);
   });
