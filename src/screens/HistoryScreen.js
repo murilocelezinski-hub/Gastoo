@@ -11,6 +11,7 @@ import { useResponsiveLayout } from '../utils/responsiveLayout';
 import { addPeriod, fmtDate } from '../utils/recurrence';
 import { parseBrDate } from '../utils/chart';
 import { getAccountBank } from '../utils/accountBank';
+import PhosphorIconByName from '../components/PhosphorIconByName';
 
 const MONTHS_PT = [
   'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -208,7 +209,7 @@ export default function HistoryScreen({ navigation }) {
             style={{ padding: 6 }}
             activeOpacity={0.7}
           >
-            <Text style={{ color: T.brandFg, fontSize: 18 }}>⏱</Text>
+            <PhosphorIconByName name="Clock" size={18} color={T.brandFg} />
           </TouchableOpacity>
         }
       />
@@ -250,9 +251,14 @@ export default function HistoryScreen({ navigation }) {
         <View style={styles.summaryDivider} />
         <View style={styles.summaryItem}>
           <Text style={styles.summaryLabel}>Saldo</Text>
-          <Text style={[styles.summaryValue, { color: saldo >= 0 ? T.positive : T.negative }]}>
-            {saldo >= 0 ? '+' : ''}{fmt(saldo)}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {saldo < 0 && (
+              <PhosphorIconByName name="WarningCircle" size={14} color="#E53935" style={{ marginRight: 3 }} />
+            )}
+            <Text style={[styles.summaryValue, { color: saldo >= 0 ? T.positive : T.negative }]}>
+              {saldo >= 0 ? '+' : ''}{fmt(saldo)}
+            </Text>
+          </View>
         </View>
       </View>
 
