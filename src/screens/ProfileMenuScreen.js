@@ -81,7 +81,7 @@ export default function ProfileMenuScreen({ navigation }) {
                     transactionListOrder === 'asc' && { color: theme.white, fontFamily: 'Poppins_600SemiBold' },
                   ]}
                 >
-                  Cresc.
+                  Mais antigos
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -99,7 +99,7 @@ export default function ProfileMenuScreen({ navigation }) {
                     transactionListOrder !== 'asc' && { color: theme.white, fontFamily: 'Poppins_600SemiBold' },
                   ]}
                 >
-                  Decr.
+                  Mais recentes
                 </Text>
               </TouchableOpacity>
             </View>
@@ -111,7 +111,6 @@ export default function ProfileMenuScreen({ navigation }) {
           <Row palette={theme} label="Contas" onPress={() => navigation.navigate('Accounts')} />
           <View style={[styles.sep, { backgroundColor: theme.grayVLight }]} />
           <Row palette={theme} label="Cartões de crédito" onPress={() => navigation.navigate('CreditCards')} />
-          <View style={[styles.sep, { backgroundColor: theme.grayVLight }]} />
           <View style={[styles.sep, { backgroundColor: theme.grayVLight }]} />
           <Row palette={theme} label="Categorias" onPress={() => navigation.navigate('CategoriesSettings')} />
           <View style={[styles.sep, { backgroundColor: theme.grayVLight }]} />

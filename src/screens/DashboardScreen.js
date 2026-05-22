@@ -973,8 +973,12 @@ export default function DashboardScreen({ navigation }) {
 
   const dismissNotification = useCallback((tx) => {
     if (tx.id?.startsWith('__mock_')) {
-      setDismissedMockIds(prev => [...prev, tx.id]);
-      setReviewPage(prev => Math.max(0, prev - 1));
+      setDismissedMockIds(prev => {
+        const novasIds = [...prev, tx.id];
+        const novasNotificacoes = MOCK_NOTIFICATIONS.filter(n => !novasIds.includes(n.id));
+        setReviewPage(p => Math.min(Math.max(0, p), Math.max(0, novasNotificacoes.length - 1)));
+        return novasIds;
+      });
       return;
     }
     deleteTransaction(tx);

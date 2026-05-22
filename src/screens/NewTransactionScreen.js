@@ -278,7 +278,7 @@ export default function NewTransactionScreen({ navigation, route }) {
             ].map((m) => (
               <TouchableOpacity
                 key={m.key}
-                onPress={() => setKind(m.key)}
+                onPress={() => { setKind(m.key); setData(''); setDataObj(null); }}
                 style={[styles.modeBtn, kind === m.key && styles.modeBtnActive]}
               >
                 <Text style={[styles.modeText, kind === m.key && styles.modeTextActive]}>{m.label}</Text>

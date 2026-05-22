@@ -496,7 +496,7 @@ export default function AccountsScreen({ navigation }) {
                     onPress={() => setEditIcon(p.icon)}
                     style={[styles.iconPill, editIcon === p.icon && styles.iconPillActive]}
                   >
-                    <Text style={styles.iconEmoji}>{p.icon}</Text>
+                    <PhosphorIconByName name={p.icon} size={22} color={T.graphite} />
                   </TouchableOpacity>
                 ))}
               </ScrollView>
