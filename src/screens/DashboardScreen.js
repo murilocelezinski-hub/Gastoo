@@ -259,7 +259,7 @@ function createStyles(T, isDesktop, isMobile) {
     /* ── Header ── */
     headerRow: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
+      justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: isDesktop ? 40 : 20,
       paddingBottom: 10,
@@ -822,8 +822,18 @@ function RecentTransactions({ transactions, creditCards, selectedAccount, select
         return true;
       });
     }
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const toTime = (s) => {
+      const d = parseBrDate(s);
+      return d ? d.getTime() : 0;
+    };
     return [...base]
-      .sort((a, b) => (b.data || '').localeCompare(a.data || ''))
+      .filter((t) => {
+        const d = parseBrDate(t.data);
+        return !d || d.getTime() <= today.getTime();
+      })
+      .sort((a, b) => toTime(b.data) - toTime(a.data))
       .slice(0, 10);
   }, [transactions, creditCards, selectedAccount, selectedCard]);
 
@@ -1172,7 +1182,7 @@ export default function DashboardScreen({ navigation }) {
                       </Text>
                     </View>
                     <Text style={styles.reviewCardCategory} numberOfLines={1}>
-                      {tx.categoria ?? '—'}
+                      {tx.categoria ?? '—'}{tx.data ? ` · ${tx.data}` : ''}
                     </Text>
                     <Text style={[styles.reviewCardValue, { color: tx.tipo === 'entrada' ? T.positive : T.negative }]}>
                       {isSaida ? '-' : '+'}{fmt(tx.valor)}
