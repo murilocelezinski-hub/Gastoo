@@ -52,6 +52,7 @@ export default function HistoryScreen({ navigation }) {
   const [selYear,  setSelYear]  = useState(now.getFullYear());
   const [tipoFilter, setTipoFilter] = useState('todos');
   const [catFilter,  setCatFilter]  = useState('Todos');
+  const [bankFilter, setBankFilter] = useState('Todos');
 
   const prev = offsetMonth(selMonth, selYear, -1);
   const next = offsetMonth(selMonth, selYear, +1);
@@ -151,10 +152,33 @@ export default function HistoryScreen({ navigation }) {
   }, [byMonthWithInvoices, tipoFilter]);
 
   // 4. filtro por categoria
-  const filtered = useMemo(() =>
+  const byCat = useMemo(() =>
     catFilter === 'Todos' ? byTipo : byTipo.filter((t) => t.categoria === catFilter),
     [byTipo, catFilter]
   );
+
+  // 5. filtro por banco (Open Finance)
+  const filtered = useMemo(() => {
+    if (bankFilter === 'Todos') return byCat;
+    return byCat.filter((t) => t.origin?.type === 'openFinance' && t.origin?.bankName === bankFilter);
+  }, [byCat, bankFilter]);
+
+  // lista de bancos disponíveis nas transações do mês
+  const banksAvailable = useMemo(() => {
+    const map = new Map();
+    for (const t of byMonthWithInvoices) {
+      if (t.origin?.type === 'openFinance' && t.origin?.bankName) {
+        if (!map.has(t.origin.bankName)) {
+          map.set(t.origin.bankName, {
+            name: t.origin.bankName,
+            color: t.origin.bankColor,
+            initial: t.origin.bankInitial,
+          });
+        }
+      }
+    }
+    return Array.from(map.values());
+  }, [byMonthWithInvoices]);
 
   const ordered = useMemo(
     () => sortTransactionsByDate(filtered, transactionListOrder),
@@ -293,6 +317,36 @@ export default function HistoryScreen({ navigation }) {
         ))}
       </ScrollView>
 
+      {/* ── pills de banco (Open Finance) ── */}
+      {banksAvailable.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterScroll}
+          contentContainerStyle={styles.filterRow}
+        >
+          <TouchableOpacity
+            onPress={() => setBankFilter('Todos')}
+            style={[styles.pill, bankFilter === 'Todos' && styles.pillActive]}
+          >
+            <Text style={[styles.pillText, bankFilter === 'Todos' && styles.pillTextActive]}>Todos bancos</Text>
+          </TouchableOpacity>
+          {banksAvailable.map((b) => {
+            const active = bankFilter === b.name;
+            return (
+              <TouchableOpacity
+                key={b.name}
+                onPress={() => setBankFilter(b.name)}
+                style={[styles.pill, styles.pillBank, active && styles.pillActive]}
+              >
+                <BankIcon bankName={b.name} bankColor={b.color} bankInitial={b.initial} size={16} />
+                <Text style={[styles.pillText, active && styles.pillTextActive]}>{b.name}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
+
       {/* ── lista agrupada por data (Hoje, Ontem, dd/mm/yyyy) ── */}
       <SectionList
         style={{ flex: 1 }}
@@ -357,9 +411,21 @@ export default function HistoryScreen({ navigation }) {
                   {tx.categoria}{bank?.bankName ? ` · ${bank.bankName}` : ''}
                 </Text>
               </View>
-              <Text style={[styles.txValue, isDesktop && styles.txValueDesktop, { color: tx.tipo === 'entrada' ? T.positive : T.negative }]}>
-                {tx.tipo === 'entrada' ? '+' : '-'}{fmt(tx.valor)}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                {tx.origin?.type === 'openFinance' ? (
+                  <View style={styles.txOriginIcon}>
+                    <BankIcon
+                      bankName={tx.origin.bankName}
+                      bankColor={tx.origin.bankColor}
+                      bankInitial={tx.origin.bankInitial}
+                      size={16}
+                    />
+                  </View>
+                ) : null}
+                <Text style={[styles.txValue, isDesktop && styles.txValueDesktop, { color: tx.tipo === 'entrada' ? T.positive : T.negative }]}>
+                  {tx.tipo === 'entrada' ? '+' : '-'}{fmt(tx.valor)}
+                </Text>
+              </View>
             </TouchableOpacity>
           );
         }}
@@ -438,8 +504,14 @@ function createHistoryStyles(T) {
       borderColor: T.graySilver,
     },
     pillActive: { backgroundColor: T.orange, borderColor: T.orange },
+    pillBank: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     pillText: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.graphite },
     pillTextActive: { fontFamily: 'Poppins_600SemiBold', color: T.white },
+    txOriginIcon: {
+      width: 24, height: 24, borderRadius: 12,
+      backgroundColor: 'rgba(0,0,0,0.04)',
+      alignItems: 'center', justifyContent: 'center',
+    },
 
     txRow: {
       flexDirection: 'row',
