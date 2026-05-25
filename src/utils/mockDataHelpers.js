@@ -7,7 +7,6 @@ export const BANKS = [
   { name: 'Banco do Brasil',color: '#FFD700', initial: 'BB' },
   { name: 'Nubank',         color: '#820AD1', initial: 'N'  },
   { name: 'C6 Bank',        color: '#242424', initial: 'C6' },
-  { name: 'XP',             color: '#000000', initial: 'XP' },
 ];
 
 export const ESTABLISHMENTS = [
