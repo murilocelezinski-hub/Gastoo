@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { T } from '../theme';
+import { useThemeColors } from '../context/AppPreferencesContext';
 import { syncBankData } from '../services/openFinanceService';
 import { BANKS } from '../utils/mockDataHelpers';
 import BankIcon from '../components/BankIcon';
@@ -22,6 +22,8 @@ const CONNECT_MESSAGES = [
 
 export default function OpenFinanceOnboardingScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+  const T = useThemeColors();
+  const styles = useMemo(() => createStyles(T), [T]);
   const { addTransaction, setIsSyncing, accounts } = useFinance();
   const [step, setStep] = useState('select');
   const [selectedBank, setSelectedBank] = useState(null);
@@ -84,95 +86,97 @@ export default function OpenFinanceOnboardingScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: T.offWhite ?? '#F7F7F7',
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    gap: 4,
-  },
-  backBtn: {
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 14,
-    color: T.orange,
-    marginBottom: 4,
-  },
-  title: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 20,
-    color: T.graphite ?? '#333333',
-  },
-  subtitle: {
-    fontFamily: 'Poppins_300Light',
-    fontSize: 13,
-    color: T.brandFgMuted ?? '#888',
-    paddingHorizontal: 16,
-    marginBottom: 20,
-    lineHeight: 20,
-  },
-  grid: {
-    paddingHorizontal: 16,
-    gap: 12,
-    paddingBottom: 32,
-  },
-  gridRow: {
-    gap: 12,
-    marginBottom: 12,
-  },
-  bankCard: {
-    flex: 1,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: T.grayVLight ?? '#E0E0E0',
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    paddingVertical: 20,
-    gap: 10,
-  },
-  bankCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bankInitial: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 16,
-    color: '#FFFFFF',
-  },
-  bankName: {
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 13,
-    color: T.graphite ?? '#333333',
-  },
-  connectingContainer: {
-    flex: 1,
-    backgroundColor: T.offWhite ?? '#F7F7F7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  bankCircleLg: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bankInitialLg: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 22,
-    color: '#FFFFFF',
-  },
-  connectingMsg: {
-    fontFamily: 'Poppins_300Light',
-    fontSize: 14,
-    color: T.brandFgMuted ?? '#888',
-    textAlign: 'center',
-    marginTop: 16,
-  },
-});
+function createStyles(T) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: T.offWhite ?? '#F7F7F7',
+    },
+    header: {
+      paddingHorizontal: 16,
+      paddingBottom: 8,
+      gap: 4,
+    },
+    backBtn: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 14,
+      color: T.orange,
+      marginBottom: 4,
+    },
+    title: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 20,
+      color: T.graphite ?? '#333333',
+    },
+    subtitle: {
+      fontFamily: 'Poppins_300Light',
+      fontSize: 13,
+      color: T.brandFgMuted ?? '#888',
+      paddingHorizontal: 16,
+      marginBottom: 20,
+      lineHeight: 20,
+    },
+    grid: {
+      paddingHorizontal: 16,
+      gap: 12,
+      paddingBottom: 32,
+    },
+    gridRow: {
+      gap: 12,
+      marginBottom: 12,
+    },
+    bankCard: {
+      flex: 1,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: T.grayVLight ?? T.graySilver ?? '#E0E0E0',
+      backgroundColor: T.white ?? '#FFFFFF',
+      alignItems: 'center',
+      paddingVertical: 20,
+      gap: 10,
+    },
+    bankCircle: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    bankInitial: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 16,
+      color: '#FFFFFF',
+    },
+    bankName: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 13,
+      color: T.graphite ?? '#333333',
+    },
+    connectingContainer: {
+      flex: 1,
+      backgroundColor: T.offWhite ?? '#F7F7F7',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 32,
+    },
+    bankCircleLg: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    bankInitialLg: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 22,
+      color: '#FFFFFF',
+    },
+    connectingMsg: {
+      fontFamily: 'Poppins_300Light',
+      fontSize: 14,
+      color: T.brandFgMuted ?? '#888',
+      textAlign: 'center',
+      marginTop: 16,
+    },
+  });
+}
