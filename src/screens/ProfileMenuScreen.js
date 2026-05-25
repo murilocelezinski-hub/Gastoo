@@ -52,7 +52,7 @@ export default function ProfileMenuScreen({ navigation }) {
         <View style={[styles.card, { backgroundColor: theme.white, borderColor: theme.grayVLight }]}>
           <Text style={[styles.sectionTitle, { color: theme.charcoal }]}>Aparência</Text>
           <View style={styles.row}>
-            <Text style={[styles.rowLabel, { color: theme.graphite, flex: 1 }]}>Visual do aplicativo</Text>
+            <Text style={[styles.rowLabel, { color: theme.graphite, flex: 1 }]}>Modo escuro</Text>
             <Switch
               value={isDark}
               onValueChange={(v) => setThemeMode(v ? 'dark' : 'light')}
