@@ -27,6 +27,7 @@ import {
 import { CatIcon } from '../components/Shared';
 import BankIcon from '../components/BankIcon';
 import { AccountIcon } from '../components/AccountIcon';
+import PhosphorIconByName from '../components/PhosphorIconByName';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { buildBalanceEvolutionSeries, parseBrDate } from '../utils/chart';
 import { sortTransactionsByDate } from '../utils/txSort';
@@ -771,7 +772,11 @@ function AccountCardItem({ account, isActive, isDesktop, onPress, styles, hidden
       activeOpacity={0.7}
     >
       <View style={styles.accountCardIconContainer}>
-        <AccountIcon accountName={account.name} size={isDesktop ? 26 : 24} color={iconColor} />
+        {account.icon ? (
+          <PhosphorIconByName name={account.icon} size={isDesktop ? 26 : 24} color={iconColor} weight="fill" />
+        ) : (
+          <AccountIcon accountName={account.name} size={isDesktop ? 26 : 24} color={iconColor} />
+        )}
       </View>
       <View>
         <Text style={[styles.accountCardName, isActive && styles.accountCardNameActive]}>{account.name}</Text>
