@@ -447,13 +447,6 @@ export default function ProjectionScreen({ navigation }) {
     return null;
   }, [expenseSlices, expenseTotal]);
 
-  // Quando receitas são dominadas (≥85%) por uma categoria, substitui donut por card simples
-  const incomeDominated = useMemo(() => {
-    if (incomeSlices.length === 0 || incomeTotal === 0) return false;
-    const top = incomeSlices.reduce((a, b) => (a.value > b.value ? a : b));
-    return top.value / incomeTotal >= 0.85;
-  }, [incomeSlices, incomeTotal]);
-
   // Label legível do período ativo para contextualizar o resumo da IA
   const periodoLabel = useMemo(() => {
     const preset = PERIOD_PRESETS.find((p) => p.key === periodPreset);
@@ -564,30 +557,10 @@ export default function ProjectionScreen({ navigation }) {
 
         <View style={styles.card}>
           <Text style={styles.chartTitle}>Receitas por categoria</Text>
-          {incomeDominated ? (
-            <View style={styles.incomeSimpleCard}>
-              <Text style={styles.incomeTotalLabel}>Total recebido</Text>
-              <Text style={styles.incomeSimpleTotal}>{fmt(incomeTotal)}</Text>
-              {incomeSlices.map((s, i) => {
-                const pct = ((s.value / incomeTotal) * 100).toFixed(1);
-                return (
-                  <View key={s.label} style={[styles.incomeRow, i === incomeSlices.length - 1 && styles.incomeRowLast]}>
-                    <View style={[styles.legendDot, { backgroundColor: s.color }]} />
-                    <Text style={styles.incomeRowLabel}>{s.label}</Text>
-                    <Text style={styles.incomeRowValue}>{fmt(s.value)}</Text>
-                    <Text style={styles.incomeRowPct}>{pct}%</Text>
-                  </View>
-                );
-              })}
-            </View>
-          ) : (
-            <>
-              <View style={styles.chartWrap}>
-                <PieChart data={incomeSlices} size={chartSize} strokeColor={pieStroke} emptyLabel="Sem receitas" />
-              </View>
-              {incomeSlices.length > 0 ? <Legend slices={incomeSlices} total={incomeTotal} /> : null}
-            </>
-          )}
+          <View style={styles.chartWrap}>
+            <PieChart data={incomeSlices} size={chartSize} strokeColor={pieStroke} emptyLabel="Sem receitas" />
+          </View>
+          {incomeSlices.length > 0 ? <Legend slices={incomeSlices} total={incomeTotal} /> : null}
         </View>
 
         {/* Card de resumo IA */}
