@@ -59,6 +59,16 @@ import {
   Bell,
   Eye,
   EyeSlash,
+  DotsThreeVertical,
+  X,
+  CaretRight,
+  CaretLeft,
+  Check,
+  Tag,
+  ArrowCounterClockwise,
+  WarningCircle,
+  Clock,
+  FunnelSimple,
 } from 'phosphor-react';
 
 const ICON_MAP = {
@@ -121,6 +131,16 @@ const ICON_MAP = {
   Bell,
   Eye,
   EyeSlash,
+  DotsThreeVertical,
+  X,
+  CaretRight,
+  CaretLeft,
+  Check,
+  Tag,
+  ArrowCounterClockwise,
+  WarningCircle,
+  Clock,
+  FunnelSimple,
 };
 
 export default function PhosphorIconByName({ name, size = 22, color = '#333333', weight = 'regular' }) {

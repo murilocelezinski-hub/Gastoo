@@ -238,29 +238,19 @@ export default function HistoryScreen({ navigation }) {
       <Header
         title="Histórico"
         right={
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Recurring')}
-              hitSlop={12}
-              style={{ padding: 6 }}
-              activeOpacity={0.7}
-            >
-              <PhosphorIconByName name="Clock" size={18} color={T.brandFg} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setFilterMenuOpen(true)}
-              hitSlop={12}
-              style={{ padding: 6 }}
-              activeOpacity={0.7}
-            >
-              <PhosphorIconByName name="DotsThreeVertical" size={20} color={T.brandFg} />
-              {filtersActiveCount > 0 && (
-                <View style={styles.filterBadge}>
-                  <Text style={styles.filterBadgeText}>{filtersActiveCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={() => setFilterMenuOpen(true)}
+            hitSlop={12}
+            style={{ padding: 6 }}
+            activeOpacity={0.7}
+          >
+            <PhosphorIconByName name="FunnelSimple" size={20} color={T.brandFg} />
+            {filtersActiveCount > 0 && (
+              <View style={styles.filterBadge}>
+                <Text style={styles.filterBadgeText}>{filtersActiveCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         }
       />
 
