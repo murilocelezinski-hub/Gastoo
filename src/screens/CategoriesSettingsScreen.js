@@ -12,7 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Header, ConfirmModal } from '../components/Shared';
+import { Header, PrimaryButton, ConfirmModal } from '../components/Shared';
 import { TrashIcon } from '../components/ActionIcons';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { useFinance } from '../context/FinanceContext';
@@ -238,112 +238,114 @@ export default function CategoriesSettingsScreen({ navigation }) {
         }}
       />
 
-      <Modal visible={modalVisible} animationType="slide" onRequestClose={() => setModalVisible(false)}>
-        <View style={[styles.editorContainer, { backgroundColor: theme.offWhite, paddingTop: insets.top }]}>
-          <View style={[styles.editorHeader, { borderBottomColor: theme.grayVLight, backgroundColor: theme.white }]}>
-            <TouchableOpacity onPress={() => setModalVisible(false)} hitSlop={12} style={styles.editorHeaderBtn}>
-              <Text style={[styles.editorHeaderCancel, { color: theme.graphite }]}>Cancelar</Text>
-            </TouchableOpacity>
-            <Text style={[styles.editorHeaderTitle, { color: theme.graphite }]}>
-              {modalMode === 'add' ? 'Nova categoria' : 'Editar categoria'}
-            </Text>
-            <TouchableOpacity
-              onPress={submitModal}
-              disabled={!name.trim()}
-              hitSlop={12}
-              style={styles.editorHeaderBtn}
-            >
-              <Text style={[styles.editorHeaderSave, { color: name.trim() ? theme.orange : theme.grayNeutral }]}>
-                Salvar
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingBottom: 32 + insets.bottom }}
-              showsVerticalScrollIndicator={false}
-            >
-              <View style={styles.heroWrap}>
-                <View style={[styles.heroIcon, { backgroundColor: color }]}>
-                  <PhosphorIconByName name={icon || 'Folder'} size={48} color="#fff" weight="fill" />
-                </View>
-                <Text style={[styles.heroName, { color: theme.graphite }]} numberOfLines={1}>
-                  {name.trim() || 'Nova categoria'}
+      <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={() => setModalVisible(false)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={[styles.modalCard, { backgroundColor: theme.white }]}>
+            <View style={styles.modalHeaderRow}>
+              <View style={[styles.heroIconSm, { backgroundColor: color }]}>
+                <PhosphorIconByName name={icon || 'Folder'} size={26} color="#fff" weight="fill" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.modalTitle, { color: theme.graphite }]} numberOfLines={1}>
+                  {modalMode === 'add' ? 'Nova categoria' : 'Editar categoria'}
+                </Text>
+                <Text style={[styles.modalSubtitle, { color: theme.grayMed }]} numberOfLines={1}>
+                  {name.trim() || 'Preencha os campos abaixo'}
                 </Text>
               </View>
+              <TouchableOpacity onPress={() => setModalVisible(false)} hitSlop={12}>
+                <PhosphorIconByName name="X" size={20} color={theme.grayMed} />
+              </TouchableOpacity>
+            </View>
 
-              {err ? (
-                <Text style={[styles.errorText, { color: theme.burnt }]}>{err}</Text>
-              ) : null}
+            {err ? <Text style={[styles.errorText, { color: theme.burnt }]}>{err}</Text> : null}
 
-              <View style={[styles.section, { backgroundColor: theme.white, borderColor: theme.grayVLight }]}>
-                <Text style={[styles.sectionLabel, { color: theme.grayMed }]}>NOME</Text>
-                <TextInput
-                  value={name}
-                  onChangeText={setName}
-                  placeholder="Ex: Pets"
-                  placeholderTextColor={theme.grayNeutral}
-                  editable={!nameLocked}
-                  style={[styles.sectionInput, { color: theme.graphite }, nameLocked && { opacity: 0.6 }]}
-                />
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              style={styles.modalScroll}
+              contentContainerStyle={{ paddingBottom: 4 }}
+            >
+              <Text style={[styles.sectionLabel, { color: theme.grayMed }]}>NOME</Text>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder="Ex: Pets"
+                placeholderTextColor={theme.grayNeutral}
+                editable={!nameLocked}
+                style={[
+                  styles.sectionInput,
+                  { borderColor: theme.grayVLight, color: theme.graphite, backgroundColor: theme.offWhite },
+                  nameLocked && { opacity: 0.6 },
+                ]}
+              />
+
+              <Text style={[styles.sectionLabel, { color: theme.grayMed, marginTop: 14 }]}>ÍCONE</Text>
+              <View style={styles.iconGrid}>
+                {PRESET_ICONS.map((ic) => {
+                  const selected = icon === ic;
+                  return (
+                    <TouchableOpacity
+                      key={ic}
+                      onPress={() => setIcon(ic)}
+                      activeOpacity={0.7}
+                      style={[
+                        styles.iconCell,
+                        { backgroundColor: theme.offWhite },
+                        selected && { backgroundColor: color },
+                      ]}
+                    >
+                      <PhosphorIconByName
+                        name={ic}
+                        size={20}
+                        color={selected ? '#fff' : theme.graphite}
+                        weight={selected ? 'fill' : 'regular'}
+                      />
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
 
-              <View style={[styles.section, { backgroundColor: theme.white, borderColor: theme.grayVLight }]}>
-                <Text style={[styles.sectionLabel, { color: theme.grayMed }]}>ÍCONE</Text>
-                <View style={styles.iconGrid}>
-                  {PRESET_ICONS.map((ic) => {
-                    const selected = icon === ic;
-                    return (
-                      <TouchableOpacity
-                        key={ic}
-                        onPress={() => setIcon(ic)}
-                        activeOpacity={0.7}
-                        style={[
-                          styles.iconCell,
-                          { backgroundColor: theme.offWhite },
-                          selected && { backgroundColor: color },
-                        ]}
-                      >
-                        <PhosphorIconByName
-                          name={ic}
-                          size={22}
-                          color={selected ? '#fff' : theme.graphite}
-                          weight={selected ? 'fill' : 'regular'}
-                        />
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-
-              <View style={[styles.section, { backgroundColor: theme.white, borderColor: theme.grayVLight }]}>
-                <Text style={[styles.sectionLabel, { color: theme.grayMed }]}>COR</Text>
-                <View style={styles.colorGrid}>
-                  {PRESET_COLORS.map((c) => {
-                    const selected = color === c;
-                    return (
-                      <TouchableOpacity
-                        key={c}
-                        onPress={() => setColor(c)}
-                        activeOpacity={0.7}
-                        style={styles.colorCellWrap}
-                      >
-                        <View style={[styles.colorCell, { backgroundColor: c }]} />
-                        {selected ? (
-                          <View style={[styles.colorCheck, { borderColor: theme.white }]}>
-                            <PhosphorIconByName name="Check" size={14} color="#fff" weight="bold" />
-                          </View>
-                        ) : null}
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
+              <Text style={[styles.sectionLabel, { color: theme.grayMed, marginTop: 14 }]}>COR</Text>
+              <View style={styles.colorGrid}>
+                {PRESET_COLORS.map((c) => {
+                  const selected = color === c;
+                  return (
+                    <TouchableOpacity
+                      key={c}
+                      onPress={() => setColor(c)}
+                      activeOpacity={0.7}
+                      style={styles.colorCellWrap}
+                    >
+                      <View style={[styles.colorCell, { backgroundColor: c }]} />
+                      {selected ? (
+                        <View style={styles.colorCheck}>
+                          <PhosphorIconByName name="Check" size={12} color="#fff" weight="bold" />
+                        </View>
+                      ) : null}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </ScrollView>
-          </KeyboardAvoidingView>
-        </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalBtnGhost, { borderColor: theme.graySilver }]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={{ fontFamily: 'Poppins_600SemiBold', color: theme.graphite }}>Cancelar</Text>
+              </TouchableOpacity>
+              <View style={{ flex: 1 }}>
+                <PrimaryButton
+                  label={modalMode === 'add' ? 'Adicionar' : 'Salvar'}
+                  onPress={submitModal}
+                  disabled={!name.trim()}
+                />
+              </View>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <ConfirmModal
@@ -379,77 +381,62 @@ const styles = StyleSheet.create({
   iconBox: { width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   rowName: { fontFamily: 'Poppins_600SemiBold', fontSize: 15 },
   rowMeta: { fontFamily: 'Poppins_400Regular', fontSize: 11, marginTop: 2 },
-  editorContainer: { flex: 1 },
-  editorHeader: {
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    borderRadius: 18,
+    padding: 18,
+    maxHeight: '85%',
+  },
+  modalHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
+    gap: 12,
+    marginBottom: 10,
   },
-  editorHeaderBtn: { minWidth: 70 },
-  editorHeaderCancel: { fontFamily: 'Poppins_400Regular', fontSize: 14 },
-  editorHeaderSave: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, textAlign: 'right' },
-  editorHeaderTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 16, flex: 1, textAlign: 'center' },
-  heroWrap: {
-    alignItems: 'center',
-    paddingTop: 28,
-    paddingBottom: 24,
-  },
-  heroIcon: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+  heroIconSm: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
   },
-  heroName: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 18,
-    maxWidth: '80%',
-    textAlign: 'center',
-  },
+  modalTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 16 },
+  modalSubtitle: { fontFamily: 'Poppins_400Regular', fontSize: 12, marginTop: 2 },
   errorText: {
     fontFamily: 'Poppins_400Regular',
     fontSize: 12,
-    marginHorizontal: 20,
-    marginBottom: 8,
-    textAlign: 'center',
+    marginBottom: 6,
   },
-  section: {
-    marginHorizontal: 16,
-    marginBottom: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+  modalScroll: {
+    maxHeight: 360,
   },
   sectionLabel: {
     fontFamily: 'Poppins_600SemiBold',
-    fontSize: 11,
+    fontSize: 10,
     letterSpacing: 0.6,
-    marginBottom: 10,
+    marginBottom: 6,
   },
   sectionInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     fontFamily: 'Poppins_400Regular',
-    fontSize: 16,
-    paddingVertical: 4,
+    fontSize: 14,
   },
   iconGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: 10,
+    rowGap: 6,
   },
   iconCell: {
-    width: '14.5%',
+    width: '15%',
     aspectRatio: 1,
     borderRadius: 999,
     alignItems: 'center',
@@ -459,10 +446,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: 12,
+    rowGap: 8,
   },
   colorCellWrap: {
-    width: '14.5%',
+    width: '15%',
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -474,11 +461,20 @@ const styles = StyleSheet.create({
   },
   colorCheck: {
     position: 'absolute',
-    width: 22,
-    height: 22,
-    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 14,
+  },
+  modalBtnGhost: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
