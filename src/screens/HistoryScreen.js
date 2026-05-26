@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fmt } from '../theme';
 import { Header, CatIcon } from '../components/Shared';
 import BankIcon from '../components/BankIcon';
-import { useFinance, invoiceLabelPtBr, creditCardName } from '../context/FinanceContext';
+import { useFinance, invoiceLabelPtBr, creditCardName, activeAccounts, activeCreditCards } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { sortTransactionsByDate } from '../utils/txSort';
 import { useResponsiveLayout } from '../utils/responsiveLayout';
@@ -52,13 +52,18 @@ export default function HistoryScreen({ navigation }) {
   const [selYear,  setSelYear]  = useState(now.getFullYear());
   const [tipoFilter, setTipoFilter] = useState('todos');
   const [catFilter,  setCatFilter]  = useState('Todos');
-  const [bankFilter, setBankFilter] = useState('Todos');
+  // sourceFilter: { type: 'all' } | { type: 'account', id, name } | { type: 'card', id, name }
+  const [sourceFilter, setSourceFilter] = useState({ type: 'all' });
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
-  // null = menu raiz; 'categoria' | 'banco' = submenu de opções
+  // null = menu raiz; 'categoria' | 'conta' = submenu de opções
   const [filterSubmenu, setFilterSubmenu] = useState(null);
 
   const filtersActiveCount =
-    (catFilter !== 'Todos' ? 1 : 0) + (bankFilter !== 'Todos' ? 1 : 0);
+    (catFilter !== 'Todos' ? 1 : 0) + (sourceFilter.type !== 'all' ? 1 : 0);
+
+  const accountsAvailable = useMemo(() => activeAccounts(accounts), [accounts]);
+  const cardsAvailable = useMemo(() => activeCreditCards(creditCards), [creditCards]);
+  const hasSources = accountsAvailable.length + cardsAvailable.length > 0;
 
   const closeFilterMenu = () => {
     setFilterMenuOpen(false);
@@ -168,28 +173,17 @@ export default function HistoryScreen({ navigation }) {
     [byTipo, catFilter]
   );
 
-  // 5. filtro por banco (Open Finance)
+  // 5. filtro por conta / cartão
   const filtered = useMemo(() => {
-    if (bankFilter === 'Todos') return byCat;
-    return byCat.filter((t) => t.origin?.type === 'openFinance' && t.origin?.bankName === bankFilter);
-  }, [byCat, bankFilter]);
-
-  // lista de bancos disponíveis nas transações do mês
-  const banksAvailable = useMemo(() => {
-    const map = new Map();
-    for (const t of byMonthWithInvoices) {
-      if (t.origin?.type === 'openFinance' && t.origin?.bankName) {
-        if (!map.has(t.origin.bankName)) {
-          map.set(t.origin.bankName, {
-            name: t.origin.bankName,
-            color: t.origin.bankColor,
-            initial: t.origin.bankInitial,
-          });
-        }
-      }
+    if (sourceFilter.type === 'all') return byCat;
+    if (sourceFilter.type === 'account') {
+      return byCat.filter((t) => String(t.accountId) === String(sourceFilter.id));
     }
-    return Array.from(map.values());
-  }, [byMonthWithInvoices]);
+    if (sourceFilter.type === 'card') {
+      return byCat.filter((t) => String(t.creditCardId) === String(sourceFilter.id));
+    }
+    return byCat;
+  }, [byCat, sourceFilter]);
 
   const ordered = useMemo(
     () => sortTransactionsByDate(filtered, transactionListOrder),
@@ -326,10 +320,10 @@ export default function HistoryScreen({ navigation }) {
               </TouchableOpacity>
             </View>
           )}
-          {bankFilter !== 'Todos' && (
+          {sourceFilter.type !== 'all' && (
             <View style={styles.activeChip}>
-              <Text style={styles.activeChipText}>{bankFilter}</Text>
-              <TouchableOpacity onPress={() => setBankFilter('Todos')} hitSlop={8}>
+              <Text style={styles.activeChipText}>{sourceFilter.name}</Text>
+              <TouchableOpacity onPress={() => setSourceFilter({ type: 'all' })} hitSlop={8}>
                 <PhosphorIconByName name="X" size={12} color={T.white} />
               </TouchableOpacity>
             </View>
@@ -367,22 +361,22 @@ export default function HistoryScreen({ navigation }) {
                 <View style={styles.menuDivider} />
 
                 <TouchableOpacity
-                  style={[styles.menuItem, banksAvailable.length === 0 && styles.menuItemDisabled]}
-                  onPress={() => banksAvailable.length > 0 && setFilterSubmenu('banco')}
-                  activeOpacity={banksAvailable.length === 0 ? 1 : 0.6}
+                  style={[styles.menuItem, !hasSources && styles.menuItemDisabled]}
+                  onPress={() => hasSources && setFilterSubmenu('conta')}
+                  activeOpacity={!hasSources ? 1 : 0.6}
                 >
-                  <PhosphorIconByName name="Bank" size={18} color={banksAvailable.length === 0 ? T.grayNeutral : T.graphite} />
+                  <PhosphorIconByName name="Wallet" size={18} color={!hasSources ? T.grayNeutral : T.graphite} />
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.menuItemText, banksAvailable.length === 0 && styles.menuItemTextDisabled]}>
-                      Filtrar por banco
+                    <Text style={[styles.menuItemText, !hasSources && styles.menuItemTextDisabled]}>
+                      Filtrar por conta/cartão
                     </Text>
-                    {bankFilter !== 'Todos' ? (
-                      <Text style={styles.menuItemSub}>{bankFilter}</Text>
-                    ) : banksAvailable.length === 0 ? (
-                      <Text style={styles.menuItemSub}>Sem bancos neste mês</Text>
+                    {sourceFilter.type !== 'all' ? (
+                      <Text style={styles.menuItemSub}>{sourceFilter.name}</Text>
+                    ) : !hasSources ? (
+                      <Text style={styles.menuItemSub}>Sem contas ou cartões</Text>
                     ) : null}
                   </View>
-                  {banksAvailable.length > 0 && (
+                  {hasSources && (
                     <PhosphorIconByName name="CaretRight" size={14} color={T.grayNeutral} />
                   )}
                 </TouchableOpacity>
@@ -394,7 +388,7 @@ export default function HistoryScreen({ navigation }) {
                       style={styles.menuItem}
                       onPress={() => {
                         setCatFilter('Todos');
-                        setBankFilter('Todos');
+                        setSourceFilter({ type: 'all' });
                         closeFilterMenu();
                       }}
                       activeOpacity={0.6}
@@ -438,44 +432,78 @@ export default function HistoryScreen({ navigation }) {
               </>
             )}
 
-            {filterSubmenu === 'banco' && (
+            {filterSubmenu === 'conta' && (
               <>
                 <View style={styles.submenuHeader}>
                   <TouchableOpacity onPress={() => setFilterSubmenu(null)} hitSlop={8}>
                     <PhosphorIconByName name="CaretLeft" size={18} color={T.graphite} />
                   </TouchableOpacity>
-                  <Text style={styles.menuTitle}>Banco</Text>
+                  <Text style={styles.menuTitle}>Conta / Cartão</Text>
                   <View style={{ width: 18 }} />
                 </View>
                 <ScrollView style={{ maxHeight: 360 }} showsVerticalScrollIndicator={false}>
                   <TouchableOpacity
                     style={styles.optionRow}
                     onPress={() => {
-                      setBankFilter('Todos');
+                      setSourceFilter({ type: 'all' });
                       closeFilterMenu();
                     }}
                     activeOpacity={0.6}
                   >
-                    <Text style={[styles.optionText, bankFilter === 'Todos' && styles.optionTextActive]}>
+                    <Text style={[styles.optionText, sourceFilter.type === 'all' && styles.optionTextActive]}>
                       Todos
                     </Text>
-                    {bankFilter === 'Todos' && <PhosphorIconByName name="Check" size={16} color={T.orange} />}
+                    {sourceFilter.type === 'all' && <PhosphorIconByName name="Check" size={16} color={T.orange} />}
                   </TouchableOpacity>
-                  {banksAvailable.map((b) => {
-                    const active = bankFilter === b.name;
+
+                  {accountsAvailable.length > 0 && (
+                    <Text style={styles.menuItemSub}>  Contas</Text>
+                  )}
+                  {accountsAvailable.map((ac) => {
+                    const active = sourceFilter.type === 'account' && String(sourceFilter.id) === String(ac.id);
+                    const b = getAccountBank([ac], ac.id);
                     return (
                       <TouchableOpacity
-                        key={b.name}
+                        key={`acc-${ac.id}`}
                         style={styles.optionRow}
                         onPress={() => {
-                          setBankFilter(b.name);
+                          setSourceFilter({ type: 'account', id: ac.id, name: ac.name });
                           closeFilterMenu();
                         }}
                         activeOpacity={0.6}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-                          <BankIcon bankName={b.name} bankColor={b.color} bankInitial={b.initial} size={18} />
-                          <Text style={[styles.optionText, active && styles.optionTextActive]}>{b.name}</Text>
+                          <BankIcon bankName={b?.bankName} bankColor={b?.bankColor} bankInitial={b?.bankInitial} size={18} />
+                          <Text style={[styles.optionText, active && styles.optionTextActive]}>{ac.name}</Text>
+                        </View>
+                        {active && <PhosphorIconByName name="Check" size={16} color={T.orange} />}
+                      </TouchableOpacity>
+                    );
+                  })}
+
+                  {cardsAvailable.length > 0 && (
+                    <Text style={styles.menuItemSub}>  Cartões</Text>
+                  )}
+                  {cardsAvailable.map((c) => {
+                    const active = sourceFilter.type === 'card' && String(sourceFilter.id) === String(c.id);
+                    const b = getAccountBank(accounts, c.accountId);
+                    return (
+                      <TouchableOpacity
+                        key={`card-${c.id}`}
+                        style={styles.optionRow}
+                        onPress={() => {
+                          setSourceFilter({ type: 'card', id: c.id, name: c.name });
+                          closeFilterMenu();
+                        }}
+                        activeOpacity={0.6}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                          {b ? (
+                            <BankIcon bankName={b.bankName} bankColor={b.bankColor} bankInitial={b.bankInitial} size={18} />
+                          ) : (
+                            <BankIcon bankInitial="C" size={18} />
+                          )}
+                          <Text style={[styles.optionText, active && styles.optionTextActive]}>{c.name}</Text>
                         </View>
                         {active && <PhosphorIconByName name="Check" size={16} color={T.orange} />}
                       </TouchableOpacity>
