@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SectionList, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SectionList, StyleSheet, Modal, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fmt } from '../theme';
 import { Header, CatIcon } from '../components/Shared';
@@ -53,6 +53,17 @@ export default function HistoryScreen({ navigation }) {
   const [tipoFilter, setTipoFilter] = useState('todos');
   const [catFilter,  setCatFilter]  = useState('Todos');
   const [bankFilter, setBankFilter] = useState('Todos');
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+  // null = menu raiz; 'categoria' | 'banco' = submenu de opções
+  const [filterSubmenu, setFilterSubmenu] = useState(null);
+
+  const filtersActiveCount =
+    (catFilter !== 'Todos' ? 1 : 0) + (bankFilter !== 'Todos' ? 1 : 0);
+
+  const closeFilterMenu = () => {
+    setFilterMenuOpen(false);
+    setFilterSubmenu(null);
+  };
 
   const prev = offsetMonth(selMonth, selYear, -1);
   const next = offsetMonth(selMonth, selYear, +1);
@@ -227,14 +238,29 @@ export default function HistoryScreen({ navigation }) {
       <Header
         title="Histórico"
         right={
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Recurring')}
-            hitSlop={12}
-            style={{ padding: 6 }}
-            activeOpacity={0.7}
-          >
-            <PhosphorIconByName name="Clock" size={18} color={T.brandFg} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Recurring')}
+              hitSlop={12}
+              style={{ padding: 6 }}
+              activeOpacity={0.7}
+            >
+              <PhosphorIconByName name="Clock" size={18} color={T.brandFg} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setFilterMenuOpen(true)}
+              hitSlop={12}
+              style={{ padding: 6 }}
+              activeOpacity={0.7}
+            >
+              <PhosphorIconByName name="DotsThreeVertical" size={20} color={T.brandFg} />
+              {filtersActiveCount > 0 && (
+                <View style={styles.filterBadge}>
+                  <Text style={styles.filterBadgeText}>{filtersActiveCount}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
         }
       />
 
@@ -299,53 +325,178 @@ export default function HistoryScreen({ navigation }) {
         ))}
       </View>
 
-      {/* ── pills de categoria ── */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterScroll}
-        contentContainerStyle={styles.filterRow}
-      >
-        {cats.map((c) => (
-          <TouchableOpacity
-            key={c}
-            onPress={() => setCatFilter(c)}
-            style={[styles.pill, catFilter === c && styles.pillActive]}
-          >
-            <Text style={[styles.pillText, catFilter === c && styles.pillTextActive]}>{c}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* ── pills de banco (Open Finance) ── */}
-      {banksAvailable.length > 0 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filterScroll}
-          contentContainerStyle={styles.filterRow}
-        >
-          <TouchableOpacity
-            onPress={() => setBankFilter('Todos')}
-            style={[styles.pill, bankFilter === 'Todos' && styles.pillActive]}
-          >
-            <Text style={[styles.pillText, bankFilter === 'Todos' && styles.pillTextActive]}>Todos bancos</Text>
-          </TouchableOpacity>
-          {banksAvailable.map((b) => {
-            const active = bankFilter === b.name;
-            return (
-              <TouchableOpacity
-                key={b.name}
-                onPress={() => setBankFilter(b.name)}
-                style={[styles.pill, styles.pillBank, active && styles.pillActive]}
-              >
-                <BankIcon bankName={b.name} bankColor={b.color} bankInitial={b.initial} size={16} />
-                <Text style={[styles.pillText, active && styles.pillTextActive]}>{b.name}</Text>
+      {/* ── chips de filtros ativos (clean: só aparecem quando há filtro) ── */}
+      {filtersActiveCount > 0 && (
+        <View style={styles.activeChipsRow}>
+          {catFilter !== 'Todos' && (
+            <View style={styles.activeChip}>
+              <Text style={styles.activeChipText}>{catFilter}</Text>
+              <TouchableOpacity onPress={() => setCatFilter('Todos')} hitSlop={8}>
+                <PhosphorIconByName name="X" size={12} color={T.white} />
               </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+            </View>
+          )}
+          {bankFilter !== 'Todos' && (
+            <View style={styles.activeChip}>
+              <Text style={styles.activeChipText}>{bankFilter}</Text>
+              <TouchableOpacity onPress={() => setBankFilter('Todos')} hitSlop={8}>
+                <PhosphorIconByName name="X" size={12} color={T.white} />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       )}
+
+      {/* ── menu de filtros (3 pontos) ── */}
+      <Modal
+        visible={filterMenuOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={closeFilterMenu}
+      >
+        <Pressable style={styles.menuBackdrop} onPress={closeFilterMenu}>
+          <Pressable style={styles.menuCard} onPress={(e) => e.stopPropagation()}>
+            {filterSubmenu === null && (
+              <>
+                <Text style={styles.menuTitle}>Filtros</Text>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => setFilterSubmenu('categoria')}
+                  activeOpacity={0.6}
+                >
+                  <PhosphorIconByName name="Tag" size={18} color={T.graphite} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.menuItemText}>Filtrar por categoria</Text>
+                    {catFilter !== 'Todos' && (
+                      <Text style={styles.menuItemSub}>{catFilter}</Text>
+                    )}
+                  </View>
+                  <PhosphorIconByName name="CaretRight" size={14} color={T.grayNeutral} />
+                </TouchableOpacity>
+
+                <View style={styles.menuDivider} />
+
+                <TouchableOpacity
+                  style={[styles.menuItem, banksAvailable.length === 0 && styles.menuItemDisabled]}
+                  onPress={() => banksAvailable.length > 0 && setFilterSubmenu('banco')}
+                  activeOpacity={banksAvailable.length === 0 ? 1 : 0.6}
+                >
+                  <PhosphorIconByName name="Bank" size={18} color={banksAvailable.length === 0 ? T.grayNeutral : T.graphite} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.menuItemText, banksAvailable.length === 0 && styles.menuItemTextDisabled]}>
+                      Filtrar por banco
+                    </Text>
+                    {bankFilter !== 'Todos' ? (
+                      <Text style={styles.menuItemSub}>{bankFilter}</Text>
+                    ) : banksAvailable.length === 0 ? (
+                      <Text style={styles.menuItemSub}>Sem bancos neste mês</Text>
+                    ) : null}
+                  </View>
+                  {banksAvailable.length > 0 && (
+                    <PhosphorIconByName name="CaretRight" size={14} color={T.grayNeutral} />
+                  )}
+                </TouchableOpacity>
+
+                {filtersActiveCount > 0 && (
+                  <>
+                    <View style={styles.menuDivider} />
+                    <TouchableOpacity
+                      style={styles.menuItem}
+                      onPress={() => {
+                        setCatFilter('Todos');
+                        setBankFilter('Todos');
+                        closeFilterMenu();
+                      }}
+                      activeOpacity={0.6}
+                    >
+                      <PhosphorIconByName name="ArrowCounterClockwise" size={18} color={T.orange} />
+                      <Text style={[styles.menuItemText, { color: T.orange }]}>Limpar filtros</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </>
+            )}
+
+            {filterSubmenu === 'categoria' && (
+              <>
+                <View style={styles.submenuHeader}>
+                  <TouchableOpacity onPress={() => setFilterSubmenu(null)} hitSlop={8}>
+                    <PhosphorIconByName name="CaretLeft" size={18} color={T.graphite} />
+                  </TouchableOpacity>
+                  <Text style={styles.menuTitle}>Categoria</Text>
+                  <View style={{ width: 18 }} />
+                </View>
+                <ScrollView style={{ maxHeight: 360 }} showsVerticalScrollIndicator={false}>
+                  {cats.map((c) => {
+                    const active = catFilter === c;
+                    return (
+                      <TouchableOpacity
+                        key={c}
+                        style={styles.optionRow}
+                        onPress={() => {
+                          setCatFilter(c);
+                          closeFilterMenu();
+                        }}
+                        activeOpacity={0.6}
+                      >
+                        <Text style={[styles.optionText, active && styles.optionTextActive]}>{c}</Text>
+                        {active && <PhosphorIconByName name="Check" size={16} color={T.orange} />}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </>
+            )}
+
+            {filterSubmenu === 'banco' && (
+              <>
+                <View style={styles.submenuHeader}>
+                  <TouchableOpacity onPress={() => setFilterSubmenu(null)} hitSlop={8}>
+                    <PhosphorIconByName name="CaretLeft" size={18} color={T.graphite} />
+                  </TouchableOpacity>
+                  <Text style={styles.menuTitle}>Banco</Text>
+                  <View style={{ width: 18 }} />
+                </View>
+                <ScrollView style={{ maxHeight: 360 }} showsVerticalScrollIndicator={false}>
+                  <TouchableOpacity
+                    style={styles.optionRow}
+                    onPress={() => {
+                      setBankFilter('Todos');
+                      closeFilterMenu();
+                    }}
+                    activeOpacity={0.6}
+                  >
+                    <Text style={[styles.optionText, bankFilter === 'Todos' && styles.optionTextActive]}>
+                      Todos
+                    </Text>
+                    {bankFilter === 'Todos' && <PhosphorIconByName name="Check" size={16} color={T.orange} />}
+                  </TouchableOpacity>
+                  {banksAvailable.map((b) => {
+                    const active = bankFilter === b.name;
+                    return (
+                      <TouchableOpacity
+                        key={b.name}
+                        style={styles.optionRow}
+                        onPress={() => {
+                          setBankFilter(b.name);
+                          closeFilterMenu();
+                        }}
+                        activeOpacity={0.6}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                          <BankIcon bankName={b.name} bankColor={b.color} bankInitial={b.initial} size={18} />
+                          <Text style={[styles.optionText, active && styles.optionTextActive]}>{b.name}</Text>
+                        </View>
+                        {active && <PhosphorIconByName name="Check" size={16} color={T.orange} />}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* ── lista agrupada por data (Hoje, Ontem, dd/mm/yyyy) ── */}
       <SectionList
@@ -548,6 +699,120 @@ function createHistoryStyles(T) {
     },
     invoiceIconText: { fontSize: 18 },
     invoiceChevron: { fontSize: 11, color: T.grayNeutral, fontFamily: 'Poppins_400Regular' },
+    // ── menu de filtros (3 pontos) ──
+    filterBadge: {
+      position: 'absolute',
+      top: 2,
+      right: 2,
+      minWidth: 14,
+      height: 14,
+      paddingHorizontal: 3,
+      borderRadius: 7,
+      backgroundColor: T.orange,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    filterBadgeText: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 9,
+      color: T.white,
+      lineHeight: 12,
+    },
+    activeChipsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+      paddingHorizontal: 20,
+      paddingTop: 10,
+    },
+    activeChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 14,
+      backgroundColor: T.orange,
+    },
+    activeChipText: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 11,
+      color: T.white,
+    },
+    menuBackdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.35)',
+      justifyContent: 'flex-start',
+      alignItems: 'flex-end',
+      paddingTop: 60,
+      paddingHorizontal: 12,
+    },
+    menuCard: {
+      width: 260,
+      backgroundColor: T.white,
+      borderRadius: 14,
+      paddingVertical: 8,
+      shadowColor: '#000',
+      shadowOpacity: 0.15,
+      shadowOffset: { width: 0, height: 4 },
+      shadowRadius: 12,
+      elevation: 8,
+    },
+    menuTitle: {
+      fontFamily: 'Poppins_600SemiBold',
+      fontSize: 13,
+      color: T.graphite,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+    },
+    menuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+    },
+    menuItemDisabled: { opacity: 0.5 },
+    menuItemText: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 13,
+      color: T.graphite,
+    },
+    menuItemTextDisabled: { color: T.grayNeutral },
+    menuItemSub: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 11,
+      color: T.grayMed,
+      marginTop: 1,
+    },
+    menuDivider: {
+      height: 1,
+      backgroundColor: T.grayVLight,
+      marginHorizontal: 10,
+    },
+    submenuHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 14,
+      paddingVertical: 4,
+    },
+    optionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 11,
+    },
+    optionText: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 13,
+      color: T.graphite,
+    },
+    optionTextActive: {
+      fontFamily: 'Poppins_600SemiBold',
+      color: T.orange,
+    },
     // Rótulo de agrupamento por data (Hoje, Ontem, dd/mm/yyyy)
     sectionDateLabel: {
       fontFamily: 'Poppins_600SemiBold',
