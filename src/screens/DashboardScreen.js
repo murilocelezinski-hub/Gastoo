@@ -1239,7 +1239,14 @@ export default function DashboardScreen({ navigation }) {
         contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
       >
         {/* SALDO CARD — Destaque central (hierarquia máxima) */}
-        <View style={styles.mainTwoCol}>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => {
+            setSelectedAccount(null);
+            setSelectedCard(null);
+          }}
+        >
+          <View style={styles.mainTwoCol}>
           <View style={styles.leftCol}>
             <View style={[styles.saldoCard, saldo < 0 && { shadowColor: T.burnt }]}>
               <View style={styles.saldoCardBase}>
@@ -1341,124 +1348,133 @@ export default function DashboardScreen({ navigation }) {
             </View>
           </View>
         </View>
+        </TouchableOpacity>
 
-        {/* CONTAS */}
-        {act.length > 0 ? (
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => {
+            setSelectedAccount(null);
+            setSelectedCard(null);
+          }}
+        >
+          {/* CONTAS */}
+          {act.length > 0 ? (
+            <View style={styles.accountsSection}>
+              <Text style={styles.sectionLabel}>Contas</Text>
+              {isDesktop ? (
+                <View style={styles.accountsRow}>
+                  {act.map((ac) => {
+                    const isActive = !selectedCard && selectedAccount === ac.id;
+                    const bal = balanceForAccount(accounts, transactions, ac.id);
+                    return (
+                      <AccountCardItem
+                        key={ac.id}
+                        account={ac}
+                        isActive={isActive}
+                        isDesktop={isDesktop}
+                        onPress={() => {
+                          setSelectedCard(null);
+                          setSelectedAccount(ac.id);
+                        }}
+                        styles={styles}
+                        balance={fmt(bal)}
+                        hidden={hidden}
+                        mask={mask}
+                        T={T}
+                      />
+                    );
+                  })}
+                </View>
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountsRow}>
+                  {act.map((ac) => {
+                    const isActive = !selectedCard && selectedAccount === ac.id;
+                    const bal = balanceForAccount(accounts, transactions, ac.id);
+                    return (
+                      <AccountCardItem
+                        key={ac.id}
+                        account={ac}
+                        isActive={isActive}
+                        isDesktop={isDesktop}
+                        onPress={() => {
+                          setSelectedCard(null);
+                          setSelectedAccount(ac.id);
+                        }}
+                        styles={styles}
+                        balance={fmt(bal)}
+                        hidden={hidden}
+                        mask={mask}
+                        T={T}
+                      />
+                    );
+                  })}
+                </ScrollView>
+              )}
+            </View>
+          ) : null}
+
+          {/* CARTÕES */}
           <View style={styles.accountsSection}>
-            <Text style={styles.sectionLabel}>Contas</Text>
-            {isDesktop ? (
-              <View style={styles.accountsRow}>
-                {act.map((ac) => {
-                  const isActive = !selectedCard && selectedAccount === ac.id;
-                  const bal = balanceForAccount(accounts, transactions, ac.id);
-                  return (
-                    <AccountCardItem
-                      key={ac.id}
-                      account={ac}
-                      isActive={isActive}
-                      isDesktop={isDesktop}
-                      onPress={() => {
-                        setSelectedCard(null);
-                        setSelectedAccount(ac.id);
-                      }}
-                      styles={styles}
-                      balance={fmt(bal)}
-                      hidden={hidden}
-                      mask={mask}
-                      T={T}
-                    />
-                  );
-                })}
-              </View>
+            <Text style={styles.sectionLabel}>Cartões</Text>
+            {cardsAct.length > 0 ? (
+              isDesktop ? (
+                <View style={styles.accountsRow}>
+                  {cardsAct.map((c) => {
+                    const isActive = selectedCard && String(selectedCard) === String(c.id);
+                    const total = invoiceTotalsByCard.get(String(c.id)) || 0;
+                    return (
+                      <AccountCardItem
+                        key={c.id}
+                        account={c}
+                        isActive={isActive}
+                        isDesktop={isDesktop}
+                        onPress={() => {
+                          setSelectedAccount(null);
+                          setSelectedCard(c.id);
+                        }}
+                        styles={styles}
+                        balance={fmt(total)}
+                        hidden={hidden}
+                        mask={mask}
+                        T={T}
+                      />
+                    );
+                  })}
+                </View>
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountsRow}>
+                  {cardsAct.map((c) => {
+                    const isActive = selectedCard && String(selectedCard) === String(c.id);
+                    const total = invoiceTotalsByCard.get(String(c.id)) || 0;
+                    return (
+                      <AccountCardItem
+                        key={c.id}
+                        account={c}
+                        isActive={isActive}
+                        isDesktop={isDesktop}
+                        onPress={() => {
+                          setSelectedAccount(null);
+                          setSelectedCard(c.id);
+                        }}
+                        styles={styles}
+                        balance={fmt(total)}
+                        hidden={hidden}
+                        mask={mask}
+                        T={T}
+                      />
+                    );
+                  })}
+                </ScrollView>
+              )
             ) : (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountsRow}>
-                {act.map((ac) => {
-                  const isActive = !selectedCard && selectedAccount === ac.id;
-                  const bal = balanceForAccount(accounts, transactions, ac.id);
-                  return (
-                    <AccountCardItem
-                      key={ac.id}
-                      account={ac}
-                      isActive={isActive}
-                      isDesktop={isDesktop}
-                      onPress={() => {
-                        setSelectedCard(null);
-                        setSelectedAccount(ac.id);
-                      }}
-                      styles={styles}
-                      balance={fmt(bal)}
-                      hidden={hidden}
-                      mask={mask}
-                      T={T}
-                    />
-                  );
-                })}
-              </ScrollView>
+              <Text
+                style={{ fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.brandFgMuted, marginHorizontal: 20, marginBottom: 4 }}
+              >
+                Nenhum cartão cadastrado. Em Perfil → Cartões de crédito você pode adicionar.
+              </Text>
             )}
           </View>
-        ) : null}
-
-        {/* CARTÕES */}
-        <View style={styles.accountsSection}>
-          <Text style={styles.sectionLabel}>Cartões</Text>
-          {cardsAct.length > 0 ? (
-            isDesktop ? (
-              <View style={styles.accountsRow}>
-                {cardsAct.map((c) => {
-                  const isActive = selectedCard && String(selectedCard) === String(c.id);
-                  const total = invoiceTotalsByCard.get(String(c.id)) || 0;
-                  return (
-                    <AccountCardItem
-                      key={c.id}
-                      account={c}
-                      isActive={isActive}
-                      isDesktop={isDesktop}
-                      onPress={() => {
-                        setSelectedAccount(null);
-                        setSelectedCard(c.id);
-                      }}
-                      styles={styles}
-                      balance={fmt(total)}
-                      hidden={hidden}
-                      mask={mask}
-                      T={T}
-                    />
-                  );
-                })}
-              </View>
-            ) : (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountsRow}>
-                {cardsAct.map((c) => {
-                  const isActive = selectedCard && String(selectedCard) === String(c.id);
-                  const total = invoiceTotalsByCard.get(String(c.id)) || 0;
-                  return (
-                    <AccountCardItem
-                      key={c.id}
-                      account={c}
-                      isActive={isActive}
-                      isDesktop={isDesktop}
-                      onPress={() => {
-                        setSelectedAccount(null);
-                        setSelectedCard(c.id);
-                      }}
-                      styles={styles}
-                      balance={fmt(total)}
-                      hidden={hidden}
-                      mask={mask}
-                      T={T}
-                    />
-                  );
-                })}
-              </ScrollView>
-            )
-          ) : (
-            <Text
-              style={{ fontFamily: 'Poppins_400Regular', fontSize: 12, color: T.brandFgMuted, marginHorizontal: 20, marginBottom: 4 }}
-            >
-              Nenhum cartão cadastrado. Em Perfil → Cartões de crédito você pode adicionar.
-            </Text>
-          )}
-        </View>
+        </TouchableOpacity>
 
         {/* Transações recentes */}
         <RecentTransactions
