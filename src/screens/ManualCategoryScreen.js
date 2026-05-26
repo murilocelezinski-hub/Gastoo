@@ -65,7 +65,11 @@ export default function ManualCategoryScreen({ navigation, route }) {
   const { categories } = useAppPreferences();
   const [selected, setSelected] = useState(null);
 
-  const cats = categories.filter((c) => !excludeCategories.includes(c.name));
+  const tipoTx = txData.tipo === 'entrada' ? 'receita' : 'despesa';
+  const cats = categories.filter((c) =>
+    !excludeCategories.includes(c.name) &&
+    (c.tipo === 'ambos' || c.tipo === tipoTx)
+  );
 
   const handleConfirm = () => {
     if (!selected) return;

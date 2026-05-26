@@ -5,7 +5,8 @@ import { lightPalette, darkPalette } from '../theme/palettes';
 import { supabase } from '../services/supabaseClient';
 import { upsertPreferences, fetchPreferences } from '../services/supabaseSync';
 
-const PREFS_KEY = '@gastoo_prefs_v2';
+const PREFS_KEY = '@gastoo_prefs_v3';
+const PREFS_KEY_LEGACY_V2 = '@gastoo_prefs_v2';
 const PREFS_KEY_LEGACY = '@gastoo_prefs_v1';
 
 const PROTECTED_CATEGORY_NAMES = new Set(['Transferência', 'Outros']);
@@ -23,13 +24,37 @@ function migratePrefs(parsed) {
   const themeMode = parsed?.themeMode === 'dark' ? 'dark' : 'light';
   const transactionListOrder = parsed?.transactionListOrder === 'asc' ? 'asc' : 'desc';
   let categories = Array.isArray(parsed?.categories) && parsed.categories.length ? cloneCategories(parsed.categories) : cloneCategories(DEFAULT_CATEGORIES);
+
+  // migração v2→v3: adiciona campo `tipo` se não existir
+  categories = categories.map((c) => {
+    if (c.tipo) return c;
+    if (PROTECTED_CATEGORY_NAMES.has(c.name)) return { ...c, tipo: 'ambos' };
+    return { ...c, tipo: 'despesa' };
+  });
+
   // garante categorias protegidas existam
   for (const req of DEFAULT_CATEGORIES.filter((c) => PROTECTED_CATEGORY_NAMES.has(c.name))) {
     if (!categories.some((c) => c.name === req.name)) categories.push({ ...req });
   }
-  // preenche ícone ausente para categorias antigas (migração silenciosa)
-  const defaultIconByName = Object.fromEntries(DEFAULT_CATEGORIES.map((c) => [c.name, c.icon]));
-  categories = categories.map((c) => (c.icon ? c : { ...c, icon: defaultIconByName[c.name] || 'Folder' }));
+
+  // adiciona categorias de receita padrão se não existirem
+  const defaultIncomeNames = new Set(['Salário', 'Freelance', 'Rendimentos', 'Presente', 'Reembolso', 'Aluguel Recebido', 'Benefícios']);
+  for (const req of DEFAULT_CATEGORIES.filter((c) => defaultIncomeNames.has(c.name))) {
+    if (!categories.some((c) => c.name === req.name)) categories.push({ ...req });
+  }
+
+  // preenche ícone e tipo ausentes para categorias antigas (migração silenciosa)
+  const defaultByName = Object.fromEntries(DEFAULT_CATEGORIES.map((c) => [c.name, c]));
+  categories = categories.map((c) => {
+    const defaults = defaultByName[c.name];
+    return {
+      name: c.name,
+      color: c.color || defaults?.color || '#BCBCB8',
+      icon: c.icon || defaults?.icon || 'Folder',
+      tipo: c.tipo || defaults?.tipo || 'despesa',
+    };
+  });
+
   const spendingGoals =
     parsed?.spendingGoals && typeof parsed.spendingGoals === 'object' ? parsed.spendingGoals : {};
   return { profile, themeMode, transactionListOrder, categories, spendingGoals };
@@ -60,6 +85,7 @@ export function AppPreferencesProvider({ children }) {
     (async () => {
       try {
         let raw = await AsyncStorage.getItem(PREFS_KEY);
+        if (!raw) raw = await AsyncStorage.getItem(PREFS_KEY_LEGACY_V2);
         if (!raw) raw = await AsyncStorage.getItem(PREFS_KEY_LEGACY);
         if (raw) {
           const m = migratePrefs(JSON.parse(raw));
@@ -116,7 +142,7 @@ export function AppPreferencesProvider({ children }) {
     setTransactionListOrderState(order === 'asc' ? 'asc' : 'desc');
   }, []);
 
-  const addCategory = useCallback(({ name, color, icon }) => {
+  const addCategory = useCallback(({ name, color, icon, tipo = 'despesa' }) => {
     const n = String(name || '').trim();
     if (!n) return { ok: false, error: 'Informe o nome.' };
     let error = null;
@@ -125,7 +151,7 @@ export function AppPreferencesProvider({ children }) {
         error = 'Já existe uma categoria com esse nome.';
         return prev;
       }
-      return [...prev, { name: n, color: color || '#BCBCB8', icon: icon || 'Folder' }];
+      return [...prev, { name: n, color: color || '#BCBCB8', icon: icon || 'Folder', tipo }];
     });
     return error ? { ok: false, error } : { ok: true };
   }, []);
@@ -138,7 +164,7 @@ export function AppPreferencesProvider({ children }) {
     return { ok: true };
   }, []);
 
-  const updateCategory = useCallback((oldName, { name, color, icon }) => {
+  const updateCategory = useCallback((oldName, { name, color, icon, tipo }) => {
     const n = String(name || '').trim();
     if (!n) return { ok: false, error: 'Informe o nome.' };
     if (PROTECTED_CATEGORY_NAMES.has(oldName) && n !== oldName) {
@@ -163,6 +189,7 @@ export function AppPreferencesProvider({ children }) {
         name: n,
         color: color ?? next[idx].color,
         icon: icon ?? next[idx].icon,
+        tipo: tipo ?? next[idx].tipo,
       };
       return next;
     });

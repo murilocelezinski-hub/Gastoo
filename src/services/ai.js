@@ -17,6 +17,13 @@ const KEYWORDS = {
   Vestuário: ['roupa', 'tênis', 'camisa', 'calça', 'sapato', 'nike', 'adidas', 'zara'],
   Assinaturas: ['netflix', 'spotify', 'disney', 'amazon', 'assinatura', 'plano', 'hbo', 'prime', 'youtube', 'globoplay', 'deezer', 'crunchyroll', 'apple tv', 'paramount'],
   Investimentos: ['investimento', 'ação', 'fundo', 'cripto', 'tesouro', 'poupança', 'bitcoin', 'cdb', 'lci', 'lca', 'renda fixa', 'btg'],
+  Salário: ['salário', 'salario', 'proventos', 'rubrica', 'contracheque'],
+  Freelance: ['freelance', 'freelancer', 'projeto', 'consultoria', 'prestação de serviço'],
+  Rendimentos: ['rendimento', 'juros', 'dividendo', 'poupança', 'renda de capital'],
+  Presente: ['presente', 'regalo', 'bolo', 'aniversário', 'natal', 'ano novo'],
+  Reembolso: ['reembolso', 'devolução', 'reemb', 'estorno'],
+  'Aluguel Recebido': ['aluguel recebido', 'aluguel de imóvel', 'aluguel recebido'],
+  Benefícios: ['benefício', 'auxílio', 'bolsa', 'subsidio', 'abono'],
 };
 
 function fallbackCategorize(descricao, categoryList) {
@@ -32,7 +39,7 @@ function fallbackCategorize(descricao, categoryList) {
 }
 
 // ─── Few-shot examples por categoria ───────────────────
-const FEW_SHOT = `Você é um assistente de finanças pessoais. Categorize transações com base na descrição e valor.
+const FEW_SHOT_EXPENSE = `Você é um assistente de finanças pessoais. Categorize transações com base na descrição e valor.
 As categorias disponíveis são: Alimentação, Transporte, Moradia, Saúde, Lazer, Educação, Vestuário, Assinaturas, Investimentos, Outros.
 Responda com uma única palavra, exclusivamente o nome da categoria, sem pontuação, acentos extras ou explicação.
 
@@ -83,6 +90,33 @@ Descrição: "Presente aniversário", Valor: R$ 80,00 → Outros
 Descrição: "Taxa bancária", Valor: R$ 12,00 → Outros
 Descrição: "Multa de trânsito", Valor: R$ 293,00 → Outros
 Descrição: "Conserto celular", Valor: R$ 350,00 → Outros`;
+
+const FEW_SHOT_INCOME = `Você é um assistente de finanças pessoais. Categorize transações de receita com base na descrição e valor.
+As categorias disponíveis são: Salário, Freelance, Rendimentos, Presente, Reembolso, Aluguel Recebido, Benefícios, Outros.
+Responda com uma única palavra, exclusivamente o nome da categoria, sem pontuação, acentos extras ou explicação.
+
+Exemplos:
+Descrição: "Salário Claro - 05/2026", Valor: R$ 3500,00 → Salário
+Descrição: "Salário mensal", Valor: R$ 4200,00 → Salário
+Descrição: "Décimo terceiro", Valor: R$ 2800,00 → Salário
+Descrição: "Remuneração bônus", Valor: R$ 950,00 → Salário
+Descrição: "Projeto web design", Valor: R$ 800,00 → Freelance
+Descrição: "Freelance consultoria", Valor: R$ 1200,00 → Freelance
+Descrição: "Prestação de serviço", Valor: R$ 500,00 → Freelance
+Descrição: "Rendimento poupança", Valor: R$ 45,00 → Rendimentos
+Descrição: "Dividendos ação", Valor: R$ 120,00 → Rendimentos
+Descrição: "Juros aplicação", Valor: R$ 85,00 → Rendimentos
+Descrição: "Rendimento CDB", Valor: R$ 200,00 → Rendimentos
+Descrição: "Presente mãe", Valor: R$ 300,00 → Presente
+Descrição: "Presente de aniversário", Valor: R$ 500,00 → Presente
+Descrição: "Reembolso viagem", Valor: R$ 600,00 → Reembolso
+Descrição: "Devolução compra", Valor: R$ 150,00 → Reembolso
+Descrição: "Estorno cartão", Valor: R$ 250,00 → Reembolso
+Descrição: "Aluguel de imóvel", Valor: R$ 1500,00 → Aluguel Recebido
+Descrição: "Aluguel temporada", Valor: R$ 1200,00 → Aluguel Recebido
+Descrição: "Bolsa auxílio", Valor: R$ 500,00 → Benefícios
+Descrição: "Auxílio desemprego", Valor: R$ 600,00 → Benefícios
+Descrição: "Subsidio governo", Valor: R$ 800,00 → Benefícios`;
 
 // ─── Recomendação de Projeção de Fim de Mês ────────────
 /**
@@ -263,7 +297,10 @@ export async function categorizeTransaction(descricao, valor, categoryList = DEF
   const cacheKey = `${descricao?.trim().toLowerCase()}|${valor}`;
   if (_cache.has(cacheKey)) return _cache.get(cacheKey);
 
-  const prompt = `${FEW_SHOT}
+  const isIncome = categoryList.some((c) => c.tipo === 'receita');
+  const fewShot = isIncome ? FEW_SHOT_INCOME : FEW_SHOT_EXPENSE;
+
+  const prompt = `${fewShot}
 
 Agora categorize:
 Descrição: "${descricao}", Valor: R$ ${valor.toFixed(2)} →`;

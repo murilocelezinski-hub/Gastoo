@@ -84,7 +84,9 @@ export default function AICategoryScreen({ navigation, route }) {
       setLoading(true);
       setHasError(false);
       try {
-        const result = await categorizeTransaction(txData.descricao, txData.valor, categories, controller.signal);
+        const tipoTx = txData.tipo === 'entrada' ? 'receita' : 'despesa';
+        const filteredCats = categories.filter((c) => c.tipo === tipoTx || c.tipo === 'ambos');
+        const result = await categorizeTransaction(txData.descricao, txData.valor, filteredCats, controller.signal);
         setSuggestion(result.category);
         setLoading(false);
       } catch (err) {
@@ -98,7 +100,7 @@ export default function AICategoryScreen({ navigation, route }) {
       clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [txData.descricao, txData.valor, categories]);
+  }, [txData.descricao, txData.valor, txData.tipo, categories]);
 
   const handleConfirm = () => {
     const newTx = {

@@ -105,6 +105,7 @@ export default function CategoriesSettingsScreen({ navigation }) {
   const { categories, addCategory, updateCategory, removeCategory } = useAppPreferences();
   const theme = useThemeColors();
   const { transactions, showToast, renameTransactionsCategory } = useFinance();
+  const [activeTab, setActiveTab] = useState('despesa');
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState('add');
   const [editingOriginalName, setEditingOriginalName] = useState(null);
@@ -113,6 +114,11 @@ export default function CategoriesSettingsScreen({ navigation }) {
   const [color, setColor] = useState(PRESET_COLORS[0]);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [err, setErr] = useState('');
+
+  const filteredCategories = useMemo(
+    () => categories.filter((c) => c.tipo === activeTab || c.tipo === 'ambos'),
+    [categories, activeTab]
+  );
 
   const countByCat = useMemo(() => {
     const m = {};
@@ -145,7 +151,7 @@ export default function CategoriesSettingsScreen({ navigation }) {
   const submitModal = () => {
     setErr('');
     if (modalMode === 'add') {
-      const res = addCategory({ name, color, icon });
+      const res = addCategory({ name, color, icon, tipo: activeTab });
       if (!res.ok) {
         setErr(res.error || 'Não foi possível adicionar.');
         return;
@@ -165,7 +171,7 @@ export default function CategoriesSettingsScreen({ navigation }) {
     if (trimmed !== editingOriginalName) {
       renameTransactionsCategory(editingOriginalName, trimmed);
     }
-    const res = updateCategory(editingOriginalName, { name: trimmed, color, icon });
+    const res = updateCategory(editingOriginalName, { name: trimmed, color, icon, tipo: activeTab });
     if (!res.ok) {
       setErr(res.error || 'Não foi possível salvar.');
       return;
@@ -201,8 +207,27 @@ export default function CategoriesSettingsScreen({ navigation }) {
     <View style={[styles.container, { backgroundColor: theme.offWhite }]}>
       <Header title="Categorias" onBack={() => navigation.goBack()} />
 
+      <View style={[styles.tabRow, { borderBottomColor: theme.grayVLight }]}>
+        <TouchableOpacity
+          onPress={() => setActiveTab('despesa')}
+          style={[styles.tabBtn, activeTab === 'despesa' && { borderBottomColor: theme.orange }]}
+        >
+          <Text style={[styles.tabText, activeTab === 'despesa' && { color: theme.orange, fontFamily: 'Poppins_600SemiBold' }]}>
+            Despesas
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setActiveTab('receita')}
+          style={[styles.tabBtn, activeTab === 'receita' && { borderBottomColor: theme.orange }]}
+        >
+          <Text style={[styles.tabText, activeTab === 'receita' && { color: theme.orange, fontFamily: 'Poppins_600SemiBold' }]}>
+            Receitas
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <FlatList
-        data={categories}
+        data={filteredCategories}
         keyExtractor={(item) => item.name}
         contentContainerStyle={{ padding: 20, paddingBottom: 100 + insets.bottom }}
         ListHeaderComponent={
@@ -225,7 +250,7 @@ export default function CategoriesSettingsScreen({ navigation }) {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowName, { color: theme.graphite }]}>{item.name}</Text>
                 <Text style={[styles.rowMeta, { color: theme.grayMed }]}>
-                  {locked ? 'Obrigatória · toque para editar cor/ícone' : `${n} lançamento(s)`}
+                  {locked ? 'Compartilhada · toque para editar cor/ícone' : `${n} lançamento(s)`}
                 </Text>
               </View>
               {!locked ? (
@@ -361,6 +386,24 @@ export default function CategoriesSettingsScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  tabRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    paddingHorizontal: 20,
+  },
+  tabBtn: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabText: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 14,
+    color: '#797970',
+  },
   addBtn: {
     paddingVertical: 14,
     borderRadius: 12,
