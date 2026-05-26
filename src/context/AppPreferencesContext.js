@@ -27,6 +27,9 @@ function migratePrefs(parsed) {
   for (const req of DEFAULT_CATEGORIES.filter((c) => PROTECTED_CATEGORY_NAMES.has(c.name))) {
     if (!categories.some((c) => c.name === req.name)) categories.push({ ...req });
   }
+  // preenche ícone ausente para categorias antigas (migração silenciosa)
+  const defaultIconByName = Object.fromEntries(DEFAULT_CATEGORIES.map((c) => [c.name, c.icon]));
+  categories = categories.map((c) => (c.icon ? c : { ...c, icon: defaultIconByName[c.name] || 'Folder' }));
   const spendingGoals =
     parsed?.spendingGoals && typeof parsed.spendingGoals === 'object' ? parsed.spendingGoals : {};
   return { profile, themeMode, transactionListOrder, categories, spendingGoals };

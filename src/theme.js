@@ -21,17 +21,17 @@ export const T = {
 };
 
 export const DEFAULT_CATEGORIES = [
-  { name: 'Alimentação',  color: '#FE5E03' },
-  { name: 'Transporte',   color: '#3C3C34' },
-  { name: 'Moradia',      color: '#2A1200' },
-  { name: 'Saúde',        color: '#989890' },
-  { name: 'Lazer',        color: '#CB7D00' },
-  { name: 'Educação',     color: '#844213' },
-  { name: 'Vestuário',    color: '#797970' },
-  { name: 'Assinaturas',  color: '#C96A1E' },
-  { name: 'Investimentos',color: '#E09A00' },
-  { name: 'Transferência',color: '#5C5C56' },
-  { name: 'Outros',       color: '#BCBCB8' },
+  { name: 'Alimentação',  color: '#FE5E03', icon: 'ForkKnife' },
+  { name: 'Transporte',   color: '#3C3C34', icon: 'Car' },
+  { name: 'Moradia',      color: '#2A1200', icon: 'House' },
+  { name: 'Saúde',        color: '#989890', icon: 'Pill' },
+  { name: 'Lazer',        color: '#CB7D00', icon: 'GameController' },
+  { name: 'Educação',     color: '#844213', icon: 'GraduationCap' },
+  { name: 'Vestuário',    color: '#797970', icon: 'TShirt' },
+  { name: 'Assinaturas',  color: '#C96A1E', icon: 'Bell' },
+  { name: 'Investimentos',color: '#E09A00', icon: 'ChartLine' },
+  { name: 'Transferência',color: '#5C5C56', icon: 'ArrowsLeftRight' },
+  { name: 'Outros',       color: '#BCBCB8', icon: 'DotsThree' },
 ];
 
 /** Lista padrão (compatível com imports antigos `CATEGORIES`) */

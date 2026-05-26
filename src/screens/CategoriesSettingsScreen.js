@@ -64,7 +64,6 @@ const PRESET_ICONS = [
   'Package',
   'Gift',
   'Lightning',
-  'Hospital',
   'Airplane',
   'Dog',
   'Cat',
@@ -76,7 +75,6 @@ const PRESET_ICONS = [
   'Receipt',
   'Lightbulb',
   'Wrench',
-  'Broom',
   'Baby',
   'Briefcase',
   'ShoppingCart',
@@ -88,18 +86,13 @@ const PRESET_ICONS = [
   'Globe',
   'Target',
   'Hamburger',
-  'BowlFood',
-  'Beer',
   'Umbrella',
   'GraduationCap',
   'Key',
-  'Toolbox',
   'Sparkle',
-  'Guitar',
   'Camera',
   'Taxi',
   'GasPump',
-  'Beach',
   'Cake',
   'CreditCard',
   'TrendUp',
@@ -271,23 +264,39 @@ export default function CategoriesSettingsScreen({ navigation }) {
                 ]}
               />
               <Text style={[styles.label, { color: theme.charcoal }]}>Ícone</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
-                {PRESET_ICONS.map((ic) => (
-                  <TouchableOpacity key={ic} onPress={() => setIcon(ic)} style={[styles.iconPill, icon === ic && { borderColor: theme.orange }]}>
-                    <PhosphorIconByName name={ic} size={22} color={theme.graphite} />
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              <View style={[styles.gridBox, { borderColor: theme.graySilver, backgroundColor: theme.offWhite }]}>
+                <View style={styles.iconGrid}>
+                  {PRESET_ICONS.map((ic) => (
+                    <TouchableOpacity
+                      key={ic}
+                      onPress={() => setIcon(ic)}
+                      style={[
+                        styles.iconCell,
+                        { backgroundColor: theme.white, borderColor: theme.grayVLight },
+                        icon === ic && { borderColor: theme.orange, backgroundColor: color, borderWidth: 2 },
+                      ]}
+                    >
+                      <PhosphorIconByName name={ic} size={22} color={icon === ic ? '#fff' : theme.graphite} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
               <Text style={[styles.label, { color: theme.charcoal }]}>Cor</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
-                {PRESET_COLORS.map((c) => (
-                  <TouchableOpacity
-                    key={c}
-                    onPress={() => setColor(c)}
-                    style={[styles.colorDot, { backgroundColor: c }, color === c && { borderColor: theme.orange, borderWidth: 3 }]}
-                  />
-                ))}
-              </ScrollView>
+              <View style={[styles.gridBox, { borderColor: theme.graySilver, backgroundColor: theme.offWhite }]}>
+                <View style={styles.colorGrid}>
+                  {PRESET_COLORS.map((c) => (
+                    <TouchableOpacity
+                      key={c}
+                      onPress={() => setColor(c)}
+                      style={[
+                        styles.colorCell,
+                        { backgroundColor: c },
+                        color === c && { borderColor: theme.orange, borderWidth: 3 },
+                      ]}
+                    />
+                  ))}
+                </View>
+              </View>
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
                 <TouchableOpacity style={[styles.modalBtn, { borderColor: theme.graySilver }]} onPress={() => setModalVisible(false)}>
                   <Text style={{ fontFamily: 'Poppins_600SemiBold', color: theme.graphite }}>Cancelar</Text>
@@ -351,16 +360,38 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_400Regular',
     fontSize: 15,
   },
-  iconRow: { gap: 8, paddingVertical: 4 },
-  iconPill: {
-    width: 44,
-    height: 44,
+  gridBox: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 10,
+    marginTop: 2,
+  },
+  iconGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 8,
+  },
+  iconCell: {
+    width: '15%',
+    aspectRatio: 1,
     borderRadius: 10,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  colorDot: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: 'transparent' },
+  colorGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 10,
+  },
+  colorCell: {
+    width: '15%',
+    aspectRatio: 1,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
   modalBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
 });
