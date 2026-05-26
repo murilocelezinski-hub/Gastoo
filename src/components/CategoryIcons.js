@@ -11,6 +11,13 @@ import {
   ChartLine,
   ArrowsLeftRight,
   DotsThree,
+  Money,
+  Laptop,
+  TrendUp,
+  Gift,
+  ArrowCounterClockwise,
+  Buildings,
+  Star,
 } from 'phosphor-react';
 
 export function IconAlimentacao({ size = 24, color = '#fff' }) {
@@ -57,6 +64,34 @@ export function IconOutros({ size = 24, color = '#fff' }) {
   return <DotsThree size={size} weight="fill" color={color} />;
 }
 
+export function IconSalario({ size = 24, color = '#fff' }) {
+  return <Money size={size} weight="fill" color={color} />;
+}
+
+export function IconFreelance({ size = 24, color = '#fff' }) {
+  return <Laptop size={size} weight="fill" color={color} />;
+}
+
+export function IconRendimentos({ size = 24, color = '#fff' }) {
+  return <TrendUp size={size} weight="fill" color={color} />;
+}
+
+export function IconPresente({ size = 24, color = '#fff' }) {
+  return <Gift size={size} weight="fill" color={color} />;
+}
+
+export function IconReembolso({ size = 24, color = '#fff' }) {
+  return <ArrowCounterClockwise size={size} weight="fill" color={color} />;
+}
+
+export function IconAluguelRecebido({ size = 24, color = '#fff' }) {
+  return <Buildings size={size} weight="fill" color={color} />;
+}
+
+export function IconBeneficios({ size = 24, color = '#fff' }) {
+  return <Star size={size} weight="fill" color={color} />;
+}
+
 // Mapa: nome da categoria → componente de ícone
 export const CATEGORY_ICON_MAP = {
   'Alimentação': IconAlimentacao,
@@ -70,6 +105,13 @@ export const CATEGORY_ICON_MAP = {
   'Investimentos': IconInvestimentos,
   'Transferência': IconTransferencia,
   'Outros': IconOutros,
+  'Salário': IconSalario,
+  'Freelance': IconFreelance,
+  'Rendimentos': IconRendimentos,
+  'Presente': IconPresente,
+  'Reembolso': IconReembolso,
+  'Aluguel Recebido': IconAluguelRecebido,
+  'Benefícios': IconBeneficios,
 };
 
 export function getCategoryIcon(categoryName) {

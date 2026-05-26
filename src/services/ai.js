@@ -41,7 +41,7 @@ function fallbackCategorize(descricao, categoryList) {
 // ─── Few-shot examples por categoria ───────────────────
 const FEW_SHOT_EXPENSE = `Você é um assistente de finanças pessoais. Categorize transações com base na descrição e valor.
 As categorias disponíveis são: Alimentação, Transporte, Moradia, Saúde, Lazer, Educação, Vestuário, Assinaturas, Investimentos, Outros.
-Responda com uma única palavra, exclusivamente o nome da categoria, sem pontuação, acentos extras ou explicação.
+Responda EXATAMENTE com o nome da categoria, sem pontuação, acentos extras ou explicação adicional.
 
 Exemplos:
 Descrição: "iFood - Jantar", Valor: R$ 45,90 → Alimentação
@@ -93,7 +93,7 @@ Descrição: "Conserto celular", Valor: R$ 350,00 → Outros`;
 
 const FEW_SHOT_INCOME = `Você é um assistente de finanças pessoais. Categorize transações de receita com base na descrição e valor.
 As categorias disponíveis são: Salário, Freelance, Rendimentos, Presente, Reembolso, Aluguel Recebido, Benefícios, Outros.
-Responda com uma única palavra, exclusivamente o nome da categoria, sem pontuação, acentos extras ou explicação.
+Responda EXATAMENTE com o nome da categoria (pode ter espaço), sem pontuação, acentos extras ou explicação adicional.
 
 Exemplos:
 Descrição: "Salário Claro - 05/2026", Valor: R$ 3500,00 → Salário
