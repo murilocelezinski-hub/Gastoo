@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fmt } from '../theme';
 import { Header } from '../components/Shared';
 import PieChart from '../components/PieChart';
+import PhosphorIconByName from '../components/PhosphorIconByName';
 import BrCalendarModal from '../components/BrCalendarModal';
 import { useFinance, activeAccounts, activeCreditCards } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
@@ -523,10 +524,10 @@ export default function ProjectionScreen({ navigation }) {
           <TouchableOpacity
             onPress={() => setPeriodFilterOpen(true)}
             hitSlop={12}
-            style={{ paddingVertical: 6, paddingHorizontal: 4 }}
+            style={{ padding: 6 }}
             activeOpacity={0.7}
           >
-            <Text style={{ color: T.brandFg, fontSize: 14, fontFamily: 'Poppins_600SemiBold' }}>Filtro</Text>
+            <PhosphorIconByName name="FunnelSimple" size={20} color={T.brandFg} />
           </TouchableOpacity>
         }
       />
