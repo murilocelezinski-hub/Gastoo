@@ -706,6 +706,12 @@ function createStyles(T, isDesktop, isMobile) {
       color: T.brandFg,
       flex: 1,
     },
+    reviewCardDescription: {
+      fontFamily: 'Poppins_400Regular',
+      fontSize: 12,
+      color: T.brandFg,
+      marginTop: 2,
+    },
     reviewCardCategory: {
       fontFamily: 'Poppins_300Light',
       fontSize: 11,
@@ -1186,6 +1192,11 @@ export default function DashboardScreen({ navigation }) {
                         {tx.origin?.bank ?? tx.descricao}
                       </Text>
                     </View>
+                    {tx.origin?.bank && tx.descricao ? (
+                      <Text style={styles.reviewCardDescription} numberOfLines={2}>
+                        {tx.descricao}
+                      </Text>
+                    ) : null}
                     <Text style={styles.reviewCardCategory} numberOfLines={1}>
                       {tx.categoria ?? '—'}{tx.data ? ` · ${tx.data}` : ''}
                     </Text>
