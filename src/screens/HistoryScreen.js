@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fmt } from '../theme';
 import { Header, CatIcon } from '../components/Shared';
 import BankIcon from '../components/BankIcon';
+import { AccountIcon } from '../components/AccountIcon';
 import { useFinance, invoiceLabelPtBr, creditCardName, activeAccounts, activeCreditCards } from '../context/FinanceContext';
 import { useAppPreferences, useThemeColors } from '../context/AppPreferencesContext';
 import { sortTransactionsByDate } from '../utils/txSort';
@@ -461,7 +462,7 @@ export default function HistoryScreen({ navigation }) {
                   )}
                   {accountsAvailable.map((ac) => {
                     const active = sourceFilter.type === 'account' && String(sourceFilter.id) === String(ac.id);
-                    const b = getAccountBank([ac], ac.id);
+                    const iconColor = active ? T.orange : T.brandFgMuted;
                     return (
                       <TouchableOpacity
                         key={`acc-${ac.id}`}
@@ -473,7 +474,11 @@ export default function HistoryScreen({ navigation }) {
                         activeOpacity={0.6}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-                          <BankIcon bankName={b?.bankName} bankColor={b?.bankColor} bankInitial={b?.bankInitial} size={18} />
+                          {ac.icon ? (
+                            <PhosphorIconByName name={ac.icon} size={20} color={iconColor} weight="fill" />
+                          ) : (
+                            <AccountIcon accountName={ac.name} size={20} color={iconColor} />
+                          )}
                           <Text style={[styles.optionText, active && styles.optionTextActive]}>{ac.name}</Text>
                         </View>
                         {active && <PhosphorIconByName name="Check" size={16} color={T.orange} />}
@@ -486,7 +491,7 @@ export default function HistoryScreen({ navigation }) {
                   )}
                   {cardsAvailable.map((c) => {
                     const active = sourceFilter.type === 'card' && String(sourceFilter.id) === String(c.id);
-                    const b = getAccountBank(accounts, c.accountId);
+                    const iconColor = active ? T.orange : T.brandFgMuted;
                     return (
                       <TouchableOpacity
                         key={`card-${c.id}`}
@@ -498,10 +503,10 @@ export default function HistoryScreen({ navigation }) {
                         activeOpacity={0.6}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-                          {b ? (
-                            <BankIcon bankName={b.bankName} bankColor={b.bankColor} bankInitial={b.bankInitial} size={18} />
+                          {c.icon ? (
+                            <PhosphorIconByName name={c.icon} size={20} color={iconColor} weight="fill" />
                           ) : (
-                            <BankIcon bankInitial="C" size={18} />
+                            <AccountIcon accountName={c.name} size={20} color={iconColor} />
                           )}
                           <Text style={[styles.optionText, active && styles.optionTextActive]}>{c.name}</Text>
                         </View>
