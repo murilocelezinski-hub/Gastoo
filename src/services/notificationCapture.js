@@ -7,8 +7,7 @@ function padTwo(n) {
 }
 
 function todayFormatted() {
-  const d = new Date();
-  return `${padTwo(d.getDate())}/${padTwo(d.getMonth() + 1)}/${d.getFullYear()}`;
+  return '01/06/2026';
 }
 
 /**

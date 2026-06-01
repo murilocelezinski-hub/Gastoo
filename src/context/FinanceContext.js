@@ -303,12 +303,9 @@ function buildDemoSeedTransactions() {
   out.push(t({ tipo: 'saída',   valor: 150,   descricao: 'Tesouro Direto',            categoria: 'Investimentos', data: '05/05/2026', accountId: a1 }));
 
   // ── Junho ─────────────────────────────────────────────────────────────────
-  out.push(t({ tipo: 'entrada', valor: 3500,  descricao: 'Salário',                    categoria: 'Outros',        data: '01/06/2026', accountId: a1 }));
   out.push(t({ tipo: 'saída',   valor: 85,    descricao: 'Café da manhã',              categoria: 'Alimentação',   data: '01/06/2026', accountId: a1 }));
   out.push(t({ tipo: 'saída',   valor: 25,    descricao: 'Passagem de ônibus',         categoria: 'Transporte',    data: '01/06/2026', accountId: a1 }));
   out.push(t({ tipo: 'saída',   valor: 35.90, descricao: 'Almoço',                     categoria: 'Alimentação',   data: '01/06/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída',   valor: 45,    descricao: 'Supermercado',               categoria: 'Alimentação',   data: '01/06/2026', accountId: a1 }));
-  out.push(t({ tipo: 'saída',   valor: 8,     descricao: 'Sorveteria',                 categoria: 'Alimentação',   data: '01/06/2026', accountId: a1 }));
 
   return out;
 }
