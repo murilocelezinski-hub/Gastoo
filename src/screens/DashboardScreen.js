@@ -957,9 +957,9 @@ export default function DashboardScreen({ navigation }) {
   );
 
   const MOCK_NOTIFICATIONS = useMemo(() => [
-    { id: '__mock_1', descricao: 'iFood', categoria: 'Alimentação', valor: 47.90, tipo: 'saída', data: '24/05/2026', origin: { type: 'notification', bank: 'Nubank' } },
-    { id: '__mock_2', descricao: 'Mercado Extra', categoria: 'Mercado', valor: 213.50, tipo: 'saída', data: '23/05/2026', origin: { type: 'notification', bank: 'Bradesco' } },
-    { id: '__mock_3', descricao: 'Salário', categoria: 'Renda', valor: 5800.00, tipo: 'entrada', data: '22/05/2026', origin: { type: 'notification', bank: 'Itaú' } },
+    { id: '__mock_1', descricao: 'iFood', categoria: 'Alimentação', valor: 47.90, tipo: 'saída', data: '01/06/2026', origin: { type: 'notification', bank: 'Nubank' } },
+    { id: '__mock_2', descricao: 'Mercado Extra', categoria: 'Alimentação', valor: 213.50, tipo: 'saída', data: '01/06/2026', origin: { type: 'notification', bank: 'Bradesco' } },
+    { id: '__mock_3', descricao: 'Uber', categoria: 'Transporte', valor: 28.50, tipo: 'saída', data: '01/06/2026', origin: { type: 'notification', bank: 'Itaú' } },
   ], []);
 
   const [dismissedMockIds, setDismissedMockIds] = useState([]);
